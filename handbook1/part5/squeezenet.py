@@ -1,12 +1,12 @@
 #SqueezeNet v1.0
 from keras import Input, Model
-from keras.layers import Conv2D, MaxPooling2D, Concatenate, Dropout,
-                         GlobalAveragePooling2D, Activation
+from keras.layers import Conv2D, MaxPooling2D, Concatenate, Dropout
+from keras.layers import GlobalAveragePooling2D, Activation
 
-def stems(inputs):
+def stem(inputs):
     ''' The stem group convolution '''
     x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
-               kernel_initializer='glorot_uniform')(x)
+               kernel_initializer='glorot_uniform')(inputs)
     x = MaxPooling2D(3, strides=2)(x)
     return x
 

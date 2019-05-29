@@ -110,7 +110,7 @@ for _ in range(2):
 x = layers.GlobalAveragePooling2D()(x)
 
 # Final Dense Outputting Layer for 1000 outputs
-outputs = layers.Dense(1000)(x)
+outputs = layers.Dense(1000, activation='softmax')(x)
 
 model = Model(inputs, outputs)
 

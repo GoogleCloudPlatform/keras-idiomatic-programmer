@@ -66,7 +66,7 @@ def exitFlow(x):
         # feature maps
         x = layers.GlobalAveragePooling2D()(x)
         # Fully connected output layer (classification)
-        x = layers.Dense(1000)(x)
+        x = layers.Dense(1000, activation='softmax')(x)
         return x
 
     shortcut = x

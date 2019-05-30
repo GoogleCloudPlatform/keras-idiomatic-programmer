@@ -112,7 +112,7 @@ x = dense_block(x, last, nb_filters)
 # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
 x = layers.GlobalAveragePooling2D()(x)
 # Fully connected output layer (classification)
-x = layers.Dense(1000)(x)
+x = layers.Dense(1000, activation='softmax')(x)
 
 model = Model(inputs, x)
 model.summary()

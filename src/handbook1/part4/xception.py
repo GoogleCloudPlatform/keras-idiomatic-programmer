@@ -157,6 +157,8 @@ def residual_block_middle(x, nb_filters):
     x = layers.SeparableConv2D(nb_filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
+    
+    x = layers.add([x, shortcut])
     return x
 
 inputs = Input(shape=(299, 299, 3))

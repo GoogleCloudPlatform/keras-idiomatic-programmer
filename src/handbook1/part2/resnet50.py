@@ -34,6 +34,7 @@ def bottleneck_block(n_filters, x):
     x = layers.BatchNormalization()(x)
 
     x = layers.add([shortcut, x])
+    x = layers.ReLU()(x)
     return x
 
 def conv_block(n_filters, x, strides=(2,2)):
@@ -82,7 +83,7 @@ x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
 x = conv_block(64, x, strides=(1,1))
 
 # First Residual Block Group of 64 filters
-for _ in range(3):
+for _ in range(2):
     x = bottleneck_block(64, x)
 
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group

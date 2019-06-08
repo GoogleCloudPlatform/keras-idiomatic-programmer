@@ -9,7 +9,7 @@ The repository is organized by:
 
 | Directory     | Description   |
 | ------------- | ------------- |
-| `src`         | code snippers for handbooks (e.g., handbook1) - Apache 2.0 license |
+| `src`         | code snippets for handbooks (e.g., handbook1) - Apache 2.0 license |
 | `handbooks`   | PDF softcopy of handbooks - CC-BY license |
 | `workshops`   | workshops (presentation slides and code labs) |
 

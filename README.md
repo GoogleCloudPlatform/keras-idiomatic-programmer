@@ -13,6 +13,22 @@ The repository is organized by:
 | `handbooks`   | PDF softcopy of handbooks - CC-BY 4.0 license |
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license |
 
+## Reviewers
+
+We thank the following for their reviews and contributions to the Idiomatic Programmer:
+
+*Google Cloud AI - Developer Relations*
+Andrew Ferlitsch
+Noah Negrey
+Yu-Han Liu
+Shahin Saadati
+Torry Yang
+Amy Unruh
+Martin Groner
+
+*Google Developer Experts (GDE)*
+Margaret Maynard-Reid / Seattle
+
 ## Disclaimer
 
 This is not an officially supported Google product.

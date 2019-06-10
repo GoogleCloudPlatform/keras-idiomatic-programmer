@@ -18,15 +18,19 @@ The repository is organized by:
 We thank the following for their reviews and contributions to the Idiomatic Programmer:
 
 *Google Cloud AI - Developer Relations*
-Andrew Ferlitsch
-Noah Negrey
-Yu-Han Liu
-Shahin Saadati
-Torry Yang
-Amy Unruh
-Martin Groner
+
+Andrew Ferlitsch<br/>
+Noah Negrey<br/>
+Yu-Han Liu<br/>
+Shahin Saadati<br/>
+Torry Yang<br/>
+Amy Unruh<br/>
+Martin Groner<br/>
+Brad Miro<br/>
+Tianzi Cai
 
 *Google Developer Experts (GDE)*
+
 Margaret Maynard-Reid / Seattle
 
 ## Disclaimer

@@ -31,7 +31,7 @@ Tianzi Cai
 
 *Google Developer Experts (GDE)*
 
-[https://github.com/margaretmz](Margaret Maynard-Reid / Seattle)
+[Margaret Maynard-Reid / Seattle](https://github.com/margaretmz)
 
 ## Disclaimer
 

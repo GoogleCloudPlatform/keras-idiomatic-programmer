@@ -12,6 +12,7 @@ The repository is organized by:
 | `src`         | code snippets for handbooks (e.g., handbook1) - Apache 2.0 license |
 | `handbooks`   | PDF softcopy of handbooks - CC-BY 4.0 license |
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license |
+| `zoo`         | tf.keras model zoo (coded in idiomatic programming style) - Apache 2.0 license |
 
 ## Reviewers
 
@@ -24,6 +25,7 @@ Noah Negrey<br/>
 Yu-Han Liu<br/>
 Shahin Saadati<br/>
 Torry Yang<br/>
+Gonzalo Gasca Meza<br/>
 Amy Unruh<br/>
 Martin Groner<br/>
 Brad Miro<br/>

@@ -24,7 +24,7 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 
 *Google Cloud AI - Developer Relations*
 
-Andrew Ferlitsch<br/>
+[Andrew Ferlitsch](https://github.com/andrewferlitsch)<br/>
 Noah Negrey<br/>
 Yu-Han Liu<br/>
 Shahin Saadati<br/>

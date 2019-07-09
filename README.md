@@ -11,6 +11,10 @@ The repository is organized by:
 | ------------- | ------------- |
 | `src`         | code snippets for handbooks (e.g., handbook1) - Apache 2.0 license |
 | `handbooks`   | PDF softcopy of handbooks - CC-BY 4.0 license |
+|               | Primer - Statistics Fundamentals for Machine Learning |
+|               | Handbook 1 - Learning Keras - Computer Vision Models |
+|               | Handbook 2 - Learning Keras (OpenCV) - Computer Vision Data Engineering |
+|               | Handbook 3 - Learning Keras - Computer Vision Training and Deployment |
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license |
 | `zoo`         | tf.keras model zoo (coded in idiomatic programming style) - Apache 2.0 license |
 

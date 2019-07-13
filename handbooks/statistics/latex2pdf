@@ -1,0 +1,1 @@
+pandoc --pdf-engine=xelatex --include-in-header=fontoptions.tex idiomatic-statistics.tex -o idiomatic-statistics.pdf

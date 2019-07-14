@@ -97,4 +97,3 @@ x = Dropout(0.5)(x)
 outputs = classifier(x, 1000)
 
 model = Model(inputs, outputs)
-model.summary()

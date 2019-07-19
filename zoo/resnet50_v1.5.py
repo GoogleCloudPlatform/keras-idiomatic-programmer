@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNet50 v1.0
+# ResNet50 version 1.5
+# The strides=2 in the conv_block is moved from the 1x1 convolution to the 
+# # 3x3 convolution. Gained 0.5% more accuracy on ImageNet
 
 import tensorflow as tf
 from tensorflow.keras import Model
@@ -53,11 +55,11 @@ def conv_block(n_filters, x, strides=(2,2)):
     # construct the 1x1, 3x3, 1x1 convolution block
 
     # feature pooling when strides=(2, 2)
-    x = layers.Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 

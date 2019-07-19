@@ -22,15 +22,15 @@ def bottleneck_block(n_filters, x):
         x        : input into the block
     """
     shortcut = x
-    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
     x = layers.add([shortcut, x])
@@ -45,22 +45,22 @@ def conv_block(n_filters, x, strides=(2,2)):
     """
     # construct the identity link
     # increase filters by 4X to match shape when added to output of block
-    shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, kernel_initializer='he_normal')(x)
+    shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
     shortcut = layers.BatchNormalization()(shortcut)
 
     # construct the 1x1, 3x3, 1x1 convolution block
 
     # feature pooling when strides=(2, 2)
-    x = layers.Conv2D(n_filters, (1, 1), strides=strides, kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
     # increase the number of filters by 4X
-    x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
     # add the  identity link to the output of the convolution block
@@ -74,7 +74,7 @@ inputs = layers.Input(shape=(224, 224, 3))
 
 # First Convolutional layer, where pooled feature maps will be reduced by 75%
 x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
-x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', kernel_initializer='he_normal')(x)
+x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
 x = layers.BatchNormalization()(x)
 x = layers.ReLU()(x)
 x = layers.ZeroPadding2D(padding=(1, 1))(x)

@@ -40,6 +40,7 @@ Tianzi Cai
 [Margaret Maynard-Reid / Seattle](https://github.com/margaretmz)
 
 *ML Practioners*
+
 [Hobson Lane](https://www.linkedin.com/in/hobsonlane)
 
 ## Disclaimer

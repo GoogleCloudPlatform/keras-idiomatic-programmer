@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNet50 version 2
+# Paper: https://arxiv.org/pdf/1603.05027.pdf
 # In this version, the BatchNormalization and ReLU activation are moved to be before the convolution in the bottleneck/conv blocks (in v1 and v1.5
 # they were after. Note, this means that the ReLU that appeared after the add operation is now replaced as the ReLU proceeding the ending 1x1
 # convolution in the block.

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNet50 v1.0
+# Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
 from tensorflow.keras import Model

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNet50 version 1.5
+# Paper: https://arxiv.org/pdf/1512.03385.pdf
 # The strides=2 in the conv_block is moved from the 1x1 convolution to the 
 # # 3x3 convolution. Gained 0.5% more accuracy on ImageNet
 

@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# ResNet152
+# Paper: https://arxiv.org/pdf/1512.03385.pdf
+
 import tensorflow as tf
 from tensorflow.keras import Model
 import tensorflow.keras.layers as layers

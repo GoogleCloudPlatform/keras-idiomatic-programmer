@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# ResNeXt50
+# Paper: https://arxiv.org/pdf/1611.05431.pdf
+
 import tensorflow as tf
 import tensorflow.keras.layers as layers
 from tensorflow.keras import Model

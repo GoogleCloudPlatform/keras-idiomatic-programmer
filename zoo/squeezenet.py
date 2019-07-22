@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#SqueezeNet v1.0
+# SqueezeNet v1.0 (2016)
+# Paper: https://arxiv.org/pdf/1602.07360.pdf
+
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Dropout

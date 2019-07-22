@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# SqueezeNet v1.0 with complex bypass (i.e., transition convolution on identify link)
+# SqueezeNet v1.0 with complex bypass (i.e., transition convolution on identify link) (2016)
+# Paper: https://arxiv.org/pdf/1602.07360.pdf
+
 from keras import Input, Model
 from keras.layers import Conv2D, MaxPooling2D, Concatenate, Add, Dropout
 from keras.layers import GlobalAveragePooling2D, Activation

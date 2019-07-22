@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Xception
+# Xception (2016)
+https://arxiv.org/pdf/1610.02357.pdf
 
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model

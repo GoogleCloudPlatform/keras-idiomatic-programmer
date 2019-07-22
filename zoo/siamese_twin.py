@@ -15,10 +15,11 @@
 # Siamese Net for One-Shot Image Classification (Koch, et. al.)
 # Paper: https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pd
 
-from keras import Input, Sequential, Model
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Lambda
-from keras.initializers import RandomNormal
-import keras.backend as K
+import tensorflow as tf
+from tensorflow.keras import Input, Sequential, Model
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Lambda
+from tensorflow.keras.initializers import RandomNormal
+import tensorflow.keras.backend as K
 
 def twin(input_shape):
     ''' Create the model for both twins of the Siamese (connected) Network

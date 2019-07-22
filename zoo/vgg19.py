@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# VGG 19 (2014)
+# Paper: https://arxiv.org/pdf/1409.1556.pdf
+
 import tensorflow as tf
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense

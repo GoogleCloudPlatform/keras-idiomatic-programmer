@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Dense Net 121
+# DenseNet 121 (2016)
+# Paper: https://arxiv.org/pdf/1608.06993.pdf
 
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model

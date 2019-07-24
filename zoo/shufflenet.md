@@ -10,3 +10,9 @@
 ## Micro-Architecture
 
 <img src='shufflenet/micro.png'>
+
+### Strided Shuffle Block
+
+<img src='shufflenet/strided-block.png'>
+
+## Shuffle Group

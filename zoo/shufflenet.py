@@ -1,3 +1,20 @@
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# ShuffleNet v1.0
+# Paper: https://arxiv.org/pdf/1707.01083.pdf
+
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, ReLU, MaxPooling2D, GlobalAveragePooling2D
@@ -9,6 +26,8 @@ def stem(inputs):
         inputs : input image (tensor)
     '''
     x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False)(inputs)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
     return x
     
@@ -49,11 +68,11 @@ def strided_shuffle_block(x, n_groups, n_filters, reduction):
     '''
     # projection shortcut
     shortcut = x
-    shortcut = AveragePooling2D((3, 3), strides=2, padding='same')(shortcut)
+    shortcut = AveragePooling2D((3, 3), strides=2, padding='same')(shortcut)   
     
     # On entry block, we need to adjust the number of output filters
-    # of the entry pointwise group convolution, by subtracting the number of input filters,
-    # to match the exit pointwise group convolution
+    # of the entry pointwise group convolution to match the exit
+    # pointwise group convolution, by subtracting the number of input filters
     n_filters -= int(x.shape[3])
     
     # pointwise group convolution, with dimensionality reduction
@@ -66,7 +85,7 @@ def strided_shuffle_block(x, n_groups, n_filters, reduction):
     # Depthwise 3x3 Strided Convolution
     x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False)(x)
     x = BatchNormalization()(x)
-    
+
     # pointwise group convolution, with dimensionality restoration
     x = pw_group_conv(x, n_groups, n_filters)
     
@@ -91,7 +110,7 @@ def shuffle_block(x, n_groups, n_filters, reduction):
     
     # channel shuffle layer
     x = channel_shuffle(x, n_groups)
-
+    
     # Depthwise 3x3 Convolution
     x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False)(x)
     x = BatchNormalization()(x)
@@ -114,7 +133,7 @@ def pw_group_conv(x, n_groups, n_filters):
     in_filters = x.shape[3]
 
     # Derive the number of input filters (channels) per group
-    grp_in_filters  = n_filters // n_groups
+    grp_in_filters  = in_filters // n_groups
     # Derive the number of output filters per group (Note the rounding up)
     grp_out_filters = int(n_filters / n_groups + 0.5)
       

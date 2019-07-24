@@ -30,24 +30,25 @@ def stem(inputs):
   x = ReLU()(x)
   return x
 
-def stage(x, n_groups, out_channels, n_units):
+def stage(x, n_groups, in_channels, out_channels, n_units, stage_id):
   ''' A Shuffle Net stage (group) 
       x           : input tensor
       n_groups    : number of groups to partition channels into
-      out_channels: number of output channels
+      n_channels  : number of channels (filters)
       n_units:    : number of shuffle units in this stage (block)
   '''
 
-  # NOTE: difference between in channels and out channels
-  #
-  # first unit uses a strided convolution
-  x = shuffle_unit(x, n_groups, out_channels, strides=2)
+  if stage_id == 2:
+    x = Conv2D( int(out_channels * 0.25), (1, 1), strides=1, padding='same', use_bias=False)(x)
+  else:
+    # first unit uses a strided convolution
+    x = shuffle_unit(x, n_groups, in_channels, out_channels, strides=2)
 
   for _ in range(n_units-1):
-    x = shuffle_unit(x, n_groups, out_channels, strides=1)
+    x = shuffle_unit(x, n_groups, out_channels, out_channels, strides=1)
   return x
 
-def shuffle_unit(x, n_groups, out_channels, strides=2, reduce_by=1):
+def shuffle_unit(x, n_groups, in_channels, out_channels, strides=2, reduce_by=0.25):
   ''' A shuffle unit (e.g., shuffle block)
       x            : input tensor
       n_groups     : number of groups to partition the channels into.
@@ -64,9 +65,7 @@ def shuffle_unit(x, n_groups, out_channels, strides=2, reduce_by=1):
   x = ReLU()(x)
 
   # Do the Shuffle ...
-  # Since there is no built-in layer, we implement the layer using the Lambda
-  # method
-  x = Lambda(channel_shuffle, arguments={'n_groups': n_groups})(x)
+  x = channel_shuffle(x, n_groups)
 
   # Depthwise 3x3 Convolution
   x = DepthwiseConv2D((3, 3), strides=strides, padding='same', use_bias=False)(x)
@@ -75,7 +74,6 @@ def shuffle_unit(x, n_groups, out_channels, strides=2, reduce_by=1):
   # Group 1x1 Convolution
   # Restore number of out channels (un-reduce)
   x = group_conv(x, n_groups, out_channels)
-  x = BatchNormalization()(x)
 
   # Identify shortcut
   if strides == 1:
@@ -83,7 +81,7 @@ def shuffle_unit(x, n_groups, out_channels, strides=2, reduce_by=1):
   # Projection shortcut
   else:
     shortcut = AveragePooling2D((3, 3), strides=2, padding='same')(shortcut)
-    x = Concatenate()([shortcut, x])
+    x = Concatenate(axis=1)([shortcut, x])
 
   return x
 
@@ -131,11 +129,11 @@ def channel_shuffle(x, n_groups):
   grp_in_channels  = in_channels // n_groups
 
   # Separate out the channel groups
-  x = K.reshape(x, [-1, height, width, n_groups, grp_in_channels])
+  x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_groups, grp_in_channels]))(x)
   # Transpose the order of the channel groups (i.e., 3, 4 => 4, 3)
-  x = K.permute_dimensions(x, (0, 1, 2, 4, 3)) 
+  x = Lambda(lambda z: K.permute_dimensions(z, (0, 1, 2, 4, 3)))(x)
   # Restore shape
-  x = K.reshape(x, [-1, height, width, in_channels])
+  x = Lambda(lambda z: K.reshape(z, [-1, height, width, in_channels]))(x)
   return x
 
 def classifier(x, n_classes):
@@ -149,27 +147,27 @@ n_groups=2
 
 # input/output channels per number of groups (key)
 channels = {
-        1: [144, 288, 576],
-        2: [200, 400, 800],
-        3: [240, 480, 960],
-        4: [272, 544, 1088],
-        8: [384, 768, 1536]
+        1: [24, 144, 288, 576],
+        2: [24, 200, 400, 800],
+        3: [24, 240, 480, 960],
+        4: [24, 272, 544, 1088],
+        8: [24, 384, 768, 1536]
 }[n_groups]
 
 # input tensor
 inputs = Input( (224, 224, 3) )
 
-# Create the stem convolution group
+# Create the stem convolution group (referred to as Stage 1)
 x = stem(inputs)
 
-# Stage (block) 1
-x = stage(x, n_groups, channels[0], 4)
-
 # Stage (block) 2
-x = stage(x, n_groups, channels[1], 8)
+x = stage(x, n_groups, channels[0], channels[1], n_units=4, stage_id=2)
 
 # Stage (block) 3
-x = stage(x, n_groups, channels[2], 4)
+x = stage(x, n_groups, channels[1], channels[2], n_units=8, stage_id=3)
+
+# Stage (block) 4
+x = stage(x, n_groups, channels[2], channels[3], n_units=4, stage_id=4)
 
 outputs = classifier(x)
 

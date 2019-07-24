@@ -11,10 +11,10 @@
 
 <img src='shufflenet/micro.png'>
 
-### Strided Shuffle Block
-
-<img src='shufflenet/block.png'>
-
 ### Shuffle Block
 
 <img src='shufflenet/strided-block.png'>
+
+### Strided Shuffle Block
+
+<img src='shufflenet/block.png'>

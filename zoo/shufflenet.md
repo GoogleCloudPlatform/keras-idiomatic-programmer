@@ -15,4 +15,6 @@
 
 <img src='shufflenet/strided-block.png'>
 
-## Shuffle Group
+## Shuffle Block
+
+<img src='shufflenet/block.png'>

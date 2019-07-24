@@ -15,6 +15,6 @@
 
 <img src='shufflenet/strided-block.png'>
 
-## Shuffle Block
+### Shuffle Block
 
 <img src='shufflenet/block.png'>

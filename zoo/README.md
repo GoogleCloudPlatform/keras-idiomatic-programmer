@@ -16,7 +16,9 @@ presented in an academic style (documented in comments and w/o production wrappi
 | `ResNet50_v2.0`  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
 | `ResNet_cifar10_v2.0`  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
 *Wide Convolutional Neural Networks*<br/>
-| `ResNeXt50`  | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
+| `ResNeXt50`  | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf)
+| `ResNeXt101` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf)
+| `ResNeXt152` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
 | `Xception`   | [Xception: Deep Learning with Depthwise Separable Convolutions, 2016](https://arxiv.org/pdf/1610.02357.pdf) |<br/>
 *Densely Connected Convolutional Neural Networks*<br/>
 | `DenseNet121` | [Densely Connected Convolutional Networks, 2016](https://arxiv.org/pdf/1608.06993.pdf) |<br/>

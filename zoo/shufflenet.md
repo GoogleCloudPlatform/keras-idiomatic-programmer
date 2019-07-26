@@ -13,8 +13,8 @@
 
 ### Shuffle Block
 
-<img src='shufflenet/strided-block.png'>
+<img src='shufflenet/block.png'>
 
 ### Strided Shuffle Block
 
-<img src='shufflenet/block.png'>
+<img src='shufflenet/strided-block.png'>

@@ -19,6 +19,17 @@ import tensorflow as tf
 from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
+def stem(inputs):
+  """ Stem Convolutional Group """
+  # First Convolutional layer, where pooled feature maps will be reduced by 75%
+  x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
+  x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
+  x = layers.BatchNormalization()(x)
+  x = layers.ReLU()(x)
+  x = layers.ZeroPadding2D(padding=(1, 1))(x)
+  x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
+  return x
+
 def bottleneck_block(n_filters, x):
     """ Create a Bottleneck Residual Block of Convolutions
         n_filters: number of filters
@@ -46,7 +57,7 @@ def conv_block(n_filters, x, strides=(2,2)):
         n_filters: number of filters
         x        : input into the block
     """
-    # construct the identity link
+    # construct the projection shortcut
     # increase filters by 4X to match shape when added to output of block
     shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
     shortcut = layers.BatchNormalization()(shortcut)
@@ -66,23 +77,32 @@ def conv_block(n_filters, x, strides=(2,2)):
     x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
-    # add the  identity link to the output of the convolution block
+    # add the projection shortcut link to the output of the convolution block
     x = layers.add([x, shortcut])
     x = layers.ReLU()(x)
 
     return x
 
+def classifier(x, nclasses):
+  """ The classifier group 
+      x        : input to the classifier
+      nclasses : number of output classes
+  """
+  # Now Pool at the end of all the convolutional residual blocks
+  x = layers.GlobalAveragePooling2D()(x)
+
+  # Final Dense Outputting Layer for 1000 outputs
+  outputs = layers.Dense(nclasses, activation='softmax')(x)
+  return outputs
+
+
 # The input tensor
 inputs = layers.Input(shape=(224, 224, 3))
 
-# First Convolutional layer, where pooled feature maps will be reduced by 75%
-x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
-x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
-x = layers.BatchNormalization()(x)
-x = layers.ReLU()(x)
-x = layers.ZeroPadding2D(padding=(1, 1))(x)
-x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
+# The stem convolutional group
+x = stem(inputs)
 
+# Double the size of filters to fit the first Residual Group
 x = conv_block(64, x, strides=(1,1))
 
 # First Residual Block Group of 64 filters
@@ -110,10 +130,7 @@ x = conv_block(512, x)
 for _ in range(2):
     x = bottleneck_block(512, x)
 
-# Now Pool at the end of all the convolutional residual blocks
-x = layers.GlobalAveragePooling2D()(x)
-
-# Final Dense Outputting Layer for 1000 outputs
-outputs = layers.Dense(1000, activation='softmax')(x)
+# The classifier
+outputs = classifier(x, 1000)
 
 model = Model(inputs, outputs)

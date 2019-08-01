@@ -52,7 +52,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
                       padding='same', kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
-    # special case for first resnext block
+    # when first resnext block in a group, use projection shortcut
     if shortcut.shape[-1] != filters_out:
         # use convolutional layer to double the input size to the block so it
         # matches the output size (so we can add them)
@@ -78,25 +78,13 @@ x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
 for _ in range(3):
     x = _resnext_block(x, 128, 256)
 
-# strided convolution to match the number of output filters on next block and
-# reduce by 2
-x = layers.Conv2D(512, kernel_size=(1, 1), strides=(2, 2), padding='same', kernel_initializer='he_normal')(x)
-
 # Second ResNeXt Group
 for _ in range(4):
     x = _resnext_block(x, 256, 512)
 
-# strided convolution to match the number of output filters on next block and
-# reduce by 2
-x = layers.Conv2D(1024, kernel_size=(1, 1), strides=(2, 2), padding='same', kernel_initializer='he_normal')(x)
-
 # Third ResNeXt Group
 for _ in range(23):
     x = _resnext_block(x, 512, 1024)
-
-# strided convolution to match the number of output filters on next block and
-# reduce by 2
-x = layers.Conv2D(2048, kernel_size=(1, 1), strides=(2, 2), padding='same', kernel_initializer='he_normal')(x)
 
 # Fourth ResNeXt Group
 for _ in range(3):

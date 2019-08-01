@@ -51,11 +51,12 @@ def bottleneck_block(n_filters, x):
     x = layers.ReLU()(x)
     return x
 
-def conv_block(n_filters, x, strides=(2,2)):
-    """ Create Block of Convolutions with feature pooling
+def projection_block(n_filters, x, strides=(2,2)):
+    """ Create Bottleneck Residual Block with Projection Shortcut
         Increase the number of filters by 4X
         n_filters: number of filters
         x        : input into the block
+        strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
     """
     # construct the projection shortcut
     # increase filters by 4X to match shape when added to output of block
@@ -102,31 +103,35 @@ inputs = layers.Input(shape=(224, 224, 3))
 # The stem convolutional group
 x = stem(inputs)
 
-# Double the size of filters to fit the first Residual Group
-x = conv_block(64, x, strides=(1,1))
-
 # First Residual Block Group of 64 filters
+# Double the size of filters to fit the first Residual Group
+x = projection_block(64, x, strides=(1,1))
+
+# Identity residual blocks
 for _ in range(2):
     x = bottleneck_block(64, x)
 
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = conv_block(128, x)
-
 # Second Residual Block Group of 128 filters
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+x = projection_block(128, x)
+
+# Identity residual blocks
 for _ in range(3):
     x = bottleneck_block(128, x)
 
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = conv_block(256, x)
-
 # Third Residual Block Group of 256 filters
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+x = projection_block(256, x)
+
+# Identity residual blocks
 for _ in range(5):
     x = bottleneck_block(256, x)
 
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = conv_block(512, x)
-
 # Fourth Residual Block Group of 512 filters
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+x = projection_block(512, x)
+
+# Identity residual blocks
 for _ in range(2):
     x = bottleneck_block(512, x)
 

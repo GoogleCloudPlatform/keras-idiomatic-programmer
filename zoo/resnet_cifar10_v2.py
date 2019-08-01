@@ -53,6 +53,7 @@ def projection_block(n_filters, x, strides=(2,2), n=2):
         Increase the number of filters by 2X (or 4X on first stage)
         n_filters: number of filters
         x        : input into the block
+        strides  : whether the first convolution is strided
         n        : multiplier for number of filters out
     """
     # construct the projection shortcut

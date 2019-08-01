@@ -29,7 +29,7 @@ How does one use a small input size on a model designed for substantially larger
 
 #### Solution
 
-The solution is very trival. We simply create a
+The solution is very trival. We simply create an additional group that is added to the input layer of the existing model, which consists of deconvolution layers to learn the optimal method to upsample the images to match the input shape of the input layer of the existing model.
 
 
 

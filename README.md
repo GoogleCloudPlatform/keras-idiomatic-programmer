@@ -45,8 +45,8 @@ Tianzi Cai
 
 *ML Practioners*
 
-[Hobson Lane](https://www.linkedin.com/in/hobsonlane)
-[Enoch Tetteh](https://www.linkedin.com/in/enoch-tetteh-80450211a)
+[Hobson Lane](https://www.linkedin.com/in/hobsonlane)<br/>
+[Enoch Tetteh](https://www.linkedin.com/in/enoch-tetteh-80450211a)<br/>
 
 ## Disclaimer
 

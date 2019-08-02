@@ -20,7 +20,9 @@ from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
 def stem(inputs):
-    ''' Stem Convolutional Group '''
+    ''' Stem Convolutional Group 
+        inputs : the input vector
+    '''
     x = layers.Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -111,12 +113,14 @@ nblocks = ((depth - 2) // 9) - 1
 
 # The input tensor
 inputs = layers.Input(shape=(32, 32, 3))
+
 # The Stem Convolution Group
 x = stem(inputs)
    
 # First Residual Block Group of 16 filters (Stage 1)
 # Projection Shortcut residual block   
 x = projection_block(16, x, strides=(1,1), n=4)
+
 # Identity Residual blocks
 for _ in range(nblocks):
     x = bottleneck_block(16, x, n=4)
@@ -124,6 +128,7 @@ for _ in range(nblocks):
 # Second Residual Block Group of 64 filters (Stage 2)
 # Quadruple the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(64, x, strides=(2,2), n=2)
+
 # Identity Residual blocks
 for _ in range(nblocks):
     x = bottleneck_block(64, x, 2)
@@ -131,11 +136,12 @@ for _ in range(nblocks):
 # Third Residual Block Group of 64 filters (Stage 3)
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(128, x, strides=(2,2), n=2)
+
 # Identity Residual blocks
 for _ in range(nblocks):
     x = bottleneck_block(128, x, 2)
 
-# The Classifier
+# The Classifier for 10 classes
 outputs = classifier(x, 10)
 
 model = Model(inputs, outputs)

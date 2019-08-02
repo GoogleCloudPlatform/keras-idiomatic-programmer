@@ -26,11 +26,15 @@ def stem(inputs):
     """ Stem Convolutional Group 
         inputs : the input vector
     """
-    # First Convolutional layer, where pooled feature maps will be reduced by 75%
+    # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
     x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
+    
+    # First Convolutional layer uses large (coarse) filter
     x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
+    
+    # Pooled feature maps will be reduced by 75%
     x = layers.ZeroPadding2D(padding=(1, 1))(x)
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
     return x
@@ -40,9 +44,12 @@ def bottleneck_block(n_filters, x):
         n_filters: number of filters
         x        : input into the block
     """
+    
+    # save input vector (feature maps) for the identity link
     shortcut = x
     
     # construct the 1x1, 3x3, 1x1 convolution block
+    
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
@@ -51,10 +58,12 @@ def bottleneck_block(n_filters, x):
     x = layers.ReLU()(x)
     x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer='he_normal')(x)
 
+    # increase the number of output filters by 4X
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
 
+    # add the identity link (input) to the output of the residual block
     x = layers.add([shortcut, x])
     return x
 

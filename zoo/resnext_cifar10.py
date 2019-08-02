@@ -19,6 +19,16 @@ import tensorflow as tf
 import tensorflow.keras.layers as layers
 from tensorflow.keras import Model
 
+def stem(inputs):
+    """ Create the stem convolutional group
+        inputs : the input vector
+    """
+    # Stem Convolutional layer
+    x = layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    return x
+
 def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     """ Construct a ResNeXT block
         shortcut   : previous layer and shortcut for identity link
@@ -64,14 +74,20 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     x = layers.add([shortcut, x])
     x = layers.ReLU()(x)
     return x
+    
+def classifier(x, nclasses):
+    """ Create the classifier
+    """
+    # Final Dense Outputting Layer for the outputs
+    x = layers.GlobalAveragePooling2D()(x)
+    outputs = layers.Dense(nclasses, activation='softmax')(x)
+    return outputs
 
 # The input tensor
 inputs = layers.Input(shape=(32, 32, 3))
 
-# Stem Convolutional layer
-x = layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
-x = layers.BatchNormalization()(x)
-x = layers.ReLU()(x)
+# The stem convolutional group
+x = stem(x)
 
 # First ResNeXt Group
 for _ in range(3):
@@ -85,12 +101,8 @@ for _ in range(3):
 for _ in range(3):
     x = _resnext_block(x, 256, 512)
 
-# Number of Classes
-nclasses = 10
-
-# Final Dense Outputting Layer for 1000 outputs
-x = layers.GlobalAveragePooling2D()(x)
-outputs = layers.Dense(nclasses, activation='softmax')(x)
+# The classifier for the 10 outputs
+outputs = classifier(x, 10)
 
 model = Model(inputs, outputs)
 

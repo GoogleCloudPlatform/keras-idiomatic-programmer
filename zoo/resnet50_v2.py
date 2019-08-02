@@ -23,15 +23,17 @@ from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
 def stem(inputs):
-  """ Stem Convolutional Group """
-  # First Convolutional layer, where pooled feature maps will be reduced by 75%
-  x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
-  x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
-  x = layers.BatchNormalization()(x)
-  x = layers.ReLU()(x)
-  x = layers.ZeroPadding2D(padding=(1, 1))(x)
-  x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
-  return x
+    """ Stem Convolutional Group 
+        inputs : the input vector
+    """
+    # First Convolutional layer, where pooled feature maps will be reduced by 75%
+    x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
+    x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.ZeroPadding2D(padding=(1, 1))(x)
+    x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
+    return x
 
 def bottleneck_block(n_filters, x):
     """ Create a Bottleneck Residual Block of Convolutions
@@ -39,6 +41,8 @@ def bottleneck_block(n_filters, x):
         x        : input into the block
     """
     shortcut = x
+    
+    # construct the 1x1, 3x3, 1x1 convolution block
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
@@ -84,7 +88,6 @@ def projection_block(n_filters, x, strides=(2,2)):
 
     # add the projection shortcut to the output of the convolution block
     x = layers.add([x, shortcut])
-
     return x
 
 def classifier(x, nclasses):
@@ -92,10 +95,10 @@ def classifier(x, nclasses):
         x        : input to the classifier
         nclasses : number of output classes
     """
-    # Now Pool at the end of all the convolutional residual blocks
+    # Pool at the end of all the convolutional residual blocks
     x = layers.GlobalAveragePooling2D()(x)
 
-    # Final Dense Outputting Layer for 1000 outputs
+    # Final Dense Outputting Layer for the outputs
     outputs = layers.Dense(nclasses, activation='softmax')(x)
     return outputs
 

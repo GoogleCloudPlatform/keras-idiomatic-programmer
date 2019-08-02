@@ -20,7 +20,7 @@ from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
 def stem(inputs):
-    """ Stem Convolutional Group
+    """ Create the Stem Convolutional Group
         inputs : the input vector
     """
     # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
@@ -37,7 +37,7 @@ def stem(inputs):
     return x
 
 def bottleneck_block(n_filters, x):
-    """ Create a Bottleneck Residual Block of Convolutions
+    """ Create a Bottleneck Residual Block with Identity Link
         n_filters: number of filters
         x        : input into the block
     """
@@ -45,17 +45,19 @@ def bottleneck_block(n_filters, x):
     # Save input vector (feature maps) for the identity link
     shortcut = x
     
-    # Construct the 1x1, 3x3, 1x1 residual block
+    ## Construct the 1x1, 3x3, 1x1 residual block
     
+    # Dimensionality reduction
     x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
+    # Bottleneck layer
     x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Increase the number of output filters by 4X
+    # Dimensionality restoration - ncrease the number of output filters by 4X
     x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
@@ -71,42 +73,44 @@ def projection_block(n_filters, x, strides=(2,2)):
         x        : input into the block
         strides  : whether the first convolution is strided
     """
-    # construct the projection shortcut
-    # increase filters by 4X to match shape when added to output of block
+    # Construct the projection shortcut
+    # Increase filters by 4X to match shape when added to output of block
     shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
     shortcut = layers.BatchNormalization()(shortcut)
 
-    # construct the 1x1, 3x3, 1x1 residual block
+    ## Construct the 1x1, 3x3, 1x1 residual block
 
+    # Dimensionality reduction
     # Feature pooling when strides=(2, 2)
     x = layers.Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
+    # Bottleneck layer
     x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Increase the number of filters by 4X
+    # Dimensionaity restoration - Increase the number of filters by 4X
     x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
-    # Add the project shortcut to the output of the convolution block
+    # Add the projection shortcut to the output of the residual block
     x = layers.add([x, shortcut])
     x = layers.ReLU()(x)
 
     return x
     
-def classifier(x, nclasses):
+def classifier(x, n_classes):
     """ Create the classifier group
-        x        : input to the classifier
-        nclasses : number of output classes
+        x         : input to the classifier
+        n_classes : number of output classes
     """
     # Pool at the end of all the convolutional residual blocks
     x = layers.GlobalAveragePooling2D()(x)
 
     # Final Dense Outputting Layer for the outputs
-    outputs = layers.Dense(nclasses, activation='softmax')(x)
+    outputs = layers.Dense(n_classes, activation='softmax')(x)
     return outputs
 
 # The input tensor
@@ -145,4 +149,5 @@ for _ in range(2):
 # The classifier for 1000 classes
 outputs = classifier(x, 1000)
 
+# Instantiate the Model
 model = Model(inputs, outputs)

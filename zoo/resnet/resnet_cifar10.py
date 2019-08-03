@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNet20, 56, 110, 164, 1001 version 2 for CIFAR-10
-# Paper: https://arxiv.org/pdf/1603.05027.pdf
+# ResNet20, 56, 110, 164, 1001 version 1 for CIFAR-10
+# Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
 from tensorflow.keras import Model
@@ -40,22 +40,22 @@ def bottleneck_block(n_filters, x, n=2):
     ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
     # Dimensionality reduction
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
-    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
 
     # Bottleneck layer
+    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal')(x)
 
     # Dimensionality restoration - increase the number of output filters by 2X or 4X
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
     x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
 
     # Add the identity link (input) to the output of the residual block
     x = layers.add([x, shortcut])
+    x = layers.ReLU()(x)
     return x
 
 def projection_block(n_filters, x, strides=(2,2), n=2):
@@ -73,22 +73,22 @@ def projection_block(n_filters, x, strides=(2,2), n=2):
     ## Construct the 1x1, 3x3, 1x1 convolution block
 
     # Dimensionality reduction
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
-    x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), kernel_initializer='he_normal')(x)
     
     # Bottleneck layer - feature pooling when strides=(2, 2)
+    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)  
-    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', kernel_initializer='he_normal')(x)
     
     # Dimensionality restoration - increase the number of filters by 2X (or 4X)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
     x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
 
     # Add the projection shortcut to the output of the residual block
     x = layers.add([shortcut, x])
+    x = layers.ReLU()(x)
     return x
     
 def classifier(x, n_classes):

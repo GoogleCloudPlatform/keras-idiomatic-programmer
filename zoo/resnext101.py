@@ -19,7 +19,7 @@ import tensorflow as tf
 import tensorflow.keras.layers as layers
 from tensorflow.keras import Model
 
-def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
+def _resnext_block(shortcut, filters_in, filters_out, cardinality=32, strides=1):
     """ Construct a ResNeXT block
         shortcut   : previous layer and shortcut for identity link
         filters_in : number of filters  (channels) at the input convolution
@@ -40,7 +40,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
         group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
         groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3),
-                                    strides=(1, 1), padding='same', kernel_initializer='he_normal')(group))
+                                    strides=strides, padding='same', kernel_initializer='he_normal')(group))
 
     # Concatenate the outputs of the cardinality layer together
     x = layers.concatenate(groups)
@@ -56,7 +56,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     if shortcut.shape[-1] != filters_out:
         # use convolutional layer to double the input size to the block so it
         # matches the output size (so we can add them)
-        shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+        shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
                                  padding='same', kernel_initializer='he_normal')(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
@@ -75,7 +75,8 @@ x = layers.ReLU()(x)
 x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
 
 # First ResNeXt Group
-for _ in range(3):
+x = _resnext_block(x, 128, 256, strides=2)
+for _ in range(2):
     x = _resnext_block(x, 128, 256)
 
 # Second ResNeXt Group
@@ -96,3 +97,4 @@ outputs = layers.Dense(1000, activation='softmax')(x)
 
 model = Model(inputs, outputs)
 
+model.summary()

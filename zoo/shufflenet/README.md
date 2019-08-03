@@ -5,16 +5,16 @@
 
 ## Macro-Architecture
 
-<img src='shufflenet/macro.png'>
+<img src='macro.png'>
 
 ## Micro-Architecture
 
-<img src='shufflenet/micro.png'>
+<img src='micro.png'>
 
 ### Shuffle Block
 
-<img src='shufflenet/block.png'>
+<img src='block.png'>
 
 ### Strided Shuffle Block
 
-<img src='shufflenet/strided-block.png'>
+<img src='strided-block.png'>

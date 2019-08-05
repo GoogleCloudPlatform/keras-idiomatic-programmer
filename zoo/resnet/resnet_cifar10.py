@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNet20, 56, 110, 164, 1001 version 2 for CIFAR-10
-# Paper: https://arxiv.org/pdf/1603.05027.pdf
+# ResNet20, 56, 110, 164, 1001 version 1 for CIFAR-10
+# Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
 from tensorflow.keras import Model
@@ -34,20 +34,28 @@ def bottleneck_block(n_filters, x, n=2):
         x        : input into the block
         n        : multiplier for filters out
     """
+    # Save input vector (feature maps) for the identity link
     shortcut = x
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    
+    ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
+
+    # Dimensionality reduction
     x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
-
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
+
+    # Bottleneck layer
     x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal')(x)
-
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
-    x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
 
+    # Dimensionality restoration - increase the number of output filters by 2X or 4X
+    x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+
+    # Add the identity link (input) to the output of the residual block
     x = layers.add([x, shortcut])
+    x = layers.ReLU()(x)
     return x
 
 def projection_block(n_filters, x, strides=(2,2), n=2):
@@ -58,34 +66,35 @@ def projection_block(n_filters, x, strides=(2,2), n=2):
         strides  : whether the first convolution is strided
         n        : multiplier for number of filters out
     """
-    # construct the projection shortcut
-    # increase filters by 2X (or 4X) to match shape when added to output of block
+    # Construct the projection shortcut
+    # Increase filters by 2X (or 4X) to match shape when added to output of block
     shortcut = layers.Conv2D(n_filters * n, (1, 1), strides=strides, kernel_initializer='he_normal')(x)
 
-    # construct the 1x1, 3x3, 1x1 convolution block
-    if x == 2:
-        x = layers.BatchNormalization()(x)
-        x = layers.ReLU()(x)
+    ## Construct the 1x1, 3x3, 1x1 convolution block
+
+    # Dimensionality reduction
     x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), kernel_initializer='he_normal')(x)
-    
-    # feature pooling when strides=(2, 2)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)  
-    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', kernel_initializer='he_normal')(x)
-    
-    # increase the number of filters by 2X (or 4X)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
+    
+    # Bottleneck layer - feature pooling when strides=(2, 2)
+    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)  
+    
+    # Dimensionality restoration - increase the number of filters by 2X (or 4X)
     x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
 
-    # add the projection shortcut to the output of the convolution block
+    # Add the projection shortcut to the output of the residual block
     x = layers.add([shortcut, x])
+    x = layers.ReLU()(x)
     return x
     
-def classifier(x, nclasses):
+def classifier(x, n_classes):
     ''' Classifier
-        x        : input into the classifier
-        nclasses : number of classes
+        x         : input into the classifier
+        n_classes : number of classes
     '''
     # Pool the feature maps after the end of all the residual blocks
     x = layers.BatchNormalization()(x)
@@ -96,7 +105,7 @@ def classifier(x, nclasses):
     x = layers.Flatten()(x)
 
     # Final Dense Outputting Layer 
-    outputs = layers.Dense(nclasses, activation='softmax')(x)
+    outputs = layers.Dense(n_classes, activation='softmax')(x)
     return outputs
 
 #-------------------
@@ -118,6 +127,7 @@ inputs = layers.Input(shape=(32, 32, 3))
 x = stem(inputs)
    
 # First Residual Block Group of 16 filters (Stage 1)
+# Quadruple (4X) the size of filters to fit the next Residual Group
 # Projection Shortcut residual block   
 x = projection_block(16, x, strides=(1,1), n=4)
 
@@ -126,7 +136,7 @@ for _ in range(nblocks):
     x = bottleneck_block(16, x, n=4)
 
 # Second Residual Block Group of 64 filters (Stage 2)
-# Quadruple the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+# Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
 x = projection_block(64, x, strides=(2,2), n=2)
 
 # Identity Residual blocks
@@ -134,7 +144,7 @@ for _ in range(nblocks):
     x = bottleneck_block(64, x, 2)
 
 # Third Residual Block Group of 64 filters (Stage 3)
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+# Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
 x = projection_block(128, x, strides=(2,2), n=2)
 
 # Identity Residual blocks
@@ -144,5 +154,6 @@ for _ in range(nblocks):
 # The Classifier for 10 classes
 outputs = classifier(x, 10)
 
+# Instantiate the Model
 model = Model(inputs, outputs)
 

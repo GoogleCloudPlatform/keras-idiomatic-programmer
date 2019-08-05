@@ -12,6 +12,7 @@ presented in an academic style (documented in comments and w/o production wrappi
 | `ResNet50`  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
 | `ResNet101` | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
 | `ResNet152` | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
+| `ResNet_cifar10` | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
 | `ResNet50_v1.5`  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
 | `ResNet50_v2.0`  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
 | `ResNet_cifar10_v2.0`  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>

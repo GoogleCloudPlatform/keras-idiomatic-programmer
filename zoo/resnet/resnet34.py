@@ -19,6 +19,15 @@ import tensorflow
 from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
+def stem(inputs):
+    """ Create the Stem Convolution Group
+        inputs : input vector
+    """
+    # First Convolutional layer, where pooled feature maps will be reduced by 75%
+    x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', kernel_initializer="he_normal")(inputs)
+    x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
+    return x
+
 def residual_block(n_filters, x):
     """ Create a Residual Block of Convolutions
         n_filters: number of filters
@@ -42,13 +51,24 @@ def conv_block(n_filters, x):
     x = layers.Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
                   activation="relu", kernel_initializer="he_normal")(x)
     return x
+    
+def classifier(x, n_classes):
+    """ Create the Classifier Group
+        x         : input vector
+        n_classes : number of output classes
+    """
+    # Pool at the end of all the convolutional residual blocks
+    x = layers.GlobalAveragePooling2D()(x)
+
+    # Final Dense Outputting Layer for the outputs
+    outputs = layers.Dense(n_classes, activation='softmax')(x)
+    return outputs
 
 # The input tensor
 inputs = layers.Input(shape=(224, 224, 3))
 
-# First Convolutional layer, where pooled feature maps will be reduced by 75%
-x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', kernel_initializer="he_normal")(inputs)
-x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
+# The Stem Convolution Group
+x = stem(inputs)
 
 # First Residual Block Group of 64 filters
 for _ in range(3):
@@ -74,12 +94,10 @@ x = conv_block(512, x)
 # Fourth Residual Block Group of 512 filters
 for _ in range(2):
     x = residual_block(512, x)
+    
+# The Classifier for 1000 classes
+outputs = classifier(x, 1000)
 
-# Now Pool at the end of all the convolutional residual blocks
-x = layers.GlobalAveragePooling2D()(x)
-
-# Final Dense Outputting Layer for 1000 outputs
-outputs = layers.Dense(1000, activation='softmax')(x)
-
+# Instantiate the Model
 model = Model(inputs, outputs)
 

@@ -21,6 +21,7 @@ The repository is organized by:
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license |
 |               | Neural Networks |
 |               | Convolutional Neural Networks |
+|               | Wide Convolutional Neural Networks |
 |               | Advanced Neural Networks |
 |               | Mobile Networks |
 |               | Data Engineering |

@@ -19,6 +19,15 @@ The repository is organized by:
 |               | Handbook 2 - Learning Keras (OpenCV) - Computer Vision Data Engineering |
 |               | Handbook 3 - Learning Keras - Computer Vision Training and Deployment |
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license |
+|               | Neural Networks |
+|               | Convolutional Neural Networks |
+|               | Advanced Neural Networks |
+|               | Mobile Networks |
+|               | Data Engineering |
+|               | Data Augmentation |
+|               | Training |
+|               | Transfer Learning |
+|               | Production |
 | `notebooks`   | notebooks for production-grade solutions |
 | `zoo`         | tf.keras model zoo (coded in idiomatic programming style) - Apache 2.0 license |
 

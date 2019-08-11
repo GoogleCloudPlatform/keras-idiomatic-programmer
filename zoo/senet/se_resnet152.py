@@ -147,6 +147,9 @@ def classifier(x, n_classes):
     outputs = layers.Dense(n_classes, activation='softmax')(x)
     return outputs
 
+# Amount of reduction on squeeze operation
+ratio=16
+
 # The input tensor
 inputs = layers.Input(shape=(224, 224, 3))
 
@@ -154,35 +157,35 @@ inputs = layers.Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # First Residual Block Group of 64 filters
-x = projection_block(64, x, strides=(1,1))
+x = projection_block(64, x, strides=(1,1), ratio=ratio)
 
 # Identity links blocks
 for _ in range(2):
-    x = bottleneck_block(64, x)
+    x = bottleneck_block(64, x, ratio=ratio)
 
 # Second Residual Block Group of 128 filters
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = projection_block(128, x)
+x = projection_block(128, x, ratio=ratio)
 
 # Identity links blocks
 for _ in range(7):
-    x = bottleneck_block(128, x)
+    x = bottleneck_block(128, x, ratio=ratio)
 
 # Third Residual Block Group of 256 filters
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = projection_block(256, x)
+x = projection_block(256, x, ratio=ratio)
 
 # Identity link blocks
 for _ in range(35):
-    x = bottleneck_block(256, x)
+    x = bottleneck_block(256, x, ratio=ratio)
 
 # Fourth Residual Block Group of 512 filters
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = projection_block(512, x)
+x = projection_block(512, x, ratio=ratio)
 
 # Identity link blocks
 for _ in range(2):
-    x = bottleneck_block(512, x)
+    x = bottleneck_block(512, x, ratio=ratio)
 
 # Create the Classifier Group for the 1000 classes
 outputs = classifier(x, 1000)

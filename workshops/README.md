@@ -6,4 +6,8 @@ free to use, modify and redistribute with the requirement to retain attribution 
 
 Each workshop packet is designed for a  v 
 
-|
+| Worshop                                  | Level       |
+| `Neural Networks`                        | Fundamental |
+| `Convolutional Neural Networks`          | Fundamental-Intermediate | 
+| `Advanced Convolutional Neural Networks` | Intermediate-Advanced |
+| `Mobile Convolutional Neural Networks`   | Intermediate-Advanced |

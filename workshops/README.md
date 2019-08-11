@@ -10,12 +10,16 @@ Each workshop packet is designed for a 2 hour workshop or study jam. The code la
 | ------------- | ------------- |
 | *Models*      |               |
 | `Neural Networks`                        | Fundamental |
-| `Convolutional Neural Networks`          | Fundamental-Intermediate |
+| `Convolutional Neural Networks`          | Fundamental |
+| `Wide Convolutional Neural Networks`     | Intermediate |
 | `Advanced Convolutional Neural Networks` | Intermediate-Advanced |
 | `Mobile Convolutional Neural Networks`   | Intermediate-Advanced |
 | *Data*        |               |
 | `Data Engineering`                       | Fundamental |<br/>
 | `Data Augmentation`                      | Intermediate-Advanced |<br/>
 | *Training*    |               |
+| `Training`    | Fundamentals  |
+| `Transfer Learning` | Intermediate |
 | *Production*  |               |
+| `Production`  | Intermediate-Advanced` |
 

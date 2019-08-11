@@ -33,3 +33,19 @@ presented in an academic style (documented in comments and w/o production wrappi
 *One-Shot Classification Networks*</br>
 | `Siamese Twin` | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |<br/>
 
+## Architecture Representation
+
+The architecture representation of models consists of an overall macro-architecture and a micro-architecture.
+
+### Macro-Architecture
+
+The macro architecture consists of a stem (entry) group, a collection of groups (middle), and a classifier group (exit). The number of groups is defined by the macro architecture.
+
+<img src='macro'>
+
+### Micro-Architecture
+
+The micro architecture consists of a collection of blocks. A block consists of an input and an output, and within the block is a set of layers connected by the block pattern. The number of blocks and the block pattern is defined by the meta-parameters (where parameters are the weights/biases learned, and hyper-parameters are the parameters used to train the model, but not part of the model).
+
+<img src='micro'>
+

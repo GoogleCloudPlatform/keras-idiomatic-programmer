@@ -6,11 +6,13 @@ free to use, modify and redistribute with the requirement to retain attribution 
 
 Each workshop packet is designed for a  v 
 
-| Worshop                                  | Level       |<br/>
-| `Models`                                 |<br/>
+| Workshop                                 | Level       |<br/>
+|------------------------------------------|-------------|
+| *Models*                                 |<br/>
 | `Neural Networks`                        | Fundamental |<br/>
 | `Convolutional Neural Networks`          | Fundamental-Intermediate |<br/>
 | `Advanced Convolutional Neural Networks` | Intermediate-Advanced |<br/>
 | `Mobile Convolutional Neural Networks`   | Intermediate-Advanced |<br/>
-| `Data`                                   |<br/>
+| *Data*                                   |<br/>
 | `Data Engineering`                       | Fundamental |<br/>
+| `Data Augmentation`                      | Intermediate-Advanced |<br/>

@@ -16,6 +16,9 @@ presented in an academic style (documented in comments and w/o production wrappi
 | `ResNet50_v1.5`  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
 | `ResNet50_v2.0`  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
 | `ResNet_cifar10_v2.0`  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
+| `SE-ResNet50`    | [Squeeze-and-Excitation Networks, 2016](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
+| `SE-ResNet101`   | [Squeeze-and-Excitation Networks, 2016](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
+| `SE-ResNet152`   | [Squeeze-and-Excitation Networks, 2016](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
 *Wide Convolutional Neural Networks*<br/>
 | `ResNeXt50`  | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf)
 | `ResNeXt101` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf)

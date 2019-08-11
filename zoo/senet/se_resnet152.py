@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNet101
-# Paper: https://arxiv.org/pdf/1512.03385.pdf
+# SE-ResNet152 v1.0
+# Paper: https://arxiv.org/pdf/1709.01507.pdf
 
 import tensorflow as tf
 from tensorflow.keras import Model
@@ -26,7 +26,7 @@ def stem(inputs):
     # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
     x = layers.ZeroPadding2D(padding=(3, 3))(inputs)
     
-    # First convolutional layer
+    # First Convolutional layer uses a large (coarse) filter
     x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -36,10 +36,40 @@ def stem(inputs):
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
     return x
 
-def bottleneck_block(n_filters, x):
-    """ Create a Bottleneck Residual Block with Identity Link
+def squeeze_excite_block(x, ratio=16):
+    """ Create a Squeeze and Excite block
+        x     : input to the block
+        ratio : amount of filter reduction during squeeze
+    """  
+    # Remember the input
+    shortcut = x
+    
+    # Get the number of filters on the input
+    filters = x.shape[-1]
+
+    # Squeeze (dimensionality reduction)
+    # Do global average pooling across the filters, which will the output a 1D vector
+    x = layers.GlobalAveragePooling2D()(x)
+    
+    # Reshape into 1x1 feature maps (1x1xC)
+    x = layers.Reshape((1, 1, filters))(x)
+    
+    # Reduce the number of filters (1x1xC/r)
+    x = layers.Dense(filters // ratio, activation='relu', kernel_initializer='he_normal', use_bias=False)(x)
+
+    # Excitation (dimensionality restoration)
+    # Restore the number of filters (1x1xC)
+    x = layers.Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(x)
+
+    # Scale - multiply the squeeze/excitation output with the input (WxHxC)
+    x = layers.multiply([shortcut, x])
+    return x
+
+def bottleneck_block(n_filters, x, ratio=16):
+    """ Create a Bottleneck Residual Block of with Identity Link
         n_filters: number of filters
         x        : input into the block
+        ratio    : amount of filter reduction during squeeze
     """
     
     # Save input vector (feature maps) for the identity link
@@ -57,28 +87,31 @@ def bottleneck_block(n_filters, x):
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Dimensionality restoration - increase the number of output filters by 4X
+    # Dimensionality restoration - Increase the number of output filters by 4X
     x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
+    
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
 
     # Add the identity link (input) to the output of the residual block
     x = layers.add([shortcut, x])
     x = layers.ReLU()(x)
     return x
 
-def projection_block(n_filters, x, strides=(2,2)):
-    """ Create a Bottleneck Residual Block of Convolutions with projection shortcut
+def projection_block(n_filters, x, strides=(2,2), ratio=16):
+    """ Create a Bottleneck Residual Block of with Projection Shortcut
         Increase the number of filters by 4X
         n_filters: number of filters
         x        : input into the block
-        strides  : whether the first convolution is strided
+        ratio    : amount of filter reduction during squeeze
     """
     # Construct the projection shortcut
     # Increase filters by 4X to match shape when added to output of block
     shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
     shortcut = layers.BatchNormalization()(shortcut)
 
-    ## Construct the 1x1, 3x3, 1x1 residual block
+    ## Construct the 1x1, 3x3, 1x1 convolution block
 
     # Dimensionality reduction
     # Feature pooling when strides=(2, 2)
@@ -86,7 +119,6 @@ def projection_block(n_filters, x, strides=(2,2)):
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Bottleneck layer
     x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -94,16 +126,18 @@ def projection_block(n_filters, x, strides=(2,2)):
     # Dimensionality restoration - Increase the number of filters by 4X
     x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
+    
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
 
     # Add the projection shortcut to the output of the residual block
     x = layers.add([x, shortcut])
     x = layers.ReLU()(x)
-
     return x
-    
+
 def classifier(x, n_classes):
-    """ Create the classifier group
-        x         : input to the classifier
+    """ Create the Classifier Group
+        x         : input vector
         n_classes : number of output classes
     """
     # Pool at the end of all the convolutional residual blocks
@@ -116,37 +150,41 @@ def classifier(x, n_classes):
 # The input tensor
 inputs = layers.Input(shape=(224, 224, 3))
 
-# The stem convolution group
+# The stem convolutional group
 x = stem(inputs)
 
+# First Residual Block Group of 64 filters
 x = projection_block(64, x, strides=(1,1))
 
-# First Residual Block Group of 64 filters
+# Identity links blocks
 for _ in range(2):
     x = bottleneck_block(64, x)
 
+# Second Residual Block Group of 128 filters
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(128, x)
 
-# Second Residual Block Group of 128 filters
-for _ in range(3):
+# Identity links blocks
+for _ in range(7):
     x = bottleneck_block(128, x)
 
+# Third Residual Block Group of 256 filters
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(256, x)
 
-# Third Residual Block Group of 256 filters
-for _ in range(22):
+# Identity link blocks
+for _ in range(35):
     x = bottleneck_block(256, x)
 
+# Fourth Residual Block Group of 512 filters
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(512, x)
 
-# Fourth Residual Block Group of 512 filters
+# Identity link blocks
 for _ in range(2):
     x = bottleneck_block(512, x)
 
-# The classifier for 1000 classes
+# Create the Classifier Group for the 1000 classes
 outputs = classifier(x, 1000)
 
 # Instantiate the Model

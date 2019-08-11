@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNet101
-# Paper: https://arxiv.org/pdf/1512.03385.pdf
+# SE-ResNet101 v1.0
+# Paper: https://arxiv.org/pdf/1709.01507.pdf
 
 import tensorflow as tf
 from tensorflow.keras import Model
@@ -36,10 +36,40 @@ def stem(inputs):
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
     return x
 
-def bottleneck_block(n_filters, x):
+def squeeze_excite_block(x, ratio=16):
+    """ Create a Squeeze and Excite block
+        x    : input to the block
+        ratio : amount of filter reduction during squeeze
+    """  
+    # Remember the input
+    shortcut = x
+    
+    # Get the number of filters on the input
+    filters = x.shape[-1]
+
+    # Squeeze (dimensionality reduction)
+    # Do global average pooling across the filters, which will the output a 1D vector
+    x = layers.GlobalAveragePooling2D()(x)
+    
+    # Reshape into 1x1 feature maps (1x1xC)
+    x = layers.Reshape((1, 1, filters))(x)
+    
+    # Reduce the number of filters (1x1xC/r)
+    x = layers.Dense(filters // ratio, activation='relu', kernel_initializer='he_normal', use_bias=False)(x)
+
+    # Excitation (dimensionality restoration)
+    # Restore the number of filters (1x1xC)
+    x = layers.Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(x)
+
+    # Scale - multiply the squeeze/excitation output with the input (WxHxC)
+    x = layers.multiply([shortcut, x])
+    return x
+
+def bottleneck_block(n_filters, x, ratio=16):
     """ Create a Bottleneck Residual Block with Identity Link
         n_filters: number of filters
         x        : input into the block
+        ratio    : amount of filter reduction during squeeze
     """
     
     # Save input vector (feature maps) for the identity link
@@ -57,21 +87,25 @@ def bottleneck_block(n_filters, x):
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Dimensionality restoration - increase the number of output filters by 4X
+    # Dimensionality restoration - ncrease the number of output filters by 4X
     x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
+    
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
 
     # Add the identity link (input) to the output of the residual block
     x = layers.add([shortcut, x])
     x = layers.ReLU()(x)
     return x
 
-def projection_block(n_filters, x, strides=(2,2)):
+def projection_block(n_filters, x, strides=(2,2), ratio=16):
     """ Create a Bottleneck Residual Block of Convolutions with projection shortcut
         Increase the number of filters by 4X
         n_filters: number of filters
         x        : input into the block
         strides  : whether the first convolution is strided
+        ratio    : amount of filter reduction during squeeze
     """
     # Construct the projection shortcut
     # Increase filters by 4X to match shape when added to output of block
@@ -94,6 +128,9 @@ def projection_block(n_filters, x, strides=(2,2)):
     # Dimensionality restoration - Increase the number of filters by 4X
     x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
+    
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
 
     # Add the projection shortcut to the output of the residual block
     x = layers.add([x, shortcut])

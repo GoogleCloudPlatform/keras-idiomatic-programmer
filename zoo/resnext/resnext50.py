@@ -37,13 +37,13 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
         cardinality: width of cardinality layer
     """
 
-    # Bottleneck layer
+    # Dimensionality reduction
     x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal')(shortcut)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Cardinality (Wide) Layer
+    # Cardinality (Wide) Layer (split-transform)
     filters_card = filters_in // cardinality
     groups = []
     for i in range(cardinality):
@@ -52,12 +52,12 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
         groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3),
                                     strides=(1, 1), padding='same', kernel_initializer='he_normal')(group))
 
-    # Concatenate the outputs of the cardinality layer together
+    # Concatenate the outputs of the cardinality layer together (merge)
     x = layers.concatenate(groups)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
-    # Bottleneck layer
+    # Dimensionality restoration
     x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)

@@ -1,7 +1,7 @@
 
-# ResNet v1.0
+# ResNeXt
 
-[Paper](https://arxiv.org/pdf/1512.03385.pdf)
+[Paper](https://arxiv.org/pdf/1611.05431.pdf)
 
 ## Macro-Architecture
 
@@ -11,10 +11,10 @@
 
 <img src='micro.jpg'>
 
-### ResNet Block with Identity Shortcut
+### ResNeXt Block with Identity Shortcut
 
 <img src='identity-block.jpg'>
 
-### ResNet Block with Projection Shortcut
+### ResNeXt Block with Projection Shortcut
 
 <img src='projection-block.jpg'>

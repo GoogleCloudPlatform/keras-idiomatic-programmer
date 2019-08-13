@@ -143,10 +143,11 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=1, rati
     x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
+    
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
 
-
-
-    # Identity Link: Add the shortcut (input) to the output of the block
+    # Add the projection shortcut (input) to the output of the block
     x = layers.add([shortcut, x])
     x = layers.ReLU()(x)
     return x

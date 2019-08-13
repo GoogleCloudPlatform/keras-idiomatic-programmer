@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# SE-ResNeXt50
+# SE-ResNeXt101
 # Paper: https://arxiv.org/pdf/1709.01507.pdf
 
 import tensorflow as tf
@@ -57,7 +57,7 @@ def squeeze_excite_block(x, ratio=16):
     # Scale - multiply the squeeze/excitation output with the input (WxHxC)
     x = layers.multiply([shortcut, x])
     return x
-
+    
 def bottleneck_block(x, filters_in, filters_out, cardinality=32, ratio=16):
     """ Construct a ResNeXT block with identity link
         x          : input to block
@@ -161,9 +161,6 @@ def classifier(x, n_classes):
     outputs = layers.Dense(n_classes, activation='softmax')(x)
     return outputs
 
-# Amount of filter reduction in squeeze operation
-ratio = 16
-
 # The input tensor
 inputs = layers.Input(shape=(224, 224, 3))
 
@@ -176,7 +173,7 @@ x = projection_block(x, 128, 256, strides=2, ratio=16)
 for _ in range(2):
     x = bottleneck_block(x, 128, 256, ratio=16)
 
-# Second ResNeXt 
+# Second ResNeXt Group
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(x, 256, 512, ratio=16)
 for _ in range(3):
@@ -185,7 +182,7 @@ for _ in range(3):
 # Third ResNeXt Group
 # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(x, 512, 1024, ratio=16)
-for _ in range(5):
+for _ in range(22):
     x = bottleneck_block(x, 512, 1024, ratio=16)
 
 # Fourth ResNeXt Group

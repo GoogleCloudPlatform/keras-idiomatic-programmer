@@ -134,21 +134,25 @@ inputs = layers.Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # First ResNeXt Group
+# Double the size of filters to fit the first Residual Group
 x = projection_block(x, 128, 256, strides=2)
 for _ in range(2):
     x = bottleneck_block(x, 128, 256)
 
-# Second ResNeXt Group
+# Second ResNeXt 
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(x, 256, 512)
 for _ in range(3):
     x = bottleneck_block(x, 256, 512)
 
 # Third ResNeXt Group
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(x, 512, 1024)
 for _ in range(5):
     x = bottleneck_block(x, 512, 1024)
 
 # Fourth ResNeXt Group
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
 x = projection_block(x, 1024, 2048)
 for _ in range(2):
     x = bottleneck_block(x, 1024, 2048)

@@ -29,17 +29,65 @@ def stem(inputs):
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
     return x
 
-def _resnext_block(shortcut, filters_in, filters_out, cardinality=32, strides=1):
-    """ Construct a ResNeXT block
-        shortcut   : previous layer and shortcut for identity link
+def bottleneck_block(x, filters_in, filters_out, cardinality=32):
+    """ Construct a ResNeXT block with identity link
+        x          : input to block
         filters_in : number of filters  (channels) at the input convolution
         filters_out: number of filters (channels) at the output convolution
         cardinality: width of cardinality layer
     """
+    
+    # Remember the input
+    shortcut = x
 
     # Dimensionality Reduction
     x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal')(shortcut)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Cardinality (Wide) Layer (split-transform)
+    filters_card = filters_in // cardinality
+    groups = []
+    for i in range(cardinality):
+        group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
+                              filters_card + filters_card])(x)
+        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3),
+                                    strides=(1, 1), padding='same', kernel_initializer='he_normal')(group))
+
+    # Concatenate the outputs of the cardinality layer together (merge)
+    x = layers.concatenate(groups)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Dimensionality restoration
+    x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+
+    # Identity Link: Add the shortcut (input) to the output of the block
+    x = layers.add([shortcut, x])
+    x = layers.ReLU()(x)
+    return x
+
+def projection_block(x, filters_in, filters_out, cardinality=32, strides=1):
+    """ Construct a ResNeXT block with projection shortcut
+        x          : input to the block
+        filters_in : number of filters  (channels) at the input convolution
+        filters_out: number of filters (channels) at the output convolution
+        cardinality: width of cardinality layer
+        strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
+    """
+    
+    # Construct the projection shortcut
+    # Increase filters by 2X to match shape when added to output of block
+    shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
+                                 padding='same', kernel_initializer='he_normal')(x)
+    shortcut = layers.BatchNormalization()(shortcut)
+
+    # Dimensionality Reduction
+    x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
@@ -62,13 +110,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32, strides=1)
                       padding='same', kernel_initializer='he_normal')(x)
     x = layers.BatchNormalization()(x)
 
-    # If first resnext block in a group, use projection shortcut
-    if shortcut.shape[-1] != filters_out:
-        # use convolutional layer to double the input size to the block so it
-        # matches the output size (so we can add them)
-        shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
-                                 padding='same', kernel_initializer='he_normal')(shortcut)
-        shortcut = layers.BatchNormalization()(shortcut)
+
 
     # Identity Link: Add the shortcut (input) to the output of the block
     x = layers.add([shortcut, x])
@@ -92,21 +134,28 @@ inputs = layers.Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # First ResNeXt Group
-x = _resnext_block(x, 128, 256, strides=2)
+# Double the size of filters to fit the first Residual Group
+x = projection_block(x, 128, 256, strides=2)
 for _ in range(2):
-    x = _resnext_block(x, 128, 256)
+    x = bottleneck_block(x, 128, 256)
 
 # Second ResNeXt Group
-for _ in range(4):
-    x = _resnext_block(x, 256, 512)
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+x = projection_block(x, 256, 512)
+for _ in range(3):
+    x = bottleneck_block(x, 256, 512)
 
 # Third ResNeXt Group
-for _ in range(23):
-    x = _resnext_block(x, 512, 1024)
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+x = projection_block(x, 512, 1024)
+for _ in range(22):
+    x = bottleneck_block(x, 512, 1024)
 
 # Fourth ResNeXt Group
-for _ in range(3):
-    x = _resnext_block(x, 1024, 2048)
+# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+x = projection_block(x, 1024, 2048)
+for _ in range(2):
+    x = bottleneck_block(x, 1024, 2048)
 
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)

@@ -18,3 +18,7 @@
 ### ResNeXt Block with Projection Shortcut
 
 <img src='projection-block.jpg'>
+
+### Cardinality
+
+<img src='cardinality.jpg'>

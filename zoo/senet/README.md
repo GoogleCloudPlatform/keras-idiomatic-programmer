@@ -18,3 +18,7 @@
 ### Residual Block and Projection Shortcut w/SE Link
 
 <img src="projection-block.jpg">
+
+### Squeeze-Excitation Block
+
+<img src="se-block.jpg">

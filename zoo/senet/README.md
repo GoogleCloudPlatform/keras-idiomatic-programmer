@@ -5,7 +5,7 @@
 
 ## Macro-Architecture
 
-
+<img src="macro.jpg">
 
 ## Micro-Architecture
 

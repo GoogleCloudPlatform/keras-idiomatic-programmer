@@ -11,6 +11,10 @@
 
 <img src="micro.jpg">
 
-### ResNet Block and Identity Shortcut w/SE Link
+### Residual Block and Identity Shortcut w/SE Link
 
 <img src="identity-block.jpg">
+
+### Residual Block and Projection Shortcut w/SE Link
+
+<img src="projection-block.jpg">

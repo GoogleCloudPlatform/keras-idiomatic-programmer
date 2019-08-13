@@ -9,4 +9,4 @@
 
 ## Micro-Architecture
 
-
+<img src="micro.jpg">

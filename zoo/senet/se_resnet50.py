@@ -103,7 +103,7 @@ def projection_block(n_filters, x, strides=(2,2), ratio=16):
         Increase the number of filters by 4X
         n_filters: number of filters
         x        : input into the block
-        strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1
+        strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
         ratio    : amount of filter reduction during squeeze
     """
     # Construct the projection shortcut

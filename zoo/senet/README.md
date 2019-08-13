@@ -10,3 +10,7 @@
 ## Micro-Architecture
 
 <img src="micro.jpg">
+
+### ResNet Block and Identity Shortcut w/SE Link
+
+<img src="identity-block.jpg">

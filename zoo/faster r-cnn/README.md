@@ -1,20 +1,16 @@
 
-# DenseNet
+# Faster R-CNN
 
-[Paper](https://arxiv.org/pdf/1608.06993.pdf)
+[Paper](https://arxiv.org/pdf/1506.01497.pdf)
 
 ## Macro-Architecture
 
 <img src='macro.jpg'>
 
-## Micro-Architecture
+## Stem Group
 
-<img src='micro.jpg'>
+<img src="stem.jpg">
 
-## Dense Block
+## Region of Proposal Group
 
-<img src="dense-block.jpg">
-
-## Transitional Block
-
-<img src="trans-block.jpg">
+<img src="rpn.jpg">

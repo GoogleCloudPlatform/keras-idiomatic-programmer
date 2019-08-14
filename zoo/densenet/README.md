@@ -15,3 +15,6 @@
 
 <img src="dense-block.jpg">
 
+## Transitional Block
+
+<img src="trans-block.jpg">

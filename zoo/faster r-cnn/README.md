@@ -11,6 +11,6 @@
 
 <img src="stem.jpg">
 
-## Region of Proposal Group
+## Region of Proposal Network
 
 <img src="rpn.jpg">

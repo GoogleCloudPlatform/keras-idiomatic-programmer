@@ -11,3 +11,7 @@
 
 <img src='micro.jpg'>
 
+## Dense Block
+
+<img src="dense-block.jpg">
+

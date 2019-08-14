@@ -30,6 +30,8 @@ presented in an academic style (documented in comments and w/o production wrappi
 | `SE-ResNeXt152`   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
 *Densely Connected Convolutional Neural Networks*<br/>
 | `DenseNet121` | [Densely Connected Convolutional Networks, 2016](https://arxiv.org/pdf/1608.06993.pdf) |<br/>
+| `DenseNet169` | [Densely Connected Convolutional Networks, 2016](https://arxiv.org/pdf/1608.06993.pdf) |<br/>
+| `DenseNet201` | [Densely Connected Convolutional Networks, 2016](https://arxiv.org/pdf/1608.06993.pdf) |<br/>
 *Mobile Networks*<br/>
 | `MobileNet224` | [MobileNets: Efficient Convolutional Neural Networks for Mobile VisionApplications, 2017](https://arxiv.org/pdf/1704.04861.pdf) |<br/>
 | `SqueezeNet` |  [SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size, 2016](https://arxiv.org/pdf/1602.07360.pdf) |<br/>

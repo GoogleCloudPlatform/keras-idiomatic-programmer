@@ -15,5 +15,15 @@
 
 <img src="stem.jpg">
 
+## Depthwise Separable Block
+
+<img src="depthwise-block.jpg">
+
+## Strided Depthwise Separable Block
+
+<img src="strided-depthwise-block.jpg">
+
 ## Classifier Group
+
+<img src="classifier.jpg">
 

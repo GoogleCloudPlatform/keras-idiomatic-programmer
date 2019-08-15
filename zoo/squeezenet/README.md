@@ -33,6 +33,11 @@
 
 ## Fire Complex Bypass Micro-Archirecture
 
+<img src="micro-complex.jpg">
+
 ### Fire Complex Bypass Block
+
+<img src="complex-block.jpg">
+
 
 

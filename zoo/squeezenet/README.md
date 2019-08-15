@@ -15,8 +15,10 @@
 
 <img src="stem.jpg">
 
-### Fire Module
+### Fire Block
 
-### Fire Module - Bypass
+<img src="fire.jpg">
 
-### Fire Module - Complex Bypass
+### Fire Bypass Block
+
+### Fire Complex Bypass Block

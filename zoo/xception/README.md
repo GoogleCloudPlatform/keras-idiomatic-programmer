@@ -17,6 +17,10 @@
 
 ### Entry Flow Block
 
-<img src="block-entry">
+<img src="block-entry.jpg">
+
+## Micro-Architecture - Middle Flow
+
+## Micro-Architecture - Exit Flow
 
 

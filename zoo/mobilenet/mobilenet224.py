@@ -24,10 +24,7 @@ def stem(inputs, alpha):
         inputs : input tensor
         alpha  : width multiplier
     """
-    # Apply the width filter to the number of feature maps
-    filters = int(32 * alpha)
-
-    # Normal Convolutional block
+    # Convolutional block
     x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
     x = layers.Conv2D(32, (3, 3), strides=(2, 2), padding='valid')(x)
     x = layers.BatchNormalization()(x)
@@ -98,7 +95,7 @@ n_classes = 1000 # number of classes
 inputs = Input(shape=(224, 224, 3))
 
 # Create the stem group
-x = stem(inputs, alpha)
+x = stem(inputs, alpha)    
 
 # First Depthwise Separable Convolution Group
 # Strided convolution - feature map size reduction

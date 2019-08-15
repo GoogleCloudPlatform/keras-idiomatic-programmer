@@ -11,6 +11,10 @@
 
 <img src='micro.jpg'>
 
+### Stem Group
+
+<img src="stem.jpg">
+
 ### ResNeXt Block with Identity Shortcut
 
 <img src='identity-block.jpg'>

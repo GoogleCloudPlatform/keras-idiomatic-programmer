@@ -11,6 +11,10 @@
 
 <img src='micro.png'>
 
+### Stem Group
+
+<img src="stem.jpg">
+
 ### Shuffle Block
 
 <img src='block.png'>

@@ -19,7 +19,15 @@
 
 <img src="fire.jpg">
 
+## Fire Bypass Micro-Archirecture
+
+<img src="micro-bypass.jpg">
+
 ### Fire Bypass Block
+
+<img src="bypass-block.jpg">
+
+## Fire Complex Bypass Micro-Archirecture
 
 ### Fire Complex Bypass Block
 

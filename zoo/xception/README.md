@@ -5,11 +5,11 @@
 
 ## Macro-Architecture
 
-<img src='macro.png'>
+<img src='macro.jpg'>
 
 ## Micro-Architecture - Entry Flow
 
-<img src='micro-entry.png'>
+<img src='micro-entry.jpg'>
 
 ### Stem Group
 

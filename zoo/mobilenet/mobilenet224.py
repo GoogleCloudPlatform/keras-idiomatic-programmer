@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, Input, Model
 
 def stem(inputs, alpha):
-    """ Create the stem group
+    """ Construct the stem group
         inputs : input tensor
         alpha  : width multiplier
     """
@@ -37,12 +37,12 @@ def stem(inputs, alpha):
     x = depthwise_block(x, 64, alpha, (1, 1))
     return x
 
-def classifier(x, alpha, dropout, nb_classes):
-    """ Create the classifier group
-        inputs    : input tensor
+def classifier(x, alpha, dropout, n_classes):
+    """ Construct the classifier group
+        x         : input to the classifier
         alpha     : width multiplier
         dropout   : dropout percentage
-        nb_classes: number of output classes
+        n_classes : number of output classes
     """
 
     # Flatten the feature maps into 1D feature maps (?, N)
@@ -55,22 +55,22 @@ def classifier(x, alpha, dropout, nb_classes):
     x = layers.Dropout(dropout)(x)
 
     # Use convolution for classifying (emulates a fully connected layer)
-    x = layers.Conv2D(nb_classes, (1, 1), padding='same')(x)
+    x = layers.Conv2D(n_classes, (1, 1), padding='same')(x)
     x = layers.Activation('softmax')(x)
     # Reshape the resulting output to 1D vector of number of classes
-    x = layers.Reshape((nb_classes, ))(x)
+    x = layers.Reshape((n_classes, ))(x)
 
     return x
 
-def depthwise_block(x, nb_filters, alpha, strides):
-    """ Create a Depthwise Separable Convolution block
-        inputs    : input tensor
-        nb_filters: number of filters
+def depthwise_block(x, n_filters, alpha, strides):
+    """ Construct a Depthwise Separable Convolution block
+        x         : input to the block
+        n_filters : number of filters
         alpha     : width multiplier
         strides   : strides
     """
     # Apply the width filter to the number of feature maps
-    filters = int(nb_filters * alpha)
+    filters = int(n_filters * alpha)
 
     # Strided convolution to match number of filters
     if strides == (2, 2):
@@ -121,8 +121,8 @@ for _ in range(5):
 x = depthwise_block(x, 1024, alpha, strides=(2, 2))
 x = depthwise_block(x, 1024, alpha, strides=(1, 1))
 
+# Create the classifier
 outputs = classifier(x, alpha, dropout, nb_classes)
 
+# Instantiate the Model
 model = Model(inputs, outputs)
-model.summary()
-

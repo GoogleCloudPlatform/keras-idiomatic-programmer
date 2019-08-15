@@ -7,9 +7,9 @@
 
 <img src='macro.png'>
 
-## Micro-Architecture
+## Micro-Architecture - Entry Flow
 
-<img src='micro.png'>
+<img src='micro-entry.png'>
 
 ### Stem Group
 

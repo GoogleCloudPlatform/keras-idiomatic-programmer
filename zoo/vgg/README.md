@@ -11,7 +11,11 @@
 
 ### Convolutional Group (Block)
 
-<img src='micro-conv.jpg'>
+<img src='micro-conv.jpg'>'>
+
+### Stem Group
+
+<img src='stem.jpg'>
 
 ### Classifier Group
 

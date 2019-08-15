@@ -19,6 +19,10 @@
 
 <img src="fire.jpg">
 
+### Classifier Group
+
+<img src="classifier.jpg">
+
 ## Fire Bypass Micro-Archirecture
 
 <img src="micro-bypass.jpg">
@@ -31,5 +35,4 @@
 
 ### Fire Complex Bypass Block
 
-### Classifier Group
-<img src="classifier.jpg">
+

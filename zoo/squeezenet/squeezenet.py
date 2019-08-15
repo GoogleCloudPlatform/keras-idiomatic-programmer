@@ -85,4 +85,5 @@ x = Dropout(0.5)(x)
 # Add the classifier
 outputs = classifier(x, 1000)
 
+# Instantiate the Model
 model = Model(inputs, outputs)

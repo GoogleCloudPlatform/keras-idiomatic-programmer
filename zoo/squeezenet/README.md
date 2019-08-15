@@ -1,24 +1,16 @@
 
-# ShuffleNet v1.0
+# SqueezeNet
 
-[Paper](https://arxiv.org/pdf/1707.01083.pdf)
+[Paper](https://arxiv.org/pdf/1602.07360.pdf)
 
 ## Macro-Architecture
 
-<img src='macro.png'>
+<img src='macro.jpg'>
 
 ## Micro-Architecture
 
-<img src='micro.png'>
+<img src='micro.jpg'>
 
 ### Stem Group
 
 <img src="stem.jpg">
-
-### Shuffle Block
-
-<img src='block.png'>
-
-### Strided Shuffle Block
-
-<img src='strided-block.png'>

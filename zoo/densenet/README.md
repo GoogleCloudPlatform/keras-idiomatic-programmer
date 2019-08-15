@@ -11,10 +11,14 @@
 
 <img src='micro.jpg'>
 
-## Dense Block
+### Stem Group
+
+<img src="stem.jpg">
+
+### Dense Block
 
 <img src="dense-block.jpg">
 
-## Transitional Block
+### Transitional Block
 
 <img src="trans-block.jpg">

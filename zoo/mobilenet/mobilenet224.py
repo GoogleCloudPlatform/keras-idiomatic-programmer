@@ -93,7 +93,7 @@ def depthwise_block(x, n_filters, alpha, strides):
 
 alpha      = 1    # width multiplier
 dropout    = 0.5  # dropout percentage
-nb_classes = 1000 # number of classes
+n_classes = 1000 # number of classes
 
 inputs = Input(shape=(224, 224, 3))
 
@@ -122,7 +122,7 @@ x = depthwise_block(x, 1024, alpha, strides=(2, 2))
 x = depthwise_block(x, 1024, alpha, strides=(1, 1))
 
 # Create the classifier
-outputs = classifier(x, alpha, dropout, nb_classes)
+outputs = classifier(x, alpha, dropout, n_classes)
 
 # Instantiate the Model
 model = Model(inputs, outputs)

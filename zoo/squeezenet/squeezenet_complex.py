@@ -33,7 +33,7 @@ def fire(x, n_filters):
 
     # remember the input (identity)
     shortcut = x
-    # if the number of input filters does not equal the number of out filters, then use
+    # if the number of input filters does not equal the number of output filters, then use
     # a transition convolution to match the number of filters in identify link to output
     if shortcut.shape[3] != 8 * n_filters:
         shortcut = Conv2D(n_filters * 8, (1, 1), strides=1, activation='relu',

@@ -46,6 +46,12 @@ In this notebook, we show you how easy it is to do this, by creating a new input
 
 #### Problem
 
+Currently training infrastructure does not do auto-scaling (unlike batch prediction). Instead, you sent your utilization strategy as part of starting your training job.
+
+If your training on the cloud, a poor utilization may result in an under or over utilization. In under utilization, you're leaving compute power (money) on the table. In over utilization, the training job may become bottleneck or excessively interrupted by other processes.
+
+Things you might consider when under utilizing. Do I scale up (larger instances) or do I scale out (distributed training).
+
 #### Solution
 
 

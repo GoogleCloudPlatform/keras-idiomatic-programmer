@@ -45,7 +45,7 @@ def entryFlow(inputs):
 
     # Create three residual blocks
     for n_filters in [128, 256, 728]:
-        x = residual_block_entry(x, n_filters)
+        x = projection_block(x, n_filters)
 
     return x
 
@@ -55,7 +55,7 @@ def middleFlow(x):
     """
     # Create 8 residual blocks
     for _ in range(8):
-        x = residual_block_middle(x, 728)
+        x = residual_block(x, 728)
     return x
 
 def exitFlow(x, n_classes):
@@ -115,7 +115,7 @@ def exitFlow(x, n_classes):
 
     return x
 
-def residual_block_entry(x, n_filters):
+def projection_block(x, n_filters):
     """ Create a residual block using Depthwise Separable Convolutions
         x        : input into residual block
         n_filters: number of filters
@@ -147,7 +147,7 @@ def residual_block_entry(x, n_filters):
 
     return x
 
-def residual_block_middle(x, n_filters):
+def residual_block(x, n_filters):
     """ Create a residual block using Depthwise Separable Convolutions
         x        : input into residual block
         n_filters: number of filters
@@ -188,3 +188,4 @@ outputs = exitFlow(x, 1000)
 
 # Instantiate the model
 model = Model(inputs, outputs)
+model.summary()

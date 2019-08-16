@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Xception (2016)
-https://arxiv.org/pdf/1610.02357.pdf
+# https://arxiv.org/pdf/1610.02357.pdf
 
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model
@@ -53,7 +53,6 @@ def middleFlow(x):
     """ Create the middle flow section
         x : input tensor into section
     """
-
     # Create 8 residual blocks
     for _ in range(8):
         x = residual_block_middle(x, 728)
@@ -111,58 +110,62 @@ def exitFlow(x):
 
     return x
 
-def residual_block_entry(x, nb_filters):
+def residual_block_entry(x, n_filters):
     """ Create a residual block using Depthwise Separable Convolutions
-        x         : input into residual block
-        nb_filters: number of filters
+        x        : input into residual block
+        n_filters: number of filters
     """
+    # Remember the input
     shortcut = x
 
     # First Depthwise Separable Convolution
-    x = layers.SeparableConv2D(nb_filters, (3, 3), padding='same')(x)
+    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
     # Second depthwise Separable Convolution
-    x = layers.SeparableConv2D(nb_filters, (3, 3), padding='same')(x)
+    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
     # Create pooled feature maps, reduce size by 75%
     x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
 
-    # Add strided convolution to identity link to double number of filters to
-    # match output of residual block for the add operation
-    shortcut = layers.Conv2D(nb_filters, (1, 1), strides=(2, 2),
+    # Strided convolution to double number of filters in identity link to
+    # match output of residual block for the add operation (projection shortcut)
+    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2),
                              padding='same')(shortcut)
     shortcut = layers.BatchNormalization()(shortcut)
 
+    # Add the projection shortcut to the output of the block
     x = layers.add([x, shortcut])
 
     return x
 
-def residual_block_middle(x, nb_filters):
+def residual_block_middle(x, n_filters):
     """ Create a residual block using Depthwise Separable Convolutions
-        x         : input into residual block
-        nb_filters: number of filters
+        x        : input into residual block
+        n_filters: number of filters
     """
+    # Remember the input
     shortcut = x
 
     # First Depthwise Separable Convolution
-    x = layers.SeparableConv2D(nb_filters, (3, 3), padding='same')(x)
+    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
     # Second depthwise Separable Convolution
-    x = layers.SeparableConv2D(nb_filters, (3, 3), padding='same')(x)
+    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
     # Third depthwise Separable Convolution
-    x = layers.SeparableConv2D(nb_filters, (3, 3), padding='same')(x)
+    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     
+    # Add the identity link to the output of the block
     x = layers.add([x, shortcut])
     return x
 
@@ -175,4 +178,6 @@ x = middleFlow(x)
 # Create the exit section
 outputs = exitFlow(x)
 
+# Instantiate the model
 model = Model(inputs, outputs)
+model.summary()

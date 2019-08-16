@@ -23,6 +23,10 @@
 
 <img src="micro-middle.jpg">
 
+### Middle Flow Block
+
+<img src="block-middle.jpg">
+
 ## Micro-Architecture - Exit Flow
 
 <img src="micro-exit.jpg">

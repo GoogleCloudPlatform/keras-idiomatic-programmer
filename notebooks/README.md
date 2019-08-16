@@ -6,7 +6,7 @@ These notebooks address *goto production (GTP)* questions that I receive as a me
 | ------------------------------------- | ------------- |
 | `Prediction with Example Key`         | Adding Unique Identifier to Predictions in asynchronous distributed batch prediction |
 | `Pre-Stem Deconvolution`              | Using deconvolution (transpose) to learn optimal transformations for different input sizes to existing model |
-| `Building Dataprocessing into Graph` | Using TF 2.0 Subclassing and @tf.function decorator to put the data preprocessing as part of the model graph |
+| `Building Data preprocessing into Graph` | Using TF 2.0 Subclassing and @tf.function decorator to put the data preprocessing as part of the model graph |
 
 ### Prediction with Example Key
 
@@ -32,5 +32,16 @@ How does one use a small input size on a model designed for substantially larger
 
 The solution is very trival. We simply create an additional group that is added to the input layer of the existing model, which consists of deconvolution layers to learn the optimal method to upsample the images to match the input shape of the input layer of the existing model.
 
+### Building Data Preprocessing into the Graph
+
+#### Problem
+
+#### Solution
+
+### Estimating your CPU/GPU utilization for Training
+
+#### Problem
+
+#### Solution
 
 

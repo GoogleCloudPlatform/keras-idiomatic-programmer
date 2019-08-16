@@ -27,12 +27,14 @@ def entryFlow(inputs):
         """ Create the stem entry into the neural network
             inputs : input tensor to neural network
         """
-        # First convolution
+        # Strided convolution - dimensionality reduction
+        # Reduce feature maps by 75%
         x = layers.Conv2D(32, (3, 3), strides=(2, 2))(inputs)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
 
-        # Second convolution, double the number of filters
+        # Convolution - dimensionality expansion
+        # Double the number of filters
         x = layers.Conv2D(64, (3, 3), strides=(1, 1))(x)
         x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)

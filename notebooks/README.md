@@ -54,4 +54,6 @@ Things you might consider when under utilizing. Do I scale up (larger instances)
 
 #### Solution
 
+In this notebook, we use short training runs (warm-start) combined with the `psutil` module to see what our utilization will be when we do a full training run. Since we are only interested in utilization, we don't care what the accuracy is --we can just use a defacto (best guess) on hyperparameters.
 
+In my experience, I find the sweetspot for utilization on a single instance is 70%. That leaves enough compute power from background processes pre-empting the training and if training headless, to be able to ssh in and monitor the system.

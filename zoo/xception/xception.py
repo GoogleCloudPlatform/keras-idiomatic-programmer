@@ -86,10 +86,12 @@ def exitFlow(x, n_classes):
     shortcut = layers.BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
+    # Dimensionality reduction - reduce number of filters
     x = layers.SeparableConv2D(728, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
 
     # Second Depthwise Separable Convolution
+    # Dimensionality restoration
     x = layers.SeparableConv2D(1024, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -116,7 +118,7 @@ def exitFlow(x, n_classes):
     return x
 
 def projection_block(x, n_filters):
-    """ Create a residual block using Depthwise Separable Convolutions
+    """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
         x        : input into residual block
         n_filters: number of filters
     """
@@ -125,8 +127,7 @@ def projection_block(x, n_filters):
     
     # Strided convolution to double number of filters in identity link to
     # match output of residual block for the add operation (projection shortcut)
-    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2),
-                             padding='same')(shortcut)
+    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2), padding='same')(shortcut)
     shortcut = layers.BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
@@ -188,4 +189,3 @@ outputs = exitFlow(x, 1000)
 
 # Instantiate the model
 model = Model(inputs, outputs)
-model.summary()

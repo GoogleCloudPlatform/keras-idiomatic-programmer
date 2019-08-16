@@ -17,7 +17,7 @@
 
 ### Entry Flow Block
 
-<img src="block-residual.jpg">
+<img src="block-projection.jpg">
 
 ## Micro-Architecture - Middle Flow
 

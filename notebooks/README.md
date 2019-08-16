@@ -36,7 +36,11 @@ The solution is very trival. We simply create an additional group that is added 
 
 #### Problem
 
+TF 2.0 has a ton of new rich features and power. Before TF 2.0, preprocessing of your data was done upstream on the CPU, which could starve the GPU's from running at full throttle. Think of this upstream preprocessing as the fuel, and if constrained, the GPU is choking waiting for fuel.
+
 #### Solution
+
+In this notebook, we show you how easy it is to do this, by creating a new input layer using subclassing of tf.keras.layers, and the @tf.function decorator to convert the Python code for preprocessing into TF graph operations. Another benefit to this, is that if you later want to change the preprocessing w/o re-training the model, you can simple replace the new preprocessing layer in your existing model, since it has no trainable weights.
 
 ### Estimating your CPU/GPU utilization for Training
 

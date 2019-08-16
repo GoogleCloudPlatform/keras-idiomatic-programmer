@@ -11,7 +11,7 @@
 
 <img src='micro-entry.jpg'>
 
-### Stem Group
+### Entry Flow Stem Group
 
 <img src="stem.jpg">
 
@@ -31,4 +31,14 @@
 
 <img src="micro-exit.jpg">
 
+### Exit Flow Residual Block
 
+<img src="block-exit-residual.jpg">
+
+### Exit Flow Convolutional Block
+
+<img src="block-exit-conv.jpg">
+
+### Exit Flow Classifier
+
+<img src="classifier.jpg">

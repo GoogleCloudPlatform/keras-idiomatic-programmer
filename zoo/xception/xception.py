@@ -44,8 +44,8 @@ def entryFlow(inputs):
     x = stem(inputs)
 
     # Create three residual blocks
-    for nb_filters in [128, 256, 728]:
-        x = residual_block_entry(x, nb_filters)
+    for n_filters in [128, 256, 728]:
+        x = residual_block_entry(x, n_filters)
 
     return x
 
@@ -58,22 +58,32 @@ def middleFlow(x):
         x = residual_block_middle(x, 728)
     return x
 
-def exitFlow(x):
+def exitFlow(x, n_classes):
     """ Create the exit flow section
-        x : input tensor into section
+        x         : input to the exit flow section
+        n_classes : number of output classes
     """
-    def classifier(x):
+    def classifier(x, n_classes):
         """ The output classifier
-            x : input tensor
+            x         : input to the classifier
+            n_classes : number of output classes
         """
         # Global Average Pooling will flatten the 10x10 feature maps into 1D
         # feature maps
         x = layers.GlobalAveragePooling2D()(x)
+        
         # Fully connected output layer (classification)
-        x = layers.Dense(1000, activation='softmax')(x)
+        x = layers.Dense(n_classes, activation='softmax')(x)
         return x
 
+    # Remember the input
     shortcut = x
+
+    # Strided convolution to double number of filters in identity link to
+    # match output of residual block for the add operation (projection shortcut)
+    shortcut = layers.Conv2D(1024, (1, 1), strides=(2, 2),
+                             padding='same')(shortcut)
+    shortcut = layers.BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
     x = layers.SeparableConv2D(728, (3, 3), padding='same')(x)
@@ -87,12 +97,7 @@ def exitFlow(x):
     # Create pooled feature maps, reduce size by 75%
     x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
 
-    # Add strided convolution to identity link to double number of filters to
-    # match output of residual block for the add operation
-    shortcut = layers.Conv2D(1024, (1, 1), strides=(2, 2),
-                             padding='same')(shortcut)
-    shortcut = layers.BatchNormalization()(shortcut)
-
+    # Add the projection shortcut to the output of the pooling layer
     x = layers.add([x, shortcut])
 
     # Third Depthwise Separable Convolution
@@ -106,7 +111,7 @@ def exitFlow(x):
     x = layers.ReLU()(x)
 
     # Create classifier section
-    x = classifier(x)
+    x = classifier(x, n_classes)
 
     return x
 
@@ -117,6 +122,12 @@ def residual_block_entry(x, n_filters):
     """
     # Remember the input
     shortcut = x
+    
+    # Strided convolution to double number of filters in identity link to
+    # match output of residual block for the add operation (projection shortcut)
+    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2),
+                             padding='same')(shortcut)
+    shortcut = layers.BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
     x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
@@ -130,12 +141,6 @@ def residual_block_entry(x, n_filters):
 
     # Create pooled feature maps, reduce size by 75%
     x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
-
-    # Strided convolution to double number of filters in identity link to
-    # match output of residual block for the add operation (projection shortcut)
-    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2),
-                             padding='same')(shortcut)
-    shortcut = layers.BatchNormalization()(shortcut)
 
     # Add the projection shortcut to the output of the block
     x = layers.add([x, shortcut])
@@ -169,15 +174,17 @@ def residual_block_middle(x, n_filters):
     x = layers.add([x, shortcut])
     return x
 
+# Create the input vector
 inputs = Input(shape=(299, 299, 3))
 
 # Create entry section
 x = entryFlow(inputs)
+
 # Create the middle section
 x = middleFlow(x)
-# Create the exit section
-outputs = exitFlow(x)
+
+# Create the exit section for 1000 classes
+outputs = exitFlow(x, 1000)
 
 # Instantiate the model
 model = Model(inputs, outputs)
-model.summary()

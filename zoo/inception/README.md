@@ -13,7 +13,7 @@
 
 ### Stem v4.0
 
-<img src="stem-v4">
+<img src="stem-v4.jpg">
 
 ### Inception Block v2.0
 

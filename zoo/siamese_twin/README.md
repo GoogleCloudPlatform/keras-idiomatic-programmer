@@ -8,10 +8,11 @@
 
 <img src="macro.jpg">
 
-### Twin Model
-
-<img src="macro-twin.jpg">
-
-## Micro-Architecture
+### Twin Micro-Architecture
 
 <img src="micro.jpg">
+
+### Stem Group
+
+<img src="stem.jpg">
+

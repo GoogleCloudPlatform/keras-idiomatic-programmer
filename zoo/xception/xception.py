@@ -45,7 +45,7 @@ def entryFlow(inputs):
 
     # Create three residual blocks
     for n_filters in [128, 256, 728]:
-        x = residual_block_entry(x, n_filters)
+        x = projection_block(x, n_filters)
 
     return x
 
@@ -55,7 +55,7 @@ def middleFlow(x):
     """
     # Create 8 residual blocks
     for _ in range(8):
-        x = residual_block_middle(x, 728)
+        x = residual_block(x, 728)
     return x
 
 def exitFlow(x, n_classes):
@@ -86,10 +86,12 @@ def exitFlow(x, n_classes):
     shortcut = layers.BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
+    # Dimensionality reduction - reduce number of filters
     x = layers.SeparableConv2D(728, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
 
     # Second Depthwise Separable Convolution
+    # Dimensionality restoration
     x = layers.SeparableConv2D(1024, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -115,8 +117,8 @@ def exitFlow(x, n_classes):
 
     return x
 
-def residual_block_entry(x, n_filters):
-    """ Create a residual block using Depthwise Separable Convolutions
+def projection_block(x, n_filters):
+    """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
         x        : input into residual block
         n_filters: number of filters
     """
@@ -125,8 +127,7 @@ def residual_block_entry(x, n_filters):
     
     # Strided convolution to double number of filters in identity link to
     # match output of residual block for the add operation (projection shortcut)
-    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2),
-                             padding='same')(shortcut)
+    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2), padding='same')(shortcut)
     shortcut = layers.BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
@@ -147,7 +148,7 @@ def residual_block_entry(x, n_filters):
 
     return x
 
-def residual_block_middle(x, n_filters):
+def residual_block(x, n_filters):
     """ Create a residual block using Depthwise Separable Convolutions
         x        : input into residual block
         n_filters: number of filters

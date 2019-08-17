@@ -16,3 +16,15 @@
 
 <img src="stem.jpg">
 
+### Convolutional Block
+
+<img src="block-conv.jpg">
+
+### Encoder 
+
+<img src="encoder.jpg">
+
+### Classifier Group
+
+<img src="classifier.jpg">
+

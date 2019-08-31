@@ -17,11 +17,12 @@ it --thank you. It's a style of teaching that appears to work universally.
 
   - It's inclusive - eliminate all gender specific phrasing, and replace with us, we and one.
   - It's welcoming - frequent use of the word let's, where students feel let's learn together.
-  - It's lifelong learning - instructor present themselves not as a master, but master/student -- while having mastered the subject,
-                           the instructor continues to learn from the students.
+  - It's lifelong learning - instructor present themselves not as a master, but master/student -- while having mastered the subject, the instructor continues to learn from the students.
   - It's exploring - eliminate pushing to correct answers, and replace with exercises that push the learner to explore.
-  - It's bias free - eliminate rewards for excellence, make learning non-judgemental, reward intiative, intuition and ??
-  - <connecting patterns, connecting examples>
+  - It's bias free - eliminate rewards for excellence, make learning non-judgemental, reward intiative, and intuition.
+  - It's intuitive - connecting with patterns and examples.
   
- <no developer is left behind>
+## Objective
+
+The education is inclusive where no software developer feels they will be left behind.
   

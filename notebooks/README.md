@@ -7,7 +7,7 @@ These notebooks address *goto production (GTP)* questions that I receive as a me
 | `Prediction with Example Key`         | Adding Unique Identifier to Predictions in asynchronous distributed batch prediction |
 | `Pre-Stem Deconvolution`              | Using deconvolution (transpose) to learn optimal transformations for different input sizes to existing model |
 | `Building Data preprocessing into Graph` | Using TF 2.0 Subclassing and @tf.function decorator to put the data preprocessing as part of the model graph |
-| `Estimating the CPU/GPU utilization for training` | | Using pre-warmpup methods to estimate utilization across compute resources, for the purpose of planning the optimal utilization prior to full training.
+| `Estimating the CPU/GPU utilization for training` | Using pre-warmpup methods to estimate utilization across compute resources, for the purpose of planning the optimal utilization prior to full training. |
 
 ### Prediction with Example Key
 

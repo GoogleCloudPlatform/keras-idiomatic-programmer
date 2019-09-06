@@ -56,7 +56,7 @@ def residual_group(n_filters, n_blocks, x, strides=(2, 2)):
     return x
 ```
 
-### Stemp Group
+### Stem Group
 
 <img src="stem.jpg">
 
@@ -151,6 +151,43 @@ def projection_block(n_filters, x, strides=(2,2)):
     x = layers.BatchNormalization()(x)
 
     # Add the projection shortcut link to the output of the residual block
+    x = layers.add([x, shortcut])
+    x = layers.ReLU()(x)
+    return x
+```
+
+*v1.5:*
+```python
+def projection_block(n_filters, x, strides=(2,2)):
+    """ Create Bottleneck Residual Block of Convolutions with projection shortcut
+        Increase the number of filters by 4X
+        n_filters: number of filters
+        x        : input into the block
+        strides  : whether the first convolution is strided
+    """
+    # Construct the projection shortcut
+    # Increase filters by 4X to match shape when added to output of block
+    shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
+    shortcut = layers.BatchNormalization()(shortcut)
+
+    ## Construct the 1x1, 3x3, 1x1 residual block
+
+    # Dimensionality reduction
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Bottleneck layer
+    # Feature pooling when strides=(2, 2)
+    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Dimensionality restoration - increase the number of output filters by 4X
+    x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+    x = layers.BatchNormalization()(x)
+
+    # Add the projection shortcut to the output of the residual block
     x = layers.add([x, shortcut])
     x = layers.ReLU()(x)
     return x

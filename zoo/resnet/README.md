@@ -114,6 +114,42 @@ def bottleneck_block(n_filters, x):
     return x
 ```
 
+#### v2.0
+
+In v2.0, the BatchNormalization and ReLU activation function is moved from after the convolution to before.
+
+```python
+def bottleneck_block(n_filters, x):
+    """ Create a Bottleneck Residual Block with Identity Link
+        n_filters: number of filters
+        x        : input into the block
+    """
+
+    # Save input vector (feature maps) for the identity link
+    shortcut = x
+
+    ## Construct the 1x1, 3x3, 1x1 convolution block
+
+    # Dimensionality reduction
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Bottleneck layer
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Dimensionality restoration - increase the number of output filters by 4X
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Add the identity link (input) to the output of the residual block
+    x = layers.add([shortcut, x])
+    return x
+```
+
 ### ResNet Block with Projection Shortcut
 
 #### v1.0
@@ -157,6 +193,8 @@ def projection_block(n_filters, x, strides=(2,2)):
 #### v1.5
 <img src='projection-block-v1.5.jpg'>
 
+In v1.5, the strided convolution is moved from the 1x1 convolution to the 3x3 bottleneck convolution.
+
 ```python
 def projection_block(n_filters, x, strides=(2,2)):
     """ Create Bottleneck Residual Block of Convolutions with projection shortcut
@@ -190,5 +228,45 @@ def projection_block(n_filters, x, strides=(2,2)):
     # Add the projection shortcut to the output of the residual block
     x = layers.add([x, shortcut])
     x = layers.ReLU()(x)
+    return x
+```
+
+#### v2.0
+
+In v2.0, the BatchNormalization and ReLU activation function is moved from after the convolution to before.
+
+```python
+def projection_block(n_filters, x, strides=(2,2)):
+    """ Create a Bottleneck Residual Block of Convolutions with projection shortcut
+        Increase the number of filters by 4X
+        n_filters: number of filters
+        strides  : whether the first convolution is strided
+        x        : input into the block
+    """
+    # Construct the projection shortcut
+    # Increase filters by 4X to match shape when added to output of block
+    shortcut = layers.BatchNormalization()(x)
+    shortcut = layers.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(shortcut)
+
+    ## Construct the 1x1, 3x3, 1x1 convolution block
+
+    # Dimensionality reduction
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Bottleneck layer
+    # Feature pooling when strides=(2, 2)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Dimensionality restoration - increase the number of filters by 4X
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Add the projection shortcut to the output of the residual block
+    x = layers.add([x, shortcut])
     return x
 ```

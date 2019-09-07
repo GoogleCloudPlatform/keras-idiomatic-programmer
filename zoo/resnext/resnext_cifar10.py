@@ -24,7 +24,7 @@ def stem(inputs):
         inputs : the input vector
     """
     # Stem Convolutional layer
-    x = layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
+    x = layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal', use_bias=False)(inputs)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     return x
@@ -39,7 +39,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
 
     # Dimensionality reduction
     x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
-                      padding='same', kernel_initializer='he_normal')(shortcut)
+                      padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 
@@ -49,8 +49,8 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     for i in range(cardinality):
         group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
-        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3),
-                                    strides=(1, 1), padding='same', kernel_initializer='he_normal')(group))
+        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1),
+                                    padding='same', kernel_initializer='he_normal', use_bias=False)(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
     x = layers.concatenate(groups)
@@ -59,7 +59,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
 
     # Dimensionality restoration
     x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
-                      padding='same', kernel_initializer='he_normal')(x)
+                      padding='same', kernel_initializer='he_normal', use_bias=False)(x)
     x = layers.BatchNormalization()(x)
 
     # If first resnext block in a group, use projection shortcut
@@ -67,7 +67,7 @@ def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
         # use convolutional layer to double the input size to the block so it
         # matches the output size (so we can add them)
         shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
-                                 padding='same', kernel_initializer='he_normal')(shortcut)
+                                 padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
         shortcut = layers.BatchNormalization()(shortcut)
 
     # Identity Link: Add the shortcut (input) to the output of the block
@@ -87,7 +87,7 @@ def classifier(x, nclasses):
 inputs = layers.Input(shape=(32, 32, 3))
 
 # The Stem Group
-x = stem(x)
+x = stem(inputs)
 
 # First ResNeXt Group
 for _ in range(3):

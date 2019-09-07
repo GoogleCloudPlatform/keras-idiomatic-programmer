@@ -17,16 +17,16 @@ inputs = layers.Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # First Residual Block Group of 64 filters
-x = residual_group(64, 2, x, strides=(1, 1))
+x = residual_group(x, 64, 2, strides=(1, 1))
 
 # Second Residual Block Group of 128 filters
-x = residual_group(128, 3, x)
+x = residual_group(x, 128, 3)
 
 # Third Residual Block Group of 256 filters
-x = residual_group(256, 5, x)
+x = residual_group(x, 256, 5)
 
 # Fourth Residual Block Group of 512 filters
-x = residual_group(512, 2, x)
+x = residual_group(x, 512, 2)
 
 # The classifier for 1000 classes
 outputs = classifier(x, 1000)
@@ -40,19 +40,19 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-def residual_group(n_filters, n_blocks, x, strides=(2, 2)):
+def residual_group(x, n_filters, n_blocks, strides=(2, 2)):
     """ Create the Learner Group
+        x         : input into the group
         n_filters : number of filters for the group
         n_blocks  : number of residual blocks with identity link
-        x         : input into the group
         strides   : whether the projection block is a strided convolution
     """
     # Double the size of filters to fit the first Residual Group
-    x = projection_block(n_filters, x, strides=strides)
+    x = projection_block(x, n_filters, strides=strides)
 
     # Identity residual blocks
     for _ in range(n_blocks):
-        x = identity_block(n_filters, x)
+        x = identity_block(x, n_filters)
     return x
 ```
 
@@ -84,10 +84,10 @@ def stem(inputs):
 <img src='identity-block.jpg'>
 
 ```python
-def identity_block(n_filters, x):
+def identity_block(x, n_filter):
     """ Create a Bottleneck Residual Block with Identity Link
-        n_filters: number of filters
         x        : input into the block
+        n_filters: number of filters
     """
     # Save input vector (feature maps) for the identity link
     shortcut = x
@@ -119,10 +119,10 @@ def identity_block(n_filters, x):
 In v2.0, the BatchNormalization and ReLU activation function is moved from after the convolution to before.
 
 ```python
-def identity_block(n_filters, x):
+def identity_block(x, n_filters):
     """ Create a Bottleneck Residual Block with Identity Link
-        n_filters: number of filters
         x        : input into the block
+        n_filters: number of filters
     """
 
     # Save input vector (feature maps) for the identity link
@@ -156,11 +156,11 @@ def identity_block(n_filters, x):
 <img src='projection-block.jpg'>
 
 ```python
-def projection_block(n_filters, x, strides=(2,2)):
+def projection_block(x, n_filters, strides=(2,2)):
     """ Create Bottleneck Residual Block with Projection Shortcut
         Increase the number of filters by 4X
-        n_filters: number of filters
         x        : input into the block
+        n_filters: number of filters
         strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
     """
     # Construct the projection shortcut
@@ -196,11 +196,11 @@ def projection_block(n_filters, x, strides=(2,2)):
 In v1.5, the strided convolution is moved from the 1x1 convolution to the 3x3 bottleneck convolution.
 
 ```python
-def projection_block(n_filters, x, strides=(2,2)):
+def projection_block(x, n_filters, strides=(2,2)):
     """ Create Bottleneck Residual Block of Convolutions with projection shortcut
         Increase the number of filters by 4X
-        n_filters: number of filters
         x        : input into the block
+        n_filters: number of filters
         strides  : whether the first convolution is strided
     """
     # Construct the projection shortcut
@@ -236,12 +236,12 @@ def projection_block(n_filters, x, strides=(2,2)):
 In v2.0, the BatchNormalization and ReLU activation function is moved from after the convolution to before.
 
 ```python
-def projection_block(n_filters, x, strides=(2,2)):
+def projection_block(x, n_filters, strides=(2,2)):
     """ Create a Bottleneck Residual Block of Convolutions with projection shortcut
         Increase the number of filters by 4X
+        x        : input into the block
         n_filters: number of filters
         strides  : whether the first convolution is strided
-        x        : input into the block
     """
     # Construct the projection shortcut
     # Increase filters by 4X to match shape when added to output of block

@@ -36,6 +36,21 @@ def stem(inputs):
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
     return x
 
+def residual_group(n_filters, n_blocks, x, strides=(2, 2)):
+    """ Create the Learner Group
+        n_filters : number of filters for the group
+        n_blocks  : number of residual blocks with identity link
+        x         : input into the group
+        strides   : whether the projection block is a strided convolution
+    """
+    # Double the size of filters to fit the first Residual Group
+    x = projection_block(n_filters, x, strides=strides)
+
+    # Identity residual blocks
+    for _ in range(n_blocks):
+        x = bottleneck_block(n_filters, x)
+    return x
+
 def bottleneck_block(n_filters, x):
     """ Create a Bottleneck Residual Block with Identity Link
         n_filters: number of filters
@@ -119,32 +134,18 @@ inputs = layers.Input(shape=(224, 224, 3))
 # The stem convolution group
 x = stem(inputs)
 
-x = projection_block(64, x, strides=(1,1))
 
 # First Residual Block Group of 64 filters
-for _ in range(2):
-    x = bottleneck_block(64, x)
-
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = projection_block(128, x)
+x = residual_group(64, 2, x, strides=(1, 1))
 
 # Second Residual Block Group of 128 filters
-for _ in range(3):
-    x = bottleneck_block(128, x)
-
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = projection_block(256, x)
+x = residual_group(128, 3, x)
 
 # Third Residual Block Group of 256 filters
-for _ in range(22):
-    x = bottleneck_block(256, x)
-
-# Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-x = projection_block(512, x)
+x = residual_group(256, 22, x)
 
 # Fourth Residual Block Group of 512 filters
-for _ in range(2):
-    x = bottleneck_block(512, x)
+x = residual_group(512, 2, x)
 
 # The classifier for 1000 classes
 outputs = classifier(x, 1000)

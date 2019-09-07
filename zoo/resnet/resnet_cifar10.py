@@ -28,26 +28,26 @@ def stem(inputs):
     x = layers.ReLU()(x)
     return x
 
-def residual_group(n_filters, n_blocks, x, strides=(2, 2), n=2):
+def residual_group(x, n_filters, n_blocks, strides=(2, 2), n=2):
     """ Create the Learner Group
+        x         : input into the group
         n_filters : number of filters for the group
         n_blocks  : number of residual blocks with identity link
-        x         : input into the group
         strides   : whether the projection block is a strided convolution
         n         : multiplier for the number of filters out
     """
     # Double the size of filters to fit the first Residual Group
-    x = projection_block(n_filters, x, strides=strides, n=n)
+    x = projection_block(x, n_filters, strides=strides, n=n)
 
     # Identity residual blocks
     for _ in range(n_blocks):
-        x = bottleneck_block(n_filters, x, n)
+        x = identity_block(x, n_filters, n)
     return x
     
-def bottleneck_block(n_filters, x, n=2):
-    """ Create a Bottleneck Residual Block of Convolutions
-        n_filters: number of filters
+def identity_block(x, n_filters, n=2):
+    """ Create a Bottleneck Residual Block of Convolutions with Identity Shortcut
         x        : input into the block
+        n_filters: number of filters
         n        : multiplier for filters out
     """
     # Save input vector (feature maps) for the identity link
@@ -74,11 +74,11 @@ def bottleneck_block(n_filters, x, n=2):
     x = layers.ReLU()(x)
     return x
 
-def projection_block(n_filters, x, strides=(2,2), n=2):
+def projection_block(x, n_filters, strides=(2,2), n=2):
     """ Create Bottleneck Residual Block with Projection Shortcut
         Increase the number of filters by 2X (or 4X on first stage)
-        n_filters: number of filters
         x        : input into the block
+        n_filters: number of filters
         strides  : whether the first convolution is strided
         n        : multiplier for number of filters out
     """
@@ -134,7 +134,7 @@ def classifier(x, n_classes):
 #
 n = 18
 depth =  n * 9 + 2
-nblocks = ((depth - 2) // 9) - 1
+n_blocks = ((depth - 2) // 9) - 1
 
 # The input tensor
 inputs = layers.Input(shape=(32, 32, 3))
@@ -144,15 +144,15 @@ x = stem(inputs)
    
 # First Residual Block Group of 16 filters (Stage 1)
 # Quadruple (4X) the size of filters to fit the next Residual Group
-x = residual_group(16, nblocks, x, strides=(1, 1), n=4)
+x = residual_group(x, 16, n_blocks, strides=(1, 1), n=4)
 
 # Second Residual Block Group of 64 filters (Stage 2)
 # Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
-x = residual_group(64, nblocks, x, n=2)
+x = residual_group(x, 64, n_blocks, n=2)
 
 # Third Residual Block Group of 64 filters (Stage 3)
 # Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
-x = residual_group(128, nblocks, x, n=2)
+x = residual_group(x, 128, n_blocks, n=2)
 
 # The Classifier for 10 classes
 outputs = classifier(x, 10)

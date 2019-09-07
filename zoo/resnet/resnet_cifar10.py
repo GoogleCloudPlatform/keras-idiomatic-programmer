@@ -27,6 +27,22 @@ def stem(inputs):
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     return x
+
+def residual_group(n_filters, n_blocks, x, strides=(2, 2), n=2):
+    """ Create the Learner Group
+        n_filters : number of filters for the group
+        n_blocks  : number of residual blocks with identity link
+        x         : input into the group
+        strides   : whether the projection block is a strided convolution
+        n         : multiplier for the number of filters out
+    """
+    # Double the size of filters to fit the first Residual Group
+    x = projection_block(n_filters, x, strides=strides, n=n)
+
+    # Identity residual blocks
+    for _ in range(n_blocks):
+        x = bottleneck_block(n_filters, x, n)
+    return x
     
 def bottleneck_block(n_filters, x, n=2):
     """ Create a Bottleneck Residual Block of Convolutions
@@ -128,32 +144,18 @@ x = stem(inputs)
    
 # First Residual Block Group of 16 filters (Stage 1)
 # Quadruple (4X) the size of filters to fit the next Residual Group
-# Projection Shortcut residual block   
-x = projection_block(16, x, strides=(1,1), n=4)
-
-# Identity Residual blocks
-for _ in range(nblocks):
-    x = bottleneck_block(16, x, n=4)
+x = residual_group(16, nblocks, x, strides=(1, 1), n=4)
 
 # Second Residual Block Group of 64 filters (Stage 2)
 # Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
-x = projection_block(64, x, strides=(2,2), n=2)
-
-# Identity Residual blocks
-for _ in range(nblocks):
-    x = bottleneck_block(64, x, 2)
+x = residual_group(64, nblocks, x, n=2)
 
 # Third Residual Block Group of 64 filters (Stage 3)
 # Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
-x = projection_block(128, x, strides=(2,2), n=2)
-
-# Identity Residual blocks
-for _ in range(nblocks):
-    x = bottleneck_block(128, x, 2)
+x = residual_group(128, nblocks, x, n=2)
 
 # The Classifier for 10 classes
 outputs = classifier(x, 10)
 
 # Instantiate the Model
 model = Model(inputs, outputs)
-

@@ -130,6 +130,53 @@ def bottleneck_block(x, filters_in, filters_out, cardinality=32):
 
 <img src='projection-block.jpg'>
 
+```python
+def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2)):
+    """ Construct a ResNeXT block with projection shortcut
+        x          : input to the block
+        filters_in : number of filters  (channels) at the input convolution
+        filters_out: number of filters (channels) at the output convolution
+        cardinality: width of cardinality layer
+        strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
+    """
+
+    # Construct the projection shortcut
+    # Increase filters by 2X to match shape when added to output of block
+    shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
+                                 padding='same', kernel_initializer='he_normal')(x)
+    shortcut = layers.BatchNormalization()(shortcut)
+
+    # Dimensionality Reduction
+    x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal', use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Cardinality (Wide) Layer (split-transform)
+    filters_card = filters_in // cardinality
+    groups = []
+    for i in range(cardinality):
+        group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
+                              filters_card + filters_card])(x)
+        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3), strides=strides,
+                                    padding='same', kernel_initializer='he_normal', use_bias=False)(group))
+
+    # Concatenate the outputs of the cardinality layer together (merge)
+    x = layers.concatenate(groups)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Dimensionality restoration
+    x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal', use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+
+    # Identity Link: Add the shortcut (input) to the output of the block
+    x = layers.add([shortcut, x])
+    x = layers.ReLU()(x)
+    return x
+```
+
 ### Cardinality
 
 <img src='cardinality.jpg'>

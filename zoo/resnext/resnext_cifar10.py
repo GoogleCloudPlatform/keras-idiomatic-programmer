@@ -29,7 +29,7 @@ def stem(inputs):
     x = layers.ReLU()(x)
     return x
 
-def _resnext_block(shortcut, filters_in, filters_out, cardinality=32):
+def resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     """ Construct a ResNeXT block
         shortcut   : previous layer and shortcut for identity link
         filters_in : number of filters  (channels) at the input convolution
@@ -91,15 +91,15 @@ x = stem(inputs)
 
 # First ResNeXt Group
 for _ in range(3):
-    x = _resnext_block(x, 64, 128)
+    x = resnext_block(x, 64, 128)
 
 # Second ResNeXt Group
 for _ in range(3):
-    x = _resnext_block(x, 128, 256)
+    x = resnext_block(x, 128, 256)
 
 # Third ResNeXt Group
 for _ in range(3):
-    x = _resnext_block(x, 256, 512)
+    x = resnext_block(x, 256, 512)
 
 # The Classifier for the 10 outputs
 outputs = classifier(x, 10)

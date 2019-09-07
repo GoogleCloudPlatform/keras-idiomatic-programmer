@@ -43,10 +43,10 @@ def residual_group(x, filters_in, filters_out, n_blocks, cardinality=32, strides
 
     # Remaining blocks
     for _ in range(n_blocks):
-        x = bottleneck_block(x, filters_in, filters_out)
+        x = identity_block(x, filters_in, filters_out)
     return x
 
-def bottleneck_block(x, filters_in, filters_out, cardinality=32):
+def identity_block(x, filters_in, filters_out, cardinality=32):
     """ Construct a ResNeXT block with identity link
         x          : input to block
         filters_in : number of filters  (channels) at the input convolution

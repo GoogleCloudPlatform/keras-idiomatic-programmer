@@ -52,7 +52,7 @@ def residual_group(n_filters, n_blocks, x, strides=(2, 2)):
 
     # Identity residual blocks
     for _ in range(n_blocks):
-        x = bottleneck_block(n_filters, x)
+        x = identity_block(n_filters, x)
     return x
 ```
 
@@ -84,7 +84,7 @@ def stem(inputs):
 <img src='identity-block.jpg'>
 
 ```python
-def bottleneck_block(n_filters, x):
+def identity_block(n_filters, x):
     """ Create a Bottleneck Residual Block with Identity Link
         n_filters: number of filters
         x        : input into the block
@@ -119,7 +119,7 @@ def bottleneck_block(n_filters, x):
 In v2.0, the BatchNormalization and ReLU activation function is moved from after the convolution to before.
 
 ```python
-def bottleneck_block(n_filters, x):
+def identity_block(n_filters, x):
     """ Create a Bottleneck Residual Block with Identity Link
         n_filters: number of filters
         x        : input into the block

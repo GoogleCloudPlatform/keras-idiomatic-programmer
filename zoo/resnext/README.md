@@ -38,29 +38,22 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-# The input tensor
-inputs = layers.Input(shape=(224, 224, 3))
+def residual_group(x, filters_in, filters_out, n_blocks, cardinality=32, strides=(2, 2)):
+    """ Create a Residual group
+	x          : input to the group
+        filters_in : number of filters  (channels) at the input convolution
+        filters_out: number of filters (channels) at the output convolution
+        cardinality: width of cardinality layer
+	strides    : whether its a strided convolution
+    """
+    # Double the size of filters to fit the first Residual Group
+    # Reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+    x = projection_block(x, filters_in, filters_out, strides=strides)
 
-# The Stem Group
-x = stem(inputs)
-
-# First ResNeXt Group
-x = residual_group(x, 128, 256, 2, strides=(1, 1))
-
-# Second ResNeXt
-x = residual_group(x, 256, 512, 3)
-
-# Third ResNeXt Group
-x = residual_group(x, 512, 1024, 5)
-
-# Fourth ResNeXt Group
-x = residual_group(x, 1024, 2048, 2)
-
-# The Classifier for 1000 classes
-outputs = classifier(x, 1000)
-
-# Instantiate the Model
-model = Model(inputs, outputs)
+    # Remaining blocks
+    for _ in range(n_blocks):
+        x = identity_block(x, filters_in, filters_out)	
+    return x
 ```
 
 ### Stem Group

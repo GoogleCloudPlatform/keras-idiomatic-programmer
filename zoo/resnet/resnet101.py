@@ -48,10 +48,10 @@ def residual_group(n_filters, n_blocks, x, strides=(2, 2)):
 
     # Identity residual blocks
     for _ in range(n_blocks):
-        x = bottleneck_block(n_filters, x)
+        x = identity_block(n_filters, x)
     return x
 
-def bottleneck_block(n_filters, x):
+def identity_block(n_filters, x):
     """ Create a Bottleneck Residual Block with Identity Link
         n_filters: number of filters
         x        : input into the block

@@ -77,7 +77,7 @@ def stem(inputs):
 <img src='identity-block.jpg'>
 
 ```python
-def bottleneck_block(x, filters_in, filters_out, cardinality=32):
+def identity_block(x, filters_in, filters_out, cardinality=32):
     """ Construct a ResNeXT block with identity link
         x          : input to block
         filters_in : number of filters  (channels) at the input convolution

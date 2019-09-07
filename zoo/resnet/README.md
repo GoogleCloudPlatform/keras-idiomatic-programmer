@@ -83,7 +83,6 @@ def stem(inputs):
 
 <img src='identity-block.jpg'>
 
-*v1.0:*
 ```python
 def bottleneck_block(n_filters, x):
     """ Create a Bottleneck Residual Block with Identity Link
@@ -117,9 +116,9 @@ def bottleneck_block(n_filters, x):
 
 ### ResNet Block with Projection Shortcut
 
+#### v1.0
 <img src='projection-block.jpg'>
 
-*v1.0:*
 ```python
 def projection_block(n_filters, x, strides=(2,2)):
     """ Create Bottleneck Residual Block with Projection Shortcut
@@ -155,8 +154,9 @@ def projection_block(n_filters, x, strides=(2,2)):
     x = layers.ReLU()(x)
     return x
 ```
+#### v1.5
+<img src='projection-block-v1.5.jpg'>
 
-*v1.5:*
 ```python
 def projection_block(n_filters, x, strides=(2,2)):
     """ Create Bottleneck Residual Block of Convolutions with projection shortcut

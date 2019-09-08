@@ -11,7 +11,7 @@ Macro-architecture code for DenseNet 121:
 
 ```python
 # Meta-parameter: amount to reduce feature maps by (compression) during transition blocks
-reduce_by = 0.5
+reduction = 0.5
 
 # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
 n_filters = 32
@@ -29,7 +29,7 @@ inputs = Input(shape=(230, 230, 3))
 x = stem(inputs)
 
 # The learner
-x = learner(x, blocks, n_filters, reduce_by)
+x = learner(x, blocks, n_filters, reduction)
 
 # Classifier for 1000 classes
 outputs = classifier(x, 1000)

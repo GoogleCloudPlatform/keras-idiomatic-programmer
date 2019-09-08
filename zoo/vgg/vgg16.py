@@ -20,7 +20,7 @@ from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 
 def stem(inputs):
-    """ Create Stem Convolutional Group
+    """ Construct the Stem Convolutional Group
         inputs : the input vector
     """
     x = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu")(inputs)
@@ -39,7 +39,7 @@ def learner(x):
     return x
 
 def conv_block(x, n_layers, n_filters):
-    """ Create Convolutional Block
+    """ Construct a Convolutional Block
         x        : input to the block
         n_layers : number of convolutional layers
         n_filters: number of filters
@@ -53,7 +53,7 @@ def conv_block(x, n_layers, n_filters):
     return x
     
 def classifier(x, n_classes):
-    """ Create Classifier
+    """ Construct the Classifier
         x         : input to the classifier
         n_classes : number of output classes
     """

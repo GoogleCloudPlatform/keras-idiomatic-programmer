@@ -213,10 +213,7 @@ def learner(x, alpha, expansion=6):
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
 alpha      = 1   
 
-# Meta-parameter: resolution multiplier (0 .. 1) for reducing input size
-pho        = 1
-
-inputs = Input(shape=(int(224 * pho), int(224 * pho), 3))
+inputs = Input(shape=(224, 224, 3))
 
 # The Stem Group
 x = stem(inputs, alpha)    
@@ -235,9 +232,45 @@ model = Model(inputs, outputs)
 
 <img src="micro-v2.jpg">
 
+```python
+def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
+    """ Construct an Inverted Residual Group
+        x         : input to the group
+        n_filters : number of filters
+        n_blocks  : number of blocks in the group
+        alpha     : width multiplier
+        expansion : multiplier for expanding the number of filters
+        strides   : whether first inverted residual block is strided.
+    """   
+    # In first block, the inverted residual block maybe strided - feature map size reduction
+    x = inverted_block(x, n_filters, alpha, expansion=expansion, strides=strides)
+    
+    # Remaining blocks
+    for _ in range(n_blocks - 1):
+        x = inverted_block(x, n_filters, alpha, strides=(1, 1))
+    return x
+```
+
 ## Stem Group
 
 <img src="stem-v2.jpg">
 
 ```python
+def stem(inputs, alpha):
+    """ Construct the Stem Group
+        inputs : input tensor
+        alpha  : width multiplier
+    """
+    # Calculate the number of filters for the stem convolution
+    # Must be divisible by 8
+    # NOTE: This should be 32 not 16 - get broadcast error on first Add() op
+    n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
+    
+    # Convolutional block
+    x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
+    x = layers.Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU(6.)(x)
+
+    return x
 ```

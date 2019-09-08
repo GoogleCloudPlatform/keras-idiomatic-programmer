@@ -25,6 +25,18 @@ def stem(inputs):
     """
     x = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu")(inputs)
     return x
+    
+def learner(x):
+    """ Create the (Feature) Learner
+        x        : input to the learner
+    """
+    # The convolutional blocks
+    x = conv_block(x, 1, 64)
+    x = conv_block(x, 2, 128)
+    x = conv_block(x, 3, 256)
+    x = conv_block(x, 3, 512)
+    x = conv_block(x, 3, 512)
+    return x
 
 def conv_block(x, n_layers, n_filters):
     """ Create Convolutional Block
@@ -62,12 +74,8 @@ inputs = Input( (224, 224, 3) )
 # The stem group
 x = stem(inputs)
 
-# The convolutional blocks
-x = conv_block(x, 1, 64)
-x = conv_block(x, 2, 128)
-x = conv_block(x, 3, 256)
-x = conv_block(x, 3, 512)
-x = conv_block(x, 3, 512)
+# The learner
+x = learner(x)
 
 # The classifier
 outputs = classifier(x, 1000)

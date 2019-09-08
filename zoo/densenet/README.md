@@ -86,10 +86,73 @@ def stem(inputs, n_filters):
 
 <img src="dense-block.jpg">
 
+```python
+def dense_group(x, n_blocks, n_filters):
+    """ Construct a Dense Block
+        x         : input to the block
+        n_blocks  : number of residual blocks in dense block
+        n_filters : number of filters in convolution layer in residual block
+    """
+    # Construct a group of residual blocks
+    for _ in range(n_blocks):
+        x = residual_block(x, n_filters)
+    return x
+```
+
 ### Transitional Block
 
 <img src="trans-block.jpg">
 
+```python
+def trans_block(x, reduction):
+    """ Construct a Transition Block
+        x        : input layer
+        reduction: percentage of reduction of feature maps
+    """
+
+    # Reduce (compress) the number of feature maps (DenseNet-C)
+    # shape[n] returns a class object. We use int() to cast it into the dimension size
+    n_filters = int( int(x.shape[3]) * reduction)
+    
+    # BN-LI-Conv pre-activation form of convolutions
+
+    x = layers.BatchNormalization()(x)
+    # Use 1x1 linear projection convolution
+    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False)(x)
+
+    # Use mean value (average) instead of max value sampling when pooling reduce by 75%
+    x = layers.AveragePooling2D((2, 2), strides=(2, 2))(x)
+    return x
+```
+
 ### Residual Block
 
 <img src="residual-block.jpg">
+
+```python
+def residual_block(x, n_filters):
+    """ Construct a Residual Block
+        x        : input to the block
+        n_filters: number of filters in convolution layer in residual block
+    """
+    # Remember input tensor into residual block
+    shortcut = x 
+    
+    # BN-RE-Conv pre-activation form of convolutions
+
+    # Dimensionality expansion, expand filters by 4 (DenseNet-B)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False)(x)
+    
+    # Bottleneck convolution
+    # 3x3 convolution with padding=same to preserve same shape of feature maps
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False)(x)
+
+    # Concatenate the input (identity) with the output of the residual block
+    # Concatenation (vs. merging) provides Feature Reuse between layers
+    x = layers.concatenate([shortcut, x])
+    return x
+```

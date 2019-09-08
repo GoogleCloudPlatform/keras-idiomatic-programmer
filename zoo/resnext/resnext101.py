@@ -28,6 +28,23 @@ def stem(inputs):
     x = layers.ReLU()(x)
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
     return x
+    
+def learner(x):
+    """ Create the Learner
+        x          : input to the learner
+    """
+    # First ResNeXt Group
+    x = residual_group(x, 128, 256, 2, strides=(1, 1))
+
+    # Second ResNeXt Group
+    x = residual_group(x, 256, 512, 3)
+
+    # Third ResNeXt Group
+    x = residual_group(x, 512, 1024, 22)
+
+    # Fourth ResNeXt Group
+    x = residual_group(x, 1024, 2048, 2)
+    return x
 
 def residual_group(x, filters_in, filters_out, n_blocks, cardinality=32, strides=(2, 2)):
     """ Create a Residual group
@@ -150,17 +167,8 @@ inputs = layers.Input(shape=(224, 224, 3))
 # The Stem Group
 x = stem(inputs)
 
-# First ResNeXt Group
-x = residual_group(x, 128, 256, 2, strides=(1, 1))
-
-# Second ResNeXt Group
-x = residual_group(x, 256, 512, 3)
-
-# Third ResNeXt Group
-x = residual_group(x, 512, 1024, 22)
-
-# Fourth ResNeXt Group
-x = residual_group(x, 1024, 2048, 2)
+# The Learner
+x = learner(x)
 
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)

@@ -28,6 +28,24 @@ def stem(inputs):
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     return x
+    
+def learner(x):
+    """ Create the Learner
+        x          : input to the learner
+    """
+    # First ResNeXt Group
+    for _ in range(3):
+        x = resnext_block(x, 64, 128)
+
+    # Second ResNeXt Group
+    for _ in range(3):
+        x = resnext_block(x, 128, 256)
+
+    # Third ResNeXt Group
+    for _ in range(3):
+        x = resnext_block(x, 256, 512)
+    return x
+
 
 def resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     """ Construct a ResNeXT block
@@ -89,17 +107,8 @@ inputs = layers.Input(shape=(32, 32, 3))
 # The Stem Group
 x = stem(inputs)
 
-# First ResNeXt Group
-for _ in range(3):
-    x = resnext_block(x, 64, 128)
-
-# Second ResNeXt Group
-for _ in range(3):
-    x = resnext_block(x, 128, 256)
-
-# Third ResNeXt Group
-for _ in range(3):
-    x = resnext_block(x, 256, 512)
+# The learner
+x = learner(x)
 
 # The Classifier for the 10 outputs
 outputs = classifier(x, 10)

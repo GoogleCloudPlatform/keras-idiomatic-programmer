@@ -27,9 +27,27 @@ def stem(inputs):
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     return x
+    
+def learner(x, n_blocks):
+    """ Construct the learner
+        x          : input to the learner
+        n_blocks   : number of blocks in a group
+    """
+    # First Residual Block Group of 16 filters (Stage 1)
+    # Quadruple (4X) the size of filters to fit the next Residual Group
+    x = residual_group(x, 16, n_blocks, strides=(1, 1), n=4)
+
+    # Second Residual Block Group of 64 filters (Stage 2)
+    # Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
+    x = residual_group(x, 64, n_blocks, n=2)
+
+    # Third Residual Block Group of 64 filters (Stage 3)
+    # Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
+    x = residual_group(x, 128, n_blocks, n=2)
+    return x
 
 def residual_group(x, n_filters, n_blocks, strides=(2, 2), n=2):
-    """ Create the Learner Group
+    """ Create a Residual Group
         x         : input into the group
         n_filters : number of filters for the group
         n_blocks  : number of residual blocks with identity link
@@ -142,17 +160,8 @@ inputs = layers.Input(shape=(32, 32, 3))
 # The Stem Convolution Group
 x = stem(inputs)
    
-# First Residual Block Group of 16 filters (Stage 1)
-# Quadruple (4X) the size of filters to fit the next Residual Group
-x = residual_group(x, 16, n_blocks, strides=(1, 1), n=4)
-
-# Second Residual Block Group of 64 filters (Stage 2)
-# Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
-x = residual_group(x, 64, n_blocks, n=2)
-
-# Third Residual Block Group of 64 filters (Stage 3)
-# Double (2X) the size of filters and reduce feature maps by 75% (strides=2) to fit the next Residual Group
-x = residual_group(x, 128, n_blocks, n=2)
+# The learner
+x = learner(x, n_blocks)
 
 # The Classifier for 10 classes
 outputs = classifier(x, 10)

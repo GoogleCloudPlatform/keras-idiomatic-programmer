@@ -47,7 +47,7 @@ def learner(x):
     x = residual_group(x, 128, 3)
 
     # Third Residual Block Group of 256 filters
-    x = residual_group(x, 256, 5)
+    x = residual_group(x, 256, 22)
 
     # Fourth Residual Block Group of 512 filters
     x = residual_group(x, 512, 2)

@@ -44,10 +44,10 @@ def learner(x):
     x = residual_group(x, 64, 2, strides=(1, 1))
 
     # Second Residual Block Group of 128 filters
-    x = residual_group(x, 128, 3)
+    x = residual_group(x, 128, 7)
 
     # Third Residual Block Group of 256 filters
-    x = residual_group(x, 256, 5)
+    x = residual_group(x, 256, 35)
 
     # Fourth Residual Block Group of 512 filters
     x = residual_group(x, 512, 2)

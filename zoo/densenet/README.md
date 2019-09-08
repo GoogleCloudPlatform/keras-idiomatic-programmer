@@ -47,12 +47,12 @@ def learner(x, blocks, n_filters, reduction):
     # pop off the list the last dense block
     last = blocks.pop()
 
-    # Create the dense blocks and interceding transition blocks
+    # Create the dense groups and interceding transition blocks
     for n_blocks in blocks:
-        x = dense_block(x, n_blocks, n_filters)
+        x = dense_group(x, n_blocks, n_filters)
         x = trans_block(x, reduction)
 
-    # Add the last dense block w/o a following transition block
+    # Add the last dense group w/o a following transition block
     x = dense_block(x, last, n_filters)
     return x
 ```

@@ -20,7 +20,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, Input, Model
 
 def stem(inputs, alpha):
-    """ Construct the stem group
+    """ Construct the Stem Group
         inputs : input tensor
         alpha  : width multiplier
     """
@@ -32,6 +32,33 @@ def stem(inputs, alpha):
 
     # Depthwise Separable Convolution Block
     x = depthwise_block(x, 64, alpha, (1, 1))
+    return x
+    
+def learner(x, alpha):
+    """ Construct the Learner
+        x      : input to the learner
+        alpha  : width multiplier
+    """
+    # First Depthwise Separable Convolution Group
+    # Strided convolution - feature map size reduction
+    x = depthwise_block(x, 128, alpha, strides=(2, 2))
+    x = depthwise_block(x, 128, alpha, strides=(1, 1))
+
+    # Second Depthwise Separable Convolution Group
+    # Strided convolution - feature map size reduction
+    x = depthwise_block(x, 256, alpha, strides=(2, 2))
+    x = depthwise_block(x, 256, alpha, strides=(1, 1))
+
+    # Third Depthwise Separable Convolution Group
+    # Strided convolution - feature map size reduction
+    x = depthwise_block(x, 512, alpha, strides=(2, 2))
+    for _ in range(5):
+        x = depthwise_block(x, 512, alpha, strides=(1, 1))
+
+    # Fourth Depthwise Separable Convolution Group
+    # Strided convolution - feature map size reduction
+    x = depthwise_block(x, 1024, alpha, strides=(2, 2))
+    x = depthwise_block(x, 1024, alpha, strides=(1, 1))
     return x
 
 def classifier(x, alpha, dropout, n_classes):
@@ -87,39 +114,25 @@ def depthwise_block(x, n_filters, alpha, strides):
     x = layers.ReLU()(x)
     return x
 
+# Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
+alpha      = 1   
 
-alpha      = 1    # width multiplier
-dropout    = 0.5  # dropout percentage
-n_classes = 1000 # number of classes
+# Meta-parameter: resolution multiplier (0 .. 1) for reducing input size
+pho        = 1
 
-inputs = Input(shape=(224, 224, 3))
+# Meta-parameter: dropout rate
+dropout    = 0.5 
 
-# Create the stem group
+inputs = Input(shape=(int(224 * pho), int(224 * pho), 3))
+
+# The Stem Group
 x = stem(inputs, alpha)    
 
-# First Depthwise Separable Convolution Group
-# Strided convolution - feature map size reduction
-x = depthwise_block(x, 128, alpha, strides=(2, 2))
-x = depthwise_block(x, 128, alpha, strides=(1, 1))
+# The Learner
+x = learner(x, alpha)
 
-# Second Depthwise Separable Convolution Group
-# Strided convolution - feature map size reduction
-x = depthwise_block(x, 256, alpha, strides=(2, 2))
-x = depthwise_block(x, 256, alpha, strides=(1, 1))
-
-# Third Depthwise Separable Convolution Group
-# Strided convolution - feature map size reduction
-x = depthwise_block(x, 512, alpha, strides=(2, 2))
-for _ in range(5):
-    x = depthwise_block(x, 512, alpha, strides=(1, 1))
-
-# Fourth Depthwise Separable Convolution Group
-# Strided convolution - feature map size reduction
-x = depthwise_block(x, 1024, alpha, strides=(2, 2))
-x = depthwise_block(x, 1024, alpha, strides=(1, 1))
-
-# Create the classifier
-outputs = classifier(x, alpha, dropout, n_classes)
+# The classifier for 1000 classes
+outputs = classifier(x, alpha, dropout, 1000)
 
 # Instantiate the Model
 model = Model(inputs, outputs)

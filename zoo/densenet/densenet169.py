@@ -18,15 +18,16 @@
 import tensorflow as tf
 from tensorflow.keras import layers, Input, Model
 
-def stem(inputs):
+def stem(inputs, n_filters):
     """ Construct the Stem Convolution Group
-        inputs : input tensor
+        inputs    : input tensor
+        n_filters : number of filters in dense blocks (k)
     """
     # Pads input from 224x224 to 230x230
     x = layers.ZeroPadding2D(padding=((3, 3), (3, 3)))(inputs)
     
     # First large convolution for abstract features for input 224 x 224 and output 112 x 112
-    x = layers.Conv2D(64, (7, 7), strides=(2, 2), use_bias=False)(x)
+    x = layers.Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False)(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     
@@ -135,7 +136,7 @@ blocks = [6, 12, 32, 32]
 inputs = Input(shape=(224, 224, 3))
 
 # The Stem Convolution Group
-x = stem(inputs)
+x = stem(inputs, n_filters)
 
 # The Learner
 x = learner(x, blocks, n_filters, reduction)

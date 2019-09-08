@@ -52,7 +52,7 @@ def learner(x, blocks, n_filters, reduction):
         x = dense_group(x, n_blocks, n_filters)
         x = trans_block(x, reduction)
 
-    # Add the last dense block w/o a following transition block
+    # Add the last dense group w/o a following transition block
     x = dense_group(x, last, n_filters)
     return x
 

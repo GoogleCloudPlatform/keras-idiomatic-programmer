@@ -27,6 +27,7 @@ def stem(inputs, n_filters):
     x = layers.ZeroPadding2D(padding=((3, 3), (3, 3)))(inputs)
     
     # First large convolution for abstract features for input 224 x 224 and output 112 x 112
+    # Stem convolution uses 2 * k (growth rate) number of filters
     x = layers.Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False)(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
@@ -51,7 +52,7 @@ def learner(x, blocks, n_filters, reduction):
         x = dense_group(x, n_blocks, n_filters)
         x = trans_block(x, reduction)
 
-    # Add the last dense block w/o a following transition block
+    # Add the last dense group w/o a following transition block
     x = dense_group(x, last, n_filters)
     return x
 

@@ -10,7 +10,7 @@
 Macro-architecture code for DenseNet 121:
 
 ```python
-# Meta-parameter: amount to reduce feature maps by (compression) during transition blocks
+# Meta-parameter: amount to reduce feature maps by (compression factor) during transition blocks
 reduction = 0.5
 
 # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
@@ -19,16 +19,13 @@ n_filters = 32
 # number of residual blocks in each dense block
 blocks = [6, 12, 24, 16]
 
-# pop off the list the last dense block
-last   = blocks.pop()
-
 # The input vector
-inputs = Input(shape=(230, 230, 3))
+inputs = Input(shape=(224, 224, 3))
 
 # The Stem Convolution Group
-x = stem(inputs)
+x = stem(inputs, n_filters)
 
-# The learner
+# The Learner
 x = learner(x, blocks, n_filters, reduction)
 
 # Classifier for 1000 classes
@@ -43,7 +40,7 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-def learner(x, blocks, n_filters, reduce_by):
+def learner(x, blocks, n_filters, reduction):
     """ Construct the Learner
         x         : input to the learner
     """
@@ -53,7 +50,7 @@ def learner(x, blocks, n_filters, reduce_by):
     # Create the dense blocks and interceding transition blocks
     for n_blocks in blocks:
         x = dense_block(x, n_blocks, n_filters)
-        x = trans_block(x, reduce_by)
+        x = trans_block(x, reduction)
 
     # Add the last dense block w/o a following transition block
     x = dense_block(x, last, n_filters)
@@ -65,12 +62,17 @@ def learner(x, blocks, n_filters, reduce_by):
 <img src="stem.jpg">
 
 ```python
-def stem(inputs):
+def stem(inputs, n_filters):
     """ Construct the Stem Convolution Group
-        inputs : input tensor
+        inputs   : input tensor
+        n_filters: number of filters for the dense blocks (k)
     """
-    # First large convolution for abstract features for input 230 x 230 and output 112 x 112
-    x = layers.Conv2D(64, (7, 7), strides=2)(inputs)
+    # Pads input from 224x224 to 230x230
+    x = layers.ZeroPadding2D(padding=((3, 3), (3, 3)))(inputs)
+    
+    # First large convolution for abstract features for input 224 x 224 and output 112 x 112
+    # Stem convolution uses 2 * k (growth rate) number of filters
+    x = layers.Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False)(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
     

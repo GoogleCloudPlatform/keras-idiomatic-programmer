@@ -26,7 +26,7 @@ def stem(inputs, alpha):
     """
     # Convolutional block
     x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-    x = layers.Conv2D(32, (3, 3), strides=(2, 2), padding='valid')(x)
+    x = layers.Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
 

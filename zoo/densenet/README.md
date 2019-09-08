@@ -87,3 +87,7 @@ def stem(inputs):
 ### Transitional Block
 
 <img src="trans-block.jpg">
+
+### Residual Block
+
+<img src="residual-block.jpg">

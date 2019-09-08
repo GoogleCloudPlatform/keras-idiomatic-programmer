@@ -36,7 +36,7 @@ inputs = layers.Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learner
-x = learner(x)
+x = learner(x, cardinality=cardinality)
 
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)

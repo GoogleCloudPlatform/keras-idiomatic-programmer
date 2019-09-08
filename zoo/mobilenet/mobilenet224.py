@@ -40,50 +40,31 @@ def learner(x, alpha):
         alpha  : width multiplier
     """
     # First Depthwise Separable Convolution Group
-    # Strided convolution - feature map size reduction
-    x = depthwise_block(x, 128, alpha, strides=(2, 2))
-    x = depthwise_block(x, 128, alpha, strides=(1, 1))
+    x = depthwise_group(x, 128, 2, alpha)
 
     # Second Depthwise Separable Convolution Group
-    # Strided convolution - feature map size reduction
-    x = depthwise_block(x, 256, alpha, strides=(2, 2))
-    x = depthwise_block(x, 256, alpha, strides=(1, 1))
+    x = depthwise_group(x, 256, 2, alpha)
 
     # Third Depthwise Separable Convolution Group
-    # Strided convolution - feature map size reduction
-    x = depthwise_block(x, 512, alpha, strides=(2, 2))
-    for _ in range(5):
-        x = depthwise_block(x, 512, alpha, strides=(1, 1))
+    x = depthwise_group(x, 512, 6, alpha)
 
     # Fourth Depthwise Separable Convolution Group
-    # Strided convolution - feature map size reduction
-    x = depthwise_block(x, 1024, alpha, strides=(2, 2))
-    x = depthwise_block(x, 1024, alpha, strides=(1, 1))
+    x = depthwise_group(x, 1024, 2, alpha)
     return x
-
-def classifier(x, alpha, dropout, n_classes):
-    """ Construct the classifier group
-        x         : input to the classifier
+    
+def depthwise_group(x, n_filters, n_blocks, alpha):
+    """ Construct a Depthwise Separable Convolution Group
+        x         : input to the group
+        n_filters : number of filters
+        n_blocks  : number of blocks in the group
         alpha     : width multiplier
-        dropout   : dropout percentage
-        n_classes : number of output classes
-    """
-
-    # Flatten the feature maps into 1D feature maps (?, N)
-    x = layers.GlobalAveragePooling2D()(x)
-
-    # Reshape the feature maps to (?, 1, 1, 1024)
-    shape = (1, 1, int(1024 * alpha))
-    x = layers.Reshape(shape)(x)
-    # Perform dropout for preventing overfitting
-    x = layers.Dropout(dropout)(x)
-
-    # Use convolution for classifying (emulates a fully connected layer)
-    x = layers.Conv2D(n_classes, (1, 1), padding='same')(x)
-    x = layers.Activation('softmax')(x)
-    # Reshape the resulting output to 1D vector of number of classes
-    x = layers.Reshape((n_classes, ))(x)
-
+    """   
+    # In first block, the depthwise convolution is strided - feature map size reduction
+    x = depthwise_block(x, n_filters, alpha, strides=(2, 2))
+    
+    # Remaining blocks
+    for _ in range(n_blocks - 1):
+        x = depthwise_block(x, n_filters, alpha, strides=(1, 1))
     return x
 
 def depthwise_block(x, n_filters, alpha, strides):
@@ -112,6 +93,29 @@ def depthwise_block(x, n_filters, alpha, strides):
     x = layers.Conv2D(filters, (1, 1), strides=(1, 1), padding='same')(x)
     x = layers.BatchNormalization()(x)
     x = layers.ReLU()(x)
+    return x
+
+def classifier(x, alpha, dropout, n_classes):
+    """ Construct the classifier group
+        x         : input to the classifier
+        alpha     : width multiplier
+        dropout   : dropout percentage
+        n_classes : number of output classes
+    """
+    # Flatten the feature maps into 1D feature maps (?, N)
+    x = layers.GlobalAveragePooling2D()(x)
+
+    # Reshape the feature maps to (?, 1, 1, 1024)
+    shape = (1, 1, int(1024 * alpha))
+    x = layers.Reshape(shape)(x)
+    # Perform dropout for preventing overfitting
+    x = layers.Dropout(dropout)(x)
+
+    # Use convolution for classifying (emulates a fully connected layer)
+    x = layers.Conv2D(n_classes, (1, 1), padding='same')(x)
+    x = layers.Activation('softmax')(x)
+    # Reshape the resulting output to 1D vector of number of classes
+    x = layers.Reshape((n_classes, ))(x)
     return x
 
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.

@@ -8,23 +8,27 @@
 <img src='macro.jpg'>
 
 ```python
-def learner(x):
-    """ Create the Learner
+def learner(x, cardinality=32):
+    """ Construct the Learner
         x          : input to the learner
+	cardinality: width of group convolution
     """
     # First ResNeXt Group
-    x = residual_group(x, 128, 256, 2, strides=(1, 1))
+    x = residual_group(x, 128, 256, 2, cardinality=cardinality, strides=(1, 1))
 
     # Second ResNeXt 
-    x = residual_group(x, 256, 512, 3)
+    x = residual_group(x, 256, 512, 3, cardinality=cardinality)
 
     # Third ResNeXt Group
-    x = residual_group(x, 512, 1024, 5)
+    x = residual_group(x, 512, 1024, 5, cardinality=cardinality)
 
     # Fourth ResNeXt Group
-    x = residual_group(x, 1024, 2048, 2)
+    x = residual_group(x, 1024, 2048, 2, cardinality=cardinality)
     return x
-    
+
+# Meta-parameter: width of group convolution
+cardinality=32
+
 # The input tensor
 inputs = layers.Input(shape=(224, 224, 3))
 
@@ -51,16 +55,16 @@ def residual_group(x, filters_in, filters_out, n_blocks, cardinality=32, strides
 	x          : input to the group
         filters_in : number of filters  (channels) at the input convolution
         filters_out: number of filters (channels) at the output convolution
-        cardinality: width of cardinality layer
+        cardinality: width of group convolution
 	strides    : whether its a strided convolution
     """
     # Double the size of filters to fit the first Residual Group
     # Reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = projection_block(x, filters_in, filters_out, strides=strides)
+    x = projection_block(x, filters_in, filters_out, cardinality=cardinality, strides=strides)
 
     # Remaining blocks
     for _ in range(n_blocks):
-        x = identity_block(x, filters_in, filters_out)	
+        x = identity_block(x, filters_in, filters_out, cardinality=cardinality)	
     return x
 ```
 
@@ -90,7 +94,7 @@ def identity_block(x, filters_in, filters_out, cardinality=32):
         x          : input to block
         filters_in : number of filters  (channels) at the input convolution
         filters_out: number of filters (channels) at the output convolution
-        cardinality: width of cardinality layer
+        cardinality: width of group convolution
     """
 
     # Remember the input
@@ -137,7 +141,7 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2))
         x          : input to the block
         filters_in : number of filters  (channels) at the input convolution
         filters_out: number of filters (channels) at the output convolution
-        cardinality: width of cardinality layer
+        cardinality: width of group convolution
         strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
     """
 

@@ -171,13 +171,73 @@ def classifier(x, alpha, dropout, n_classes):
 
 ## Macro-Architecture
 
-<img src='macro.jpg'>
+<img src='macro-v2.jpg'>
 
 Macro-architecture code for MobileNet v2 (224x224 input):
 
 ```python
+def learner(x, alpha, expansion=6):
+    """ Construct the Learner
+        x        : input to the learner
+        alpha    : width multiplier
+        expansion: 
+    """
+    # First Inverted Residual Convolution Group
+    x = inverted_group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
+    
+    # Second Inverted Residual Convolution Group
+    x = inverted_group(x, 24, 2, alpha)
+
+    # Third Inverted Residual Convolution Group
+    x = inverted_group(x, 32, 3, alpha)
+    
+    # Fourth Inverted Residual Convolution Group
+    x = inverted_group(x, 64, 4, alpha)
+    
+    # Fifth Inverted Residual Convolution Group
+    x = inverted_group(x, 96, 3, alpha, strides=(1, 1))
+    
+    # Sixth Inverted Residual Convolution Group
+    x = inverted_group(x, 160, 3, alpha)
+    
+    # Seventh Inverted Residual Convolution Group
+    x = inverted_group(x, 320, 1, alpha, strides=(1, 1))
+    
+    # Last block is a 1x1 linear convolutional layer,
+    # expanding the number of filters to 1280.
+    x = layers.Conv2D(1280, (1, 1), use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU(6.)(x)
+    return x
+
+# Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
+alpha      = 1   
+
+# Meta-parameter: resolution multiplier (0 .. 1) for reducing input size
+pho        = 1
+
+inputs = Input(shape=(int(224 * pho), int(224 * pho), 3))
+
+# The Stem Group
+x = stem(inputs, alpha)    
+
+# The Learner
+x = learner(x, alpha)
+
+# The classifier for 1000 classes
+outputs = classifier(x, 1000)
+
+# Instantiate the Model
+model = Model(inputs, outputs)
 ```
 
 ## Micro-Architecture
 
-<img src="micro.jpg">
+<img src="micro-v2.jpg">
+
+## Stem Group
+
+<img src="stem-v2.jpg">
+
+```python
+```

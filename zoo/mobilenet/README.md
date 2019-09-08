@@ -1,5 +1,5 @@
 
-# MobileNet
+# MobileNet v1.0
 
 [Paper](https://arxiv.org/pdf/1704.04861.pdf)
 
@@ -7,7 +7,7 @@
 
 <img src='macro.jpg'>
 
-Macro-architecture code for MobileNet 224:
+Macro-architecture code for MobileNet v1 (224x224 input):
 
 ```python
 def learner(x, alpha):
@@ -164,3 +164,20 @@ def classifier(x, alpha, dropout, n_classes):
     return x
 ```
 
+
+# MobileNet v2.0
+
+[Paper](https://arxiv.org/pdf/1801.04381.pdf)
+
+## Macro-Architecture
+
+<img src='macro.jpg'>
+
+Macro-architecture code for MobileNet v2 (224x224 input):
+
+```python
+```
+
+## Micro-Architecture
+
+<img src="micro.jpg">

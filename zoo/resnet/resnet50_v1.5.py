@@ -22,7 +22,7 @@ from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
 def stem(inputs):
-    """ Create the Stem Convolutional Group 
+    """ Construct the Stem Convolutional Group 
         inputs : the input vector
     """
     # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
@@ -39,7 +39,7 @@ def stem(inputs):
     return x
     
 def learner(x):
-    """ Create the Learner
+    """ Construct the Learner
         x  : input to the learner
     """
     # First Residual Block Group of 64 filters
@@ -56,7 +56,7 @@ def learner(x):
     return x
 
 def residual_group(x, n_filters, n_blocks, strides=(2, 2)):
-    """ Create a Residual Group
+    """ Construct a Residual Group
         x         : input into the group
         n_filters : number of filters for the group
         n_blocks  : number of residual blocks with identity link
@@ -71,7 +71,7 @@ def residual_group(x, n_filters, n_blocks, strides=(2, 2)):
     return x
 
 def identity_block(x, n_filters):
-    """ Create a Bottleneck Residual Block with Identity Link
+    """ Construct a Bottleneck Residual Block with Identity Link
         x        : input into the block
         n_filters: number of filters
     """
@@ -101,7 +101,7 @@ def identity_block(x, n_filters):
     return x
 
 def projection_block(x, n_filters, strides=(2,2)):
-    """ Create Bottleneck Residual Block of Convolutions with projection shortcut
+    """ Construct Bottleneck Residual Block of Convolutions with Projection Shortcut
         Increase the number of filters by 4X
         x        : input into the block
         n_filters: number of filters
@@ -135,7 +135,7 @@ def projection_block(x, n_filters, strides=(2,2)):
     return x
 
 def classifier(x, n_classes):
-    """ Create the classifier group 
+    """ Construct the Classifier Group 
         x         : input to the classifier
         n_classes : number of output classes
     """

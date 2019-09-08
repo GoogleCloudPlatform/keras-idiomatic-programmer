@@ -20,7 +20,7 @@ from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
 def stem(inputs):
-    ''' Stem Convolutional Group 
+    ''' Construct the Stem Convolutional Group 
         inputs : the input vector
     '''
     x = layers.Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
@@ -29,7 +29,7 @@ def stem(inputs):
     return x
     
 def learner(x, n_blocks):
-    """ Construct the learner
+    """ Construct the Learner
         x          : input to the learner
         n_blocks   : number of blocks in a group
     """
@@ -47,7 +47,7 @@ def learner(x, n_blocks):
     return x
 
 def residual_group(x, n_filters, n_blocks, strides=(2, 2), n=2):
-    """ Create a Residual Group
+    """ Construct a Residual Group
         x         : input into the group
         n_filters : number of filters for the group
         n_blocks  : number of residual blocks with identity link
@@ -63,7 +63,7 @@ def residual_group(x, n_filters, n_blocks, strides=(2, 2), n=2):
     return x
     
 def identity_block(x, n_filters, n=2):
-    """ Create a Bottleneck Residual Block of Convolutions with Identity Shortcut
+    """ Construct a Bottleneck Residual Block of Convolutions with Identity Shortcut
         x        : input into the block
         n_filters: number of filters
         n        : multiplier for filters out
@@ -93,7 +93,7 @@ def identity_block(x, n_filters, n=2):
     return x
 
 def projection_block(x, n_filters, strides=(2,2), n=2):
-    """ Create Bottleneck Residual Block with Projection Shortcut
+    """ Construct Bottleneck Residual Block with Projection Shortcut
         Increase the number of filters by 2X (or 4X on first stage)
         x        : input into the block
         n_filters: number of filters
@@ -126,7 +126,7 @@ def projection_block(x, n_filters, strides=(2,2), n=2):
     return x
     
 def classifier(x, n_classes):
-    ''' Classifier
+    ''' Construct the Classifier
         x         : input into the classifier
         n_classes : number of classes
     '''

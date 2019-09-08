@@ -20,7 +20,7 @@ from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
 
 def stem(inputs):
-    """ Create the Stem Convolution Group
+    """ Construct the Stem Convolution Group
         inputs : input vector
     """
     # First Convolutional layer, where pooled feature maps will be reduced by 75%
@@ -29,7 +29,7 @@ def stem(inputs):
     return x
     
 def learner(x):
-    """ Create the Learner
+    """ Construct the Learner
         x  : input to the learner
     """
     # First Residual Block Group of 64 filters
@@ -47,7 +47,7 @@ def learner(x):
 
     
 def residual_group(x, n_filters, n_blocks, conv=True):
-    """ Create a Residual Group
+    """ Construct a Residual Group
         x        : input to the group
         n_filters: number of filters
         n_blocks : number of blocks in the group
@@ -62,7 +62,7 @@ def residual_group(x, n_filters, n_blocks, conv=True):
     return x
 
 def residual_block(x, n_filters):
-    """ Create a Residual Block of Convolutions
+    """ Construct a Residual Block of Convolutions
         x        : input into the block
         n_filters: number of filters
     """
@@ -75,7 +75,7 @@ def residual_block(x, n_filters):
     return x
 
 def conv_block(x, n_filters):
-    """ Create Block of Convolutions without Pooling
+    """ Construct Block of Convolutions without Pooling
         x        : input into the block
         n_filters: number of filters
     """
@@ -86,7 +86,7 @@ def conv_block(x, n_filters):
     return x
     
 def classifier(x, n_classes):
-    """ Create the Classifier Group
+    """ Construct the Classifier Group
         x         : input vector
         n_classes : number of output classes
     """

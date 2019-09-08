@@ -11,7 +11,7 @@ Macro-architecture for VGG16:
 
 ```python
 def learner(x):
-    """ Create the (Feature) Learner
+    """ Construct the (Feature) Learner
         x        : input to the learner
     """
     # The convolutional blocks
@@ -43,7 +43,7 @@ outputs = classifier(x, 1000)
 
 ```python
 def conv_block(x, n_layers, n_filters):
-    """ Create Convolutional Block
+    """ Construct a Convolutional Block
         x        : input to the block
         n_layers : number of convolutional layers
         n_filters: number of filters
@@ -63,7 +63,7 @@ def conv_block(x, n_layers, n_filters):
 
 ```python
 def stem(inputs):
-    """ Create Stem Convolutional Group
+    """ Construct the Stem Convolutional Group
         inputs : the input vector
     """
     x = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu")(inputs)
@@ -76,7 +76,7 @@ def stem(inputs):
 
 ```python
 def classifier(x, n_classes):
-    """ Create Classifier
+    """ Construct the Classifier
         x         : input to the classifier
         n_classes : number of output classes
     """

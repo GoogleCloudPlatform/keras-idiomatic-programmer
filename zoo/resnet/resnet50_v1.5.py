@@ -37,9 +37,26 @@ def stem(inputs):
     x = layers.ZeroPadding2D(padding=(1, 1))(x)
     x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2))(x)
     return x
+    
+def learner(x):
+    """ Create the Learner
+        x  : input to the learner
+    """
+    # First Residual Block Group of 64 filters
+    x = residual_group(x, 64, 2, strides=(1, 1))
+
+    # Second Residual Block Group of 128 filters
+    x = residual_group(x, 128, 3)
+
+    # Third Residual Block Group of 256 filters
+    x = residual_group(x, 256, 5)
+
+    # Fourth Residual Block Group of 512 filters
+    x = residual_group(x, 512, 2)
+    return x
 
 def residual_group(x, n_filters, n_blocks, strides=(2, 2)):
-    """ Create the Learner Group
+    """ Create a Residual Group
         x         : input into the group
         n_filters : number of filters for the group
         n_blocks  : number of residual blocks with identity link
@@ -135,17 +152,8 @@ inputs = layers.Input(shape=(224, 224, 3))
 # The stem convolution group
 x = stem(inputs)
 
-# First Residual Block Group of 64 filters
-x = residual_group(x, 64, 2, strides=(1, 1))
-
-# Second Residual Block Group of 128 filters
-x = residual_group(x, 128, 3)
-
-# Third Residual Block Group of 256 filters
-x = residual_group(x, 256, 5)
-
-# Fourth Residual Block Group of 512 filters
-x = residual_group(x, 512, 2)
+# The learner
+x = learner(x)
 
 # The classifier for 1000 outputs
 outputs = classifier(x, 1000)

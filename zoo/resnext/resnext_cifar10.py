@@ -20,7 +20,7 @@ import tensorflow.keras.layers as layers
 from tensorflow.keras import Model
 
 def stem(inputs):
-    """ Create the stem convolutional group
+    """ Construct the stem convolutional group
         inputs : the input vector
     """
     # Stem Convolutional layer
@@ -29,21 +29,22 @@ def stem(inputs):
     x = layers.ReLU()(x)
     return x
     
-def learner(x):
-    """ Create the Learner
+def learner(x, cardinality=32):
+    """ Construct the Learner
         x          : input to the learner
+        cardinality: width of group convolution
     """
     # First ResNeXt Group
     for _ in range(3):
-        x = resnext_block(x, 64, 128)
+        x = resnext_block(x, 64, 128, cardinality=cardinality)
 
     # Second ResNeXt Group
     for _ in range(3):
-        x = resnext_block(x, 128, 256)
+        x = resnext_block(x, 128, 256, cardinality=cardinality)
 
     # Third ResNeXt Group
     for _ in range(3):
-        x = resnext_block(x, 256, 512)
+        x = resnext_block(x, 256, 512, cardinality=cardinality)
     return x
 
 
@@ -52,9 +53,8 @@ def resnext_block(shortcut, filters_in, filters_out, cardinality=32):
         shortcut   : previous layer and shortcut for identity link
         filters_in : number of filters  (channels) at the input convolution
         filters_out: number of filters (channels) at the output convolution
-        cardinality: width of cardinality layer
+        cardinality: width of group convolution
     """
-
     # Dimensionality reduction
     x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
@@ -94,12 +94,15 @@ def resnext_block(shortcut, filters_in, filters_out, cardinality=32):
     return x
     
 def classifier(x, nclasses):
-    """ Create the classifier
+    """ Construct the classifier
     """
     # Final Dense Outputting Layer for the outputs
     x = layers.GlobalAveragePooling2D()(x)
     outputs = layers.Dense(nclasses, activation='softmax')(x)
     return outputs
+
+# Meta-parameter: width of group convolutional
+cardinality=32
 
 # The input tensor
 inputs = layers.Input(shape=(32, 32, 3))
@@ -108,7 +111,7 @@ inputs = layers.Input(shape=(32, 32, 3))
 x = stem(inputs)
 
 # The learner
-x = learner(x)
+x = learner(x, cardinality=cardinality)
 
 # The Classifier for the 10 outputs
 outputs = classifier(x, 10)

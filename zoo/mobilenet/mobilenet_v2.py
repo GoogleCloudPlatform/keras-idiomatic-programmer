@@ -42,7 +42,7 @@ def learner(x, alpha, expansion=6):
     """ Construct the Learner
         x        : input to the learner
         alpha    : width multiplier
-        expansion: 
+        expansion: multipler to expand number of filters
     """
     # First Inverted Residual Convolution Group
     x = inverted_group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
@@ -78,7 +78,7 @@ def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
         n_filters : number of filters
         n_blocks  : number of blocks in the group
         alpha     : width multiplier
-        expansion :
+        expansion : multiplier for expanding the number of filters
         strides   : whether first inverted residual block is strided.
     """   
     # In first block, the inverted residual block maybe strided - feature map size reduction
@@ -95,7 +95,7 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
         n_filters : number of filters
         alpha     : width multiplier
         strides   : strides
-        expansion :
+        expansion : multiplier for expanding number of filters
     """
     # Remember input
     shortcut = x
@@ -105,7 +105,7 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     
     n_channels = int(x.shape[3])
     
-    # No expansion (first block)
+    # Dimensionality Expansion (non-first block)
     if expansion > 1:
         # 1x1 linear convolution
         x = layers.Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False)(x)
@@ -149,10 +149,7 @@ def classifier(x, n_classes):
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
 alpha      = 1   
 
-# Meta-parameter: resolution multiplier (0 .. 1) for reducing input size
-pho        = 1
-
-inputs = Input(shape=(int(224 * pho), int(224 * pho), 3))
+inputs = Input(shape=(224, 224, 3))
 
 # The Stem Group
 x = stem(inputs, alpha)    

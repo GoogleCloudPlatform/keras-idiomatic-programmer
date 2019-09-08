@@ -13,7 +13,7 @@ Macro-architecture code for DenseNet 121:
 # Meta-parameter: amount to reduce feature maps by (compression) during transition blocks
 reduce_by = 0.5
 
-# Meta-parameter: number of filters in a convolution block within a residual block
+# Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
 n_filters = 32
 
 # number of residual blocks in each dense block
@@ -87,3 +87,7 @@ def stem(inputs):
 ### Transitional Block
 
 <img src="trans-block.jpg">
+
+### Residual Block
+
+<img src="residual-block.jpg">

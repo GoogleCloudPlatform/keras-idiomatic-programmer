@@ -73,7 +73,7 @@ def depthwise_group(x, n_filters, n_blocks, alpha):
     return x
 ```
 
-## Stem Group
+### Stem Group
 
 <img src="stem.jpg">
 
@@ -94,7 +94,7 @@ def stem(inputs, alpha):
     return x
 ```
 
-## Depthwise Separable Block
+### Depthwise Separable Block
 
 <img src="depthwise-block.jpg">
 
@@ -128,14 +128,14 @@ def depthwise_block(x, n_filters, alpha, strides):
     return x
 ```
 
-## Strided Depthwise Separable Block
+### Strided Depthwise Separable Block
 
 <img src="strided-depthwise-block.jpg">
 
 ```python
 ```
 
-## Classifier Group
+### Classifier Group
 
 <img src="classifier.jpg">
 
@@ -251,7 +251,7 @@ def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
     return x
 ```
 
-## Stem Group
+### Stem Group
 
 <img src="stem-v2.jpg">
 
@@ -274,7 +274,9 @@ def stem(inputs, alpha):
     return x
 ```
 
-## Inverted Residual Block
+### Inverted Residual Block
+
+<img src='inverted-block.jpg'>
 
 ```python
 def inverted_block(x, n_filters, alpha, strides, expansion=6):
@@ -323,9 +325,11 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     return x
  ```
 
-## Strided Inverted Residual Block
+### Strided Inverted Residual Block
 
-## Classifier
+<img src='strided-inverted-block.jpg'>
+
+### Classifier
 
 <img src="classifier-v2.jpg">
 

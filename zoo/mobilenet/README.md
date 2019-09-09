@@ -280,7 +280,7 @@ def stem(inputs, alpha):
 
 ```python
 def inverted_block(x, n_filters, alpha, strides, expansion=6):
-    """ Construct a Depthwise Separable Convolution block
+    """ Construct an Inverted Residual Block
         x         : input to the block
         n_filters : number of filters
         alpha     : width multiplier

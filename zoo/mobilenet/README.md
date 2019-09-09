@@ -263,7 +263,6 @@ def stem(inputs, alpha):
     """
     # Calculate the number of filters for the stem convolution
     # Must be divisible by 8
-    # NOTE: This should be 32 not 16 - get broadcast error on first Add() op
     n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
     
     # Convolutional block
@@ -274,3 +273,54 @@ def stem(inputs, alpha):
 
     return x
 ```
+
+## Inverted Residual Block
+
+```python
+def inverted_block(x, n_filters, alpha, strides, expansion=6):
+    """ Construct a Depthwise Separable Convolution block
+        x         : input to the block
+        n_filters : number of filters
+        alpha     : width multiplier
+        strides   : strides
+        expansion : multiplier for expanding number of filters
+    """
+    # Remember input
+    shortcut = x
+
+    # Apply the width filter to the number of feature maps for the pointwise convolution
+    filters = int(n_filters * alpha)
+    
+    n_channels = int(x.shape[3])
+    
+    # Dimensionality Expansion (non-first block)
+    if expansion > 1:
+        # 1x1 linear convolution
+        x = layers.Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False)(x)
+        
+        x = layers.BatchNormalization()(x)
+        x = layers.ReLU(6.)(x)
+
+    # Strided convolution to match number of filters
+    if strides == (2, 2):
+        x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(x)
+        padding = 'valid'
+    else:
+        padding = 'same'
+
+    # Depthwise Convolution
+    x = layers.DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    x = layers.ReLU()(x)
+
+    # Linear Pointwise Convolution
+    x = layers.Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
+    x = layers.BatchNormalization()(x)
+    
+    # Number of input filters matches the number of output filters
+    if n_channels == filters and strides == (1, 1):
+        x = layers.Add()([shortcut, x]) 
+    return x
+ ```
+
+## Strided Inverted Residual Block

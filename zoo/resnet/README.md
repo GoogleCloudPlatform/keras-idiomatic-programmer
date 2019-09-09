@@ -275,3 +275,21 @@ def projection_block(x, n_filters, strides=(2,2)):
     x = layers.add([x, shortcut])
     return x
 ```
+
+### Classifier
+
+<img src="classifier.jpg">
+
+```python
+def classifier(x, n_classes):
+  """ Construct the Classifier Group 
+      x         : input to the classifier
+      n_classes : number of output classes
+  """
+  # Pool at the end of all the convolutional residual blocks
+  x = layers.GlobalAveragePooling2D()(x)
+
+  # Final Dense Outputting Layer for the outputs
+  outputs = layers.Dense(n_classes, activation='softmax')(x)
+  return outputs
+```

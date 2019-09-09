@@ -27,7 +27,6 @@ def stem(inputs, alpha):
     """
     # Calculate the number of filters for the stem convolution
     # Must be divisible by 8
-    # NOTE: This should be 32 not 16 - get broadcast error on first Add() op
     n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
     
     # Convolutional block

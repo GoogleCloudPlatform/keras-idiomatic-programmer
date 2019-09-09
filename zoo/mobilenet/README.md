@@ -324,3 +324,22 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
  ```
 
 ## Strided Inverted Residual Block
+
+## Classifier
+
+<img src="classifier-v2.jpg">
+
+```python
+
+def classifier(x, n_classes):
+    """ Construct the classifier group
+        x         : input to the classifier
+        n_classes : number of output classes
+    """
+    # Flatten the feature maps into 1D feature maps (?, N)
+    x = layers.GlobalAveragePooling2D()(x)
+
+    # Dense layer for final classification
+    x = layers.Dense(n_classes, activation='softmax')(x)
+    return x
+```

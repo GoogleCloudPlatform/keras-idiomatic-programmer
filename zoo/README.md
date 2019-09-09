@@ -48,13 +48,13 @@ The architecture representation of models consists of an overall macro-architect
 
 ### Macro-Architecture
 
-The macro architecture consists of a stem (entry) group, a collection of groups (middle), and a classifier group (exit). The number of groups is defined by the macro architecture.
+The macro architecture consists of a stem (entry) group, a collection of groups (middle), and a classifier group (exit). The number of groups is defined by the macro architecture. The macro architecture may optionally contain a pre-stem, which perform additional operations, such as data preprocessing, model aggregation, and prediction post-processing.
 
 <img src='macro.jpg'>
 
 ### Micro-Architecture
 
-The micro architecture consists of a collection of blocks. A block consists of an input and an output, and within the block is a set of layers connected by the block pattern. The number of blocks and the block pattern is defined by the meta-parameters (where parameters are the weights/biases learned, and hyper-parameters are the parameters used to train the model, but not part of the model).
+The micro architecture consists of a collection of blocks, which collectively form a group. A block consists of an input and an output, and within the block is a set of layers connected by the block pattern. The number of blocks and the block pattern is defined by the meta-parameters (where parameters are the weights/biases learned, and hyper-parameters are the parameters used to train the model, but not part of the model).
 
 <img src='micro.jpg'>
 

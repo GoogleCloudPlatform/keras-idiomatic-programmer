@@ -185,3 +185,21 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2))
 ### Cardinality
 
 <img src='cardinality.jpg'>
+
+### Classifier
+
+<img src="classifier.jpg">
+
+```python
+def classifier(x, n_classes):
+  """ Construct the Classifier Group 
+      x         : input to the classifier
+      n_classes : number of output classes
+  """
+  # Pool at the end of all the convolutional residual blocks
+  x = layers.GlobalAveragePooling2D()(x)
+
+  # Final Dense Outputting Layer for the outputs
+  outputs = layers.Dense(n_classes, activation='softmax')(x)
+  return outputs
+```

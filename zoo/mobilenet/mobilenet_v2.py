@@ -89,7 +89,7 @@ def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
     return x
 
 def inverted_block(x, n_filters, alpha, strides, expansion=6):
-    """ Construct a Depthwise Separable Convolution block
+    """ Construct an Inverted Residual Block
         x         : input to the block
         n_filters : number of filters
         alpha     : width multiplier

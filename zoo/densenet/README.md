@@ -156,3 +156,20 @@ def residual_block(x, n_filters):
     x = layers.concatenate([shortcut, x])
     return x
 ```
+
+### Classifier
+
+<img src="classifier.jpg">
+
+```python
+def classifier(x, n_classes):
+    """ Construct the Classifier Group
+        x         : input to the classifier
+        n_classes : number of output classes
+    """
+    # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
+    x = layers.GlobalAveragePooling2D()(x)
+    # Fully connected output layer (classification)
+    x = layers.Dense(n_classes, activation='softmax')(x)
+    return x
+```

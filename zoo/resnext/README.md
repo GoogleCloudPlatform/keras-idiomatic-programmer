@@ -30,7 +30,7 @@ def learner(x, cardinality=32):
 cardinality=32
 
 # The input tensor
-inputs = layers.Input(shape=(224, 224, 3))
+inputs = Input(shape=(224, 224, 3))
 
 # The Stem Group
 x = stem(inputs)
@@ -77,10 +77,10 @@ def stem(inputs):
     """ Construct the Stem Convolution Group
         inputs : input vector
     """
-    x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same', kernel_initializer='he_normal', use_bias=False)(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-    x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', kernel_initializer='he_normal', use_bias=False)(inputs)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
     return x
 ```
 
@@ -101,33 +101,33 @@ def identity_block(x, filters_in, filters_out, cardinality=32):
     shortcut = x
 
     # Dimensionality Reduction
-    x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Cardinality (Wide) Layer (split-transform)
     filters_card = filters_in // cardinality
     groups = []
     for i in range(cardinality):
-        group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
-        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1),
+        groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1),
                                     padding='same', kernel_initializer='he_normal', use_bias=False)(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
-    x = layers.concatenate(groups)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Concatenate()(groups)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Dimensionality restoration
-    x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
     x = layers.BatchNormalization()(x)
 
     # Identity Link: Add the shortcut (input) to the output of the block
-    x = layers.add([shortcut, x])
-    x = layers.ReLU()(x)
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
     return x
 ```
 
@@ -147,38 +147,38 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2))
 
     # Construct the projection shortcut
     # Increase filters by 2X to match shape when added to output of block
-    shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
+    shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
                                  padding='same', kernel_initializer='he_normal')(x)
-    shortcut = layers.BatchNormalization()(shortcut)
+    shortcut = BatchNormalization()(shortcut)
 
     # Dimensionality Reduction
-    x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Cardinality (Wide) Layer (split-transform)
     filters_card = filters_in // cardinality
     groups = []
     for i in range(cardinality):
-        group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
-        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3), strides=strides,
+        groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=strides,
                                     padding='same', kernel_initializer='he_normal', use_bias=False)(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
-    x = layers.concatenate(groups)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Concatenate()(groups)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Dimensionality restoration
-    x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
+    x = BatchNormalization()(x)
 
     # Identity Link: Add the shortcut (input) to the output of the block
-    x = layers.add([shortcut, x])
-    x = layers.ReLU()(x)
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
     return x
 ```
 
@@ -197,9 +197,9 @@ def classifier(x, n_classes):
       n_classes : number of output classes
   """
   # Pool at the end of all the convolutional residual blocks
-  x = layers.GlobalAveragePooling2D()(x)
+  x = GlobalAveragePooling2D()(x)
 
   # Final Dense Outputting Layer for the outputs
-  outputs = layers.Dense(n_classes, activation='softmax')(x)
+  outputs = Dense(n_classes, activation='softmax')(x)
   return outputs
 ```

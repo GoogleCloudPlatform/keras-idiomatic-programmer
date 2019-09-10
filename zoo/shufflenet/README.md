@@ -93,13 +93,143 @@ def stem(inputs):
 
 <img src='block.png'>
 
+```python
+
+    
+def shuffle_block(x, n_groups, n_filters, reduction):
+    ''' Construct a shuffle Shuffle block  
+        x         : input to the block
+        n_groups  : number of groups to partition feature maps (channels) into.
+        n_filters : number of filters
+        reduction : dimensionality reduction factor (e.g, 0.25)
+    '''
+    # identity shortcut
+    shortcut = x
+    
+    # pointwise group convolution, with dimensionality reduction
+    x = pw_group_conv(x, n_groups, int(reduction * n_filters))
+    x = ReLU()(x)
+    
+    # channel shuffle layer
+    x = channel_shuffle(x, n_groups)
+    
+    # Depthwise 3x3 Convolution
+    x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False)(x)
+    x = BatchNormalization()(x)
+    
+    # pointwise group convolution, with dimensionality restoration
+    x = pw_group_conv(x, n_groups, n_filters)
+    
+    # Add the identity shortcut (input added to output)
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
+    return x
+
+def pw_group_conv(x, n_groups, n_filters):
+    ''' A Pointwise Group Convolution  
+        x        : input tensor
+        n_groups : number of groups to partition feature maps (channels) into.
+        n_filers : number of filters
+    '''
+    # Calculate the number of input filters (channels)
+    in_filters = x.shape[3]
+
+    # Derive the number of input filters (channels) per group
+    grp_in_filters  = in_filters // n_groups
+    # Derive the number of output filters per group (Note the rounding up)
+    grp_out_filters = int(n_filters / n_groups + 0.5)
+      
+    # Perform convolution across each channel group
+    groups = []
+    for i in range(n_groups):
+        # Slice the input across channel group
+        group = Lambda(lambda x: x[:, :, :, grp_in_filters * i: grp_in_filters * (i + 1)])(x)
+
+        # Perform convolution on channel group
+        conv = Conv2D(grp_out_filters, (1,1), padding='same', strides=1, use_bias=False)(group)
+        # Maintain the point-wise group convolutions in a list
+        groups.append(conv)
+
+    # Concatenate the outputs of the group pointwise convolutions together
+    x = Concatenate()(groups)
+    # Do batch normalization of the concatenated filters (feature maps)
+    x = BatchNormalization()(x)
+    return x
+    
+def channel_shuffle(x, n_groups):
+    ''' Implements the channel shuffle layer 
+        x        : input tensor
+        n_groups : number of groups to partition feature maps (channels) into.
+    '''
+    # Get dimensions of the input tensor
+    batch, height, width, n_filters = x.shape
+
+    # Derive the number of input filters (channels) per group
+    grp_in_filters  = n_filters // n_groups
+
+    # Separate out the channel groups
+    x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_groups, grp_in_filters]))(x)
+    # Transpose the order of the channel groups (i.e., 3, 4 => 4, 3)
+    x = Lambda(lambda z: K.permute_dimensions(z, (0, 1, 2, 4, 3)))(x)
+    # Restore shape
+    x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_filters]))(x)
+    return x
+```
+
 ### Strided Shuffle Block
 
 <img src='strided-block.png'>
+
+```python
+def strided_shuffle_block(x, n_groups, n_filters, reduction):
+    ''' Construct a Strided Shuffle Block 
+        x           : input to the block
+        n_groups    : number of groups to partition feature maps (channels) into.
+        n_filters   : number of filters
+        reduction   : dimensionality reduction factor (e.g, 0.25)
+    '''
+    # projection shortcut
+    shortcut = x
+    shortcut = AveragePooling2D((3, 3), strides=2, padding='same')(shortcut)   
+    
+    # On entry block, we need to adjust the number of output filters
+    # of the entry pointwise group convolution to match the exit
+    # pointwise group convolution, by subtracting the number of input filters
+    n_filters -= int(x.shape[3])
+    
+    # pointwise group convolution, with dimensionality reduction
+    x = pw_group_conv(x, n_groups, int(reduction * n_filters))
+    x = ReLU()(x)
+    
+    # channel shuffle layer
+    x = channel_shuffle(x, n_groups)
+
+    # Depthwise 3x3 Strided Convolution
+    x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False)(x)
+    x = BatchNormalization()(x)
+
+    # pointwise group convolution, with dimensionality restoration
+    x = pw_group_conv(x, n_groups, n_filters)
+    
+    # Concatenate the projection shortcut to the output
+    x = Concatenate()([shortcut, x])
+    x = ReLU()(x)
+    return x
+```
 
 ### Classifier
 
 <img src='classifier.jpg'>
 
 ```python
+def classifier(x, n_classes):
+    ''' Construct the Classifier Group 
+        x         : input to the classifier
+        n_classes : number of output classes
+    '''
+    # Use global average pooling to flatten feature maps to 1D vector, where
+    # each feature map is a single averaged value (pixel) in flatten vector
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(n_classes, activation='softmax')(x)
+    return x
 ```

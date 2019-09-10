@@ -74,13 +74,13 @@ def stem(inputs):
     x = ZeroPadding2D(padding=(3, 3))(inputs)
 
     # First Convolutional layer which uses a large (coarse) filter
-    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
     # Pooled feature maps will be reduced by 75%
     x = ZeroPadding2D(padding=(1, 1))(x)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2))(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
     return x
 ```
 

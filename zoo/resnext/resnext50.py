@@ -77,7 +77,7 @@ def identity_block(x, filters_in, filters_out, cardinality=32):
     shortcut = x
 
     # Dimensionality Reduction
-    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_in, (1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
     x = BatchNormalization()(x)
     x = ReLU()(x)
@@ -88,7 +88,7 @@ def identity_block(x, filters_in, filters_out, cardinality=32):
     for i in range(cardinality):
         group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
-        groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1),
+        groups.append(Conv2D(filters_card, (3, 3), strides=(1, 1),
                                     padding='same', kernel_initializer='he_normal', use_bias=False)(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
@@ -97,7 +97,7 @@ def identity_block(x, filters_in, filters_out, cardinality=32):
     x = ReLU()(x)
 
     # Dimensionality restoration
-    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_out, (1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
     x = BatchNormalization()(x)
 
@@ -117,12 +117,12 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2))
     
     # Construct the projection shortcut
     # Increase filters by 2X to match shape when added to output of block
-    shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
+    shortcut = Conv2D(filters_out, (1, 1), strides=strides,
                                  padding='same', kernel_initializer='he_normal')(x)
     shortcut = BatchNormalization()(shortcut)
 
     # Dimensionality Reduction
-    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_in, (1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
@@ -133,7 +133,7 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2))
     for i in range(cardinality):
         group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
-        groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=strides,
+        groups.append(Conv2D(filters_card, (3, 3), strides=strides,
                                     padding='same', kernel_initializer='he_normal', use_bias=False)(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
@@ -142,7 +142,7 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2))
     x = ReLU()(x)
 
     # Dimensionality restoration
-    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_out, (1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
     x = BatchNormalization()(x)
 

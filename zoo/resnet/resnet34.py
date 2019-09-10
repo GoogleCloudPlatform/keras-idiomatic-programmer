@@ -25,8 +25,8 @@ def stem(inputs):
         inputs : input vector
     """
     # First Convolutional layer, where pooled feature maps will be reduced by 75%
-    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', kernel_initializer="he_normal")(inputs)
-    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', activation='relu', kernel_initializer="he_normal")(inputs)
+    x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
     return x
     
 def learner(x):

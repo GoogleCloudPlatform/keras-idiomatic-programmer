@@ -24,7 +24,7 @@ def stem(inputs):
     ''' Construct Stem Convolutional Group 
         inputs : the input vector
     '''
-    x = Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
+    x = Conv2D(16, (3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
     x = BatchNormalization()(x)
     x = ReLU()(x)
     return x

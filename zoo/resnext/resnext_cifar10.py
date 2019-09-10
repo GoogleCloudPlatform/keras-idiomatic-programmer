@@ -16,17 +16,18 @@
 # Paper: https://arxiv.org/pdf/1611.05431.pdf
 
 import tensorflow as tf
-import tensorflow.keras.layers as layers
-from tensorflow.keras import Model
+from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Concatenate, Lambda, Add
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 
 def stem(inputs):
     """ Construct the stem convolutional group
         inputs : the input vector
     """
     # Stem Convolutional layer
-    x = layers.Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal', use_bias=False)(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(64, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal', use_bias=False)(inputs)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     return x
     
 def learner(x, cardinality=32):
@@ -56,56 +57,56 @@ def resnext_block(shortcut, filters_in, filters_out, cardinality=32):
         cardinality: width of group convolution
     """
     # Dimensionality reduction
-    x = layers.Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Cardinality (Wide) Layer (split-transform)
     filters_card = filters_in // cardinality
     groups = []
     for i in range(cardinality):
-        group = layers.Lambda(lambda z: z[:, :, :, i * filters_card:i *
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
                               filters_card + filters_card])(x)
-        groups.append(layers.Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1),
+        groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1),
                                     padding='same', kernel_initializer='he_normal', use_bias=False)(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
-    x = layers.concatenate(groups)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Concatenate()(groups)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Dimensionality restoration
-    x = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
                       padding='same', kernel_initializer='he_normal', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
+    x = BatchNormalization()(x)
 
     # If first resnext block in a group, use projection shortcut
     if shortcut.shape[-1] != filters_out:
         # use convolutional layer to double the input size to the block so it
         # matches the output size (so we can add them)
-        shortcut = layers.Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+        shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
                                  padding='same', kernel_initializer='he_normal', use_bias=False)(shortcut)
-        shortcut = layers.BatchNormalization()(shortcut)
+        shortcut = BatchNormalization()(shortcut)
 
     # Identity Link: Add the shortcut (input) to the output of the block
-    x = layers.add([shortcut, x])
-    x = layers.ReLU()(x)
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
     return x
     
 def classifier(x, nclasses):
     """ Construct the classifier
     """
     # Final Dense Outputting Layer for the outputs
-    x = layers.GlobalAveragePooling2D()(x)
-    outputs = layers.Dense(nclasses, activation='softmax')(x)
+    x = GlobalAveragePooling2D()(x)
+    outputs = Dense(nclasses, activation='softmax')(x)
     return outputs
 
 # Meta-parameter: width of group convolutional
 cardinality=32
 
 # The input tensor
-inputs = layers.Input(shape=(32, 32, 3))
+inputs = Input(shape=(32, 32, 3))
 
 # The Stem Group
 x = stem(inputs)

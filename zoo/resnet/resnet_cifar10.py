@@ -16,16 +16,17 @@
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
-from tensorflow.keras import Model
-import tensorflow.keras.layers as layers
+from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Add, Dense
+from tensorflow.keras.layers import AveragePooling2D, Flatten
 
 def stem(inputs):
     ''' Construct the Stem Convolutional Group 
         inputs : the input vector
     '''
-    x = layers.Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(16, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_initializer='he_normal')(inputs)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     return x
     
 def learner(x, n_blocks):
@@ -74,22 +75,22 @@ def identity_block(x, n_filters, n=2):
     ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
     # Dimensionality reduction
-    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Bottleneck layer
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Dimensionality restoration - increase the number of output filters by 2X or 4X
-    x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
+    x = Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
 
     # Add the identity link (input) to the output of the residual block
-    x = layers.add([x, shortcut])
-    x = layers.ReLU()(x)
+    x = Add()([x, shortcut])
+    x = ReLU()(x)
     return x
 
 def projection_block(x, n_filters, strides=(2,2), n=2):
@@ -102,27 +103,27 @@ def projection_block(x, n_filters, strides=(2,2), n=2):
     """
     # Construct the projection shortcut
     # Increase filters by 2X (or 4X) to match shape when added to output of block
-    shortcut = layers.Conv2D(n_filters * n, (1, 1), strides=strides, kernel_initializer='he_normal')(x)
+    shortcut = Conv2D(n_filters * n, (1, 1), strides=strides, kernel_initializer='he_normal')(x)
 
     ## Construct the 1x1, 3x3, 1x1 convolution block
 
     # Dimensionality reduction
-    x = layers.Conv2D(n_filters, (1, 1), strides=(1,1), kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (1, 1), strides=(1,1), kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     
     # Bottleneck layer - feature pooling when strides=(2, 2)
-    x = layers.Conv2D(n_filters, (3, 3), strides=strides, padding='same', kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)  
+    x = Conv2D(n_filters, (3, 3), strides=strides, padding='same', kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)  
     
     # Dimensionality restoration - increase the number of filters by 2X (or 4X)
-    x = layers.Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
+    x = Conv2D(n_filters * n, (1, 1), strides=(1, 1), kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
 
     # Add the projection shortcut to the output of the residual block
-    x = layers.add([shortcut, x])
-    x = layers.ReLU()(x)
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
     return x
     
 def classifier(x, n_classes):
@@ -131,15 +132,15 @@ def classifier(x, n_classes):
         n_classes : number of classes
     '''
     # Pool the feature maps after the end of all the residual blocks
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
-    x = layers.AveragePooling2D(pool_size=8)(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = AveragePooling2D(pool_size=8)(x)
     
     # Flatten into 1D vector
-    x = layers.Flatten()(x)
+    x = Flatten()(x)
 
     # Final Dense Outputting Layer 
-    outputs = layers.Dense(n_classes, activation='softmax')(x)
+    outputs = Dense(n_classes, activation='softmax')(x)
     return outputs
 
 #-------------------
@@ -155,7 +156,7 @@ depth =  n * 9 + 2
 n_blocks = ((depth - 2) // 9) - 1
 
 # The input tensor
-inputs = layers.Input(shape=(32, 32, 3))
+inputs = Input(shape=(32, 32, 3))
 
 # The Stem Convolution Group
 x = stem(inputs)

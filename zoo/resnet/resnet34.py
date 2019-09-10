@@ -16,16 +16,17 @@
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow
-from tensorflow.keras import Model
-import tensorflow.keras.layers as layers
+from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, ReLU, BatchNormalization
+from tensorflow.keras.layers import Add, GlobalAveragePooling2D
 
 def stem(inputs):
     """ Construct the Stem Convolution Group
         inputs : input vector
     """
     # First Convolutional layer, where pooled feature maps will be reduced by 75%
-    x = layers.Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', kernel_initializer="he_normal")(inputs)
-    x = layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
+    x = Conv2D(64, kernel_size=(7, 7), strides=(2, 2), padding='same', activation='relu', kernel_initializer="he_normal")(inputs)
+    x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
     return x
     
 def learner(x):
@@ -67,11 +68,11 @@ def residual_block(x, n_filters):
         n_filters: number of filters
     """
     shortcut = x
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
                       activation="relu", kernel_initializer="he_normal")(x)
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
                       activation="relu", kernel_initializer="he_normal")(x)
-    x = layers.add([shortcut, x])
+    x = Add()([shortcut, x])
     return x
 
 def conv_block(x, n_filters):
@@ -79,9 +80,9 @@ def conv_block(x, n_filters):
         x        : input into the block
         n_filters: number of filters
     """
-    x = layers.Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
+    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
                   activation="relu", kernel_initializer="he_normal")(x)
-    x = layers.Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
+    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding="same",
                   activation="relu", kernel_initializer="he_normal")(x)
     return x
     
@@ -91,14 +92,14 @@ def classifier(x, n_classes):
         n_classes : number of output classes
     """
     # Pool at the end of all the convolutional residual blocks
-    x = layers.GlobalAveragePooling2D()(x)
+    x = GlobalAveragePooling2D()(x)
 
     # Final Dense Outputting Layer for the outputs
-    outputs = layers.Dense(n_classes, activation='softmax')(x)
+    outputs = Dense(n_classes, activation='softmax')(x)
     return outputs
 
 # The input tensor
-inputs = layers.Input(shape=(224, 224, 3))
+inputs = Input(shape=(224, 224, 3))
 
 # The Stem Convolution Group
 x = stem(inputs)

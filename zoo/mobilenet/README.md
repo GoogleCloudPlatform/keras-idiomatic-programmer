@@ -84,10 +84,10 @@ def stem(inputs, alpha):
         alpha  : width multiplier
     """
     # Convolutional block
-    x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-    x = layers.Conv2D(32, (3, 3), strides=(2, 2), padding='valid')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
+    x = Conv2D(32, (3, 3), strides=(2, 2), padding='valid')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Depthwise Separable Convolution Block
     x = depthwise_block(x, 64, alpha, (1, 1))
@@ -117,14 +117,14 @@ def depthwise_block(x, n_filters, alpha, strides):
         padding = 'same'
 
     # Depthwise Convolution
-    x = layers.DepthwiseConv2D((3, 3), strides, padding=padding)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = DepthwiseConv2D((3, 3), strides, padding=padding)(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Pointwise Convolution
-    x = layers.Conv2D(filters, (1, 1), strides=(1, 1), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     return x
 ```
 
@@ -152,15 +152,14 @@ def classifier(x, alpha, dropout, n_classes):
 
     # Reshape the feature maps to (?, 1, 1, 1024)
     shape = (1, 1, int(1024 * alpha))
-    x = layers.Reshape(shape)(x)
+    x = Reshape(shape)(x)
     # Perform dropout for preventing overfitting
-    x = layers.Dropout(dropout)(x)
+    x = Dropout(dropout)(x)
 
     # Use convolution for classifying (emulates a fully connected layer)
-    x = layers.Conv2D(n_classes, (1, 1), padding='same')(x)
-    x = layers.Activation('softmax')(x)
+    x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax')(x)
     # Reshape the resulting output to 1D vector of number of classes
-    x = layers.Reshape((n_classes, ))(x)
+    x = Reshape((n_classes, ))(x)
     return x
 ```
 
@@ -205,9 +204,9 @@ def learner(x, alpha, expansion=6):
     
     # Last block is a 1x1 linear convolutional layer,
     # expanding the number of filters to 1280.
-    x = layers.Conv2D(1280, (1, 1), use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU(6.)(x)
+    x = Conv2D(1280, (1, 1), use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = ReLU(6.)(x)
     return x
 
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
@@ -266,10 +265,10 @@ def stem(inputs, alpha):
     n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
     
     # Convolutional block
-    x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-    x = layers.Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU(6.)(x)
+    x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
+    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = ReLU(6.)(x)
 
     return x
 ```
@@ -298,30 +297,30 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     # Dimensionality Expansion (non-first block)
     if expansion > 1:
         # 1x1 linear convolution
-        x = layers.Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False)(x)
+        x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False)(x)
         
-        x = layers.BatchNormalization()(x)
-        x = layers.ReLU(6.)(x)
+        x = BatchNormalization()(x)
+        x = ReLU(6.)(x)
 
     # Strided convolution to match number of filters
     if strides == (2, 2):
-        x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(x)
+        x = ZeroPadding2D(padding=((0, 1), (0, 1)))(x)
         padding = 'valid'
     else:
         padding = 'same'
 
     # Depthwise Convolution
-    x = layers.DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Linear Pointwise Convolution
-    x = layers.Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
+    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
+    x = BatchNormalization()(x)
     
     # Number of input filters matches the number of output filters
     if n_channels == filters and strides == (1, 1):
-        x = layers.Add()([shortcut, x]) 
+        x = Add()([shortcut, x]) 
     return x
  ```
 
@@ -341,9 +340,9 @@ def classifier(x, n_classes):
         n_classes : number of output classes
     """
     # Flatten the feature maps into 1D feature maps (?, N)
-    x = layers.GlobalAveragePooling2D()(x)
+    x = GlobalAveragePooling2D()(x)
 
     # Dense layer for final classification
-    x = layers.Dense(n_classes, activation='softmax')(x)
+    x = Dense(n_classes, activation='softmax')(x)
     return x
 ```

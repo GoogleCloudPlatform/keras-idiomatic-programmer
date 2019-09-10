@@ -177,7 +177,7 @@ def channel_shuffle(x, n_groups):
     
 def classifier(x, n_classes):
     ''' Construct the Classifier Group 
-        x : input tensor
+        x         : input to the classifier
         n_classes : number of output classes
     '''
     # Use global average pooling to flatten feature maps to 1D vector, where

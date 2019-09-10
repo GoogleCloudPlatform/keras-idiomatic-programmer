@@ -17,7 +17,9 @@
 # Paper: https://arxiv.org/pdf/1704.04861.pdf
 
 import tensorflow as tf
-from tensorflow.keras import layers, Input, Model
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import ZeroPadding2D, Conv2D, BatchNormalization, ReLU
+from tensorflow.keras.layers import DepthwiseConv2D, GlobalAveragePooling2D, Reshape, Dropout
 
 def stem(inputs, alpha):
     """ Construct the Stem Group
@@ -25,10 +27,10 @@ def stem(inputs, alpha):
         alpha  : width multiplier
     """
     # Convolutional block
-    x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-    x = layers.Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
+    x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Depthwise Separable Convolution Block
     x = depthwise_block(x, 64, alpha, (1, 1))
@@ -79,20 +81,20 @@ def depthwise_block(x, n_filters, alpha, strides):
 
     # Strided convolution to match number of filters
     if strides == (2, 2):
-        x = layers.ZeroPadding2D(padding=((0, 1), (0, 1)))(x)
+        x = ZeroPadding2D(padding=((0, 1), (0, 1)))(x)
         padding = 'valid'
     else:
         padding = 'same'
 
     # Depthwise Convolution
-    x = layers.DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Pointwise Convolution
-    x = layers.Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     return x
 
 def classifier(x, alpha, dropout, n_classes):
@@ -103,19 +105,18 @@ def classifier(x, alpha, dropout, n_classes):
         n_classes : number of output classes
     """
     # Flatten the feature maps into 1D feature maps (?, N)
-    x = layers.GlobalAveragePooling2D()(x)
+    x = GlobalAveragePooling2D()(x)
 
     # Reshape the feature maps to (?, 1, 1, 1024)
     shape = (1, 1, int(1024 * alpha))
-    x = layers.Reshape(shape)(x)
+    x = Reshape(shape)(x)
     # Perform dropout for preventing overfitting
-    x = layers.Dropout(dropout)(x)
+    x = Dropout(dropout)(x)
 
     # Use convolution for classifying (emulates a fully connected layer)
-    x = layers.Conv2D(n_classes, (1, 1), padding='same')(x)
-    x = layers.Activation('softmax')(x)
+    x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax')(x)
     # Reshape the resulting output to 1D vector of number of classes
-    x = layers.Reshape((n_classes, ))(x)
+    x = Reshape((n_classes, ))(x)
     return x
 
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.

@@ -22,7 +22,7 @@ from tensorflow.keras.layers import Add, Concatenate, AveragePooling2D, Depthwis
 from tensorflow.keras import backend as K
 
 def stem(inputs):
-    ''' Stem Convolution Group 
+    ''' Construct the Stem Convolution Group 
         inputs : input image (tensor)
     '''
     x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False)(inputs)
@@ -30,21 +30,23 @@ def stem(inputs):
     x = ReLU()(x)
     x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
     return x
-    
-def classifier(x, n_classes):
-    ''' Classifier Group 
-        x : input tensor
-        n_classes : number of output classes
+
+def learner(x, blocks, n_groups, filters, reduction):
+    ''' Construct the Learner
+	x        : input to the learner
+        blocks   : number of shuffle blocks per shuffle group
+        n_groups : number of groups to partition feature maps (channels) into.
+        filters  : dict that maps n_groups to list of output filters per block
+        reduction: dimensionality reduction on entry to a shuffle block
     '''
-    # Use global average pooling to flatten feature maps to 1D vector, where
-    # each feature map is a single averaged value (pixel) in flatten vector
-    x = GlobalAveragePooling2D()(x)
-    x = Dense(n_classes, activation='softmax')(x)
+    # Assemble the shuffle groups
+    for i in range(3):
+        x = shuffle_group(x, n_groups, blocks[i], filters[n_groups][i+1], reduction)
     return x
     
 def shuffle_group(x, n_groups, n_blocks, n_filters, reduction):
-    ''' A Shuffle Group 
-        x        : input tensor
+    ''' Construct a Shuffle Group 
+        x        : input to the group
         n_groups : number of groups to partition feature maps (channels) into.
         n_blocks : number of shuffle blocks for this group
         n_filters: number of output filters
@@ -60,8 +62,8 @@ def shuffle_group(x, n_groups, n_blocks, n_filters, reduction):
     return x
     
 def strided_shuffle_block(x, n_groups, n_filters, reduction):
-    ''' A Strided Shuffle Block 
-        x           : input tensor
+    ''' Construct a Strided Shuffle Block 
+        x           : input to the block
         n_groups    : number of groups to partition feature maps (channels) into.
         n_filters   : number of filters
         reduction   : dimensionality reduction factor (e.g, 0.25)
@@ -95,11 +97,11 @@ def strided_shuffle_block(x, n_groups, n_filters, reduction):
     return x
     
 def shuffle_block(x, n_groups, n_filters, reduction):
-    ''' A Shuffle block  
-        x        : input tensor
-        n_groups : number of groups to partition feature maps (channels) into.
-        n_filters   : number of filters
-        reduction   : dimensionality reduction factor (e.g, 0.25)
+    ''' Construct a shuffle Shuffle block  
+        x         : input to the block
+        n_groups  : number of groups to partition feature maps (channels) into.
+        n_filters : number of filters
+        reduction : dimensionality reduction factor (e.g, 0.25)
     '''
     # identity shortcut
     shortcut = x
@@ -173,7 +175,18 @@ def channel_shuffle(x, n_groups):
     x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_filters]))(x)
     return x
     
-# The number of groups to partition the filters (channels)
+def classifier(x, n_classes):
+    ''' Construct the Classifier Group 
+        x : input tensor
+        n_classes : number of output classes
+    '''
+    # Use global average pooling to flatten feature maps to 1D vector, where
+    # each feature map is a single averaged value (pixel) in flatten vector
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(n_classes, activation='softmax')(x)
+    return x
+    
+# meta-parameter: The number of groups to partition the filters (channels)
 n_groups=2
 
 # meta-parameter: number of groups to partition feature maps (key), and
@@ -189,21 +202,19 @@ filters = {
 # meta-parameter: the dimensionality reduction on entry to a shuffle block
 reduction = 0.25
 
-# number of shuffle blocks per shuffle group
+# meta-parameter: number of shuffle blocks per shuffle group
 blocks = [4, 8, 4 ]
 
 # input tensor
 inputs = Input( (224, 224, 3) )
 
-# Create the stem convolution group (referred to as Stage 1)
+# The Stem convolution group (referred to as Stage 1)
 x = stem(inputs)
 
-# Assemble the shuffle groups
-for i in range(3):
-    x = shuffle_group(x, n_groups, blocks[i], filters[n_groups][i+1], reduction)
-    
-# Add the final classifier layer
+# The Learner
+x = learner(x, blocks, n_groups, filters, reduction)
+
+# The Classifier
 outputs = classifier(x, 1000)
 
 model = Model(inputs, outputs)
-model.summary()

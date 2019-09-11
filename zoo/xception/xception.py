@@ -16,7 +16,9 @@
 # https://arxiv.org/pdf/1610.02357.pdf
 
 import tensorflow as tf
-from tensorflow.keras import layers, Input, Model
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Dense, GlobalAveragePooling2D
+from tensorflow.keras.layers import SeparableConv2D, MaxPooling2D, Add
 
 def entryFlow(inputs):
     """ Create the entry flow section
@@ -29,21 +31,21 @@ def entryFlow(inputs):
         """
         # Strided convolution - dimensionality reduction
         # Reduce feature maps by 75%
-        x = layers.Conv2D(32, (3, 3), strides=(2, 2))(inputs)
-        x = layers.BatchNormalization()(x)
-        x = layers.ReLU()(x)
+        x = Conv2D(32, (3, 3), strides=(2, 2))(inputs)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
 
         # Convolution - dimensionality expansion
         # Double the number of filters
-        x = layers.Conv2D(64, (3, 3), strides=(1, 1))(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.ReLU()(x)
+        x = Conv2D(64, (3, 3), strides=(1, 1))(x)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
         return x
 
     # Create the stem to the neural network
     x = stem(inputs)
 
-    # Create three residual blocks
+    # Create three residual blocks using linear projection
     for n_filters in [128, 256, 728]:
         x = projection_block(x, n_filters)
 
@@ -70,10 +72,10 @@ def exitFlow(x, n_classes):
         """
         # Global Average Pooling will flatten the 10x10 feature maps into 1D
         # feature maps
-        x = layers.GlobalAveragePooling2D()(x)
+        x = GlobalAveragePooling2D()(x)
         
         # Fully connected output layer (classification)
-        x = layers.Dense(n_classes, activation='softmax')(x)
+        x = Dense(n_classes, activation='softmax')(x)
         return x
 
     # Remember the input
@@ -81,36 +83,35 @@ def exitFlow(x, n_classes):
 
     # Strided convolution to double number of filters in identity link to
     # match output of residual block for the add operation (projection shortcut)
-    shortcut = layers.Conv2D(1024, (1, 1), strides=(2, 2),
-                             padding='same')(shortcut)
-    shortcut = layers.BatchNormalization()(shortcut)
+    shortcut = Conv2D(1024, (1, 1), strides=(2, 2), padding='same')(shortcut)
+    shortcut = BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
     # Dimensionality reduction - reduce number of filters
-    x = layers.SeparableConv2D(728, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
+    x = SeparableConv2D(728, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
 
     # Second Depthwise Separable Convolution
     # Dimensionality restoration
-    x = layers.SeparableConv2D(1024, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(1024, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Create pooled feature maps, reduce size by 75%
-    x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
 
     # Add the projection shortcut to the output of the pooling layer
-    x = layers.add([x, shortcut])
+    x = Add()([x, shortcut])
 
     # Third Depthwise Separable Convolution
-    x = layers.SeparableConv2D(1556, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(1556, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Fourth Depthwise Separable Convolution
-    x = layers.SeparableConv2D(2048, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(2048, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Create classifier section
     x = classifier(x, n_classes)
@@ -127,24 +128,24 @@ def projection_block(x, n_filters):
     
     # Strided convolution to double number of filters in identity link to
     # match output of residual block for the add operation (projection shortcut)
-    shortcut = layers.Conv2D(n_filters, (1, 1), strides=(2, 2), padding='same')(shortcut)
-    shortcut = layers.BatchNormalization()(shortcut)
+    shortcut = Conv2D(n_filters, (1, 1), strides=(2, 2), padding='same')(shortcut)
+    shortcut = BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution
-    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Second depthwise Separable Convolution
-    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Create pooled feature maps, reduce size by 75%
-    x = layers.MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
 
     # Add the projection shortcut to the output of the block
-    x = layers.add([x, shortcut])
+    x = Add()([x, shortcut])
 
     return x
 
@@ -157,22 +158,22 @@ def residual_block(x, n_filters):
     shortcut = x
 
     # First Depthwise Separable Convolution
-    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Second depthwise Separable Convolution
-    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Third depthwise Separable Convolution
-    x = layers.SeparableConv2D(n_filters, (3, 3), padding='same')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
     
     # Add the identity link to the output of the block
-    x = layers.add([x, shortcut])
+    x = Add()([x, shortcut])
     return x
 
 # Create the input vector

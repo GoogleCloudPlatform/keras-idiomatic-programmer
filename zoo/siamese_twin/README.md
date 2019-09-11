@@ -42,9 +42,40 @@ model = Model(inputs=[left_input,right_input],outputs=out
 
 <img src="micro.jpg">
 
+```python
+def twin(input_shape):
+    ''' Construct the model for both twins of the Siamese (connected) Network
+        input_shape : input shape for input vector
+    '''
+    global dense_weights, biases
+    
+    model = Sequential()
+    
+    # The weights for the convolutional layers are initialized from a normal distribution
+    # with a zero_mean and standard deviation of 10e-2
+    conv_weights = RandomNormal(mean=0.0, stddev=10e-2)
+    
+    # The weights for the dense layers are initialized from a normal distribution
+    # with a mean of 0 and standard deviation of 2 * 10e-1
+    dense_weights = RandomNormal(mean=0.0, stddev=(2 * 10e-1))
+    
+    # The biases for all layers are initialized from a normal distribution
+    # with a mean of 0.5 and standard deviation of 10e-2
+    biases = RandomNormal(mean=0.5, stddev=10e-2)
+
+    # Build the model
+    stem(input_shape)
+    block()
+    encoder()
+    return model
+```
+
 ### Stem Group
 
 <img src="stem.jpg">
+
+```python
+```
 
 ### Convolutional Block
 

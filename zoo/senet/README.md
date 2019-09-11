@@ -7,6 +7,9 @@
 
 <img src="macro.jpg">
 
+Macro-architectures for SE-ResNet50 and SE-ResNext50:
+
+*SE-ResNet*
 ```python
 def learner(x, ratio):
     """ Construct the Learner
@@ -39,6 +42,50 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learnet
+x = learner(x, ratio)
+
+# The Classifier for 1000 classes
+outputs = classifier(x, 1000)
+
+# Instantiate the Model
+model = Model(inputs, outputs)
+```
+
+*SE-ResNeXt*
+
+```python
+def learner(x, ratio):
+    """ Construct the Learner
+        x     : input to the learner
+        ratio : amount of filter reduction during squeeze
+    """
+    # First ResNeXt Group
+    # Double the size of filters to fit the first Residual Group
+    x = se_group(x, 3, 128, 256, ratio=ratio, strides=(1, 1))
+
+    # Second ResNeXt
+    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+    x = se_group(x, 4, 256, 512, ratio=ratio)
+
+    # Third ResNeXt Group
+    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+    x = se_group(x, 6, 512, 1024, ratio=ratio)
+
+    # Fourth ResNeXt Group
+    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
+    x = se_group(x, 3, 1024, 2048, ratio=ratio)
+    return x
+    
+# Meta-parameter: Amount of filter reduction in squeeze operation
+ratio = 16
+
+# The input tensor
+inputs = Input(shape=(224, 224, 3))
+
+# The Stem Group
+x = stem(inputs)
+
+# The Learner
 x = learner(x, ratio)
 
 # The Classifier for 1000 classes

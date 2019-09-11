@@ -22,7 +22,8 @@ from tensorflow.keras.initializers import RandomNormal
 import tensorflow.keras.backend as K
 
 def twin(input_shape):
-    ''' Create the model for both twins of the Siamese (connected) Network
+    ''' Construct the model for both twins of the Siamese (connected) Network
+        input_shape : input shape for input vector
     '''
     global dense_weights, biases
     
@@ -41,14 +42,16 @@ def twin(input_shape):
     biases = RandomNormal(mean=0.5, stddev=10e-2)
     
     def stem(input_shape):
-        ''' Stem Group Convolution '''
+        ''' Construct the Stem Group
+            input_shape: input shape for input vector
+        '''
 
         # entry convolutional layer and reduce feature maps by 75% (max pooling)
         model.add(Conv2D(64, (10, 10), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases, input_shape=input_shape))
         model.add(MaxPooling2D((2, 2), strides=2))
         
     def block():
-        ''' Single convolutional block '''
+        ''' Construct a Convolutional Block '''
     
         # 2nd convolutional layer doubling the number of filters, and reduce feature maps by 75% (max pooling)
         model.add(Conv2D(128, (7, 7), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
@@ -63,7 +66,7 @@ def twin(input_shape):
         # for a 105x105 input, the feature map size will be 6x6
         
     def encoder():
-        ''' The encoding block '''
+        ''' Construct the Encoding block '''
         # flatten the maps into a 1D vector
         model.add(Flatten())
     

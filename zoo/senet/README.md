@@ -53,25 +53,20 @@ model = Model(inputs, outputs)
 <img src="micro.jpg">
 
 ```python
-def learner(x, ratio):
-    """ Construct the Learner
-        x    : input to the learner
-        ratio: amount of filter reduction in squeeze
+def se_group(x, n_blocks, n_filters, ratio, strides=(2, 2)):
+    """ Construct the Squeeze-Excite Group
+        x        : input to the group
+        n_blocks : number of blocks
+        n_filters: number of filters
+        ratio    : amount of filter reduction during squeeze
+        strides  : whether projection block is strided
     """
-    # First Residual Block Group of 64 filters
-    x = se_group(x, 3, 64, ratio, strides=(1, 1))
+    # first block uses linear projection to match the doubling of filters between groups
+    x = projection_block(x, n_filters, strides=strides, ratio=ratio)
 
-    # Second Residual Block Group of 128 filters
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 4, 128, ratio)
-
-    # Third Residual Block Group of 256 filters
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 6, 256, ratio)
-
-    # Fourth Residual Block Group of 512 filters
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 3, 512, ratio)
+    # remaining blocks use identity link
+    for _ in range(n_blocks-1):
+        x = identity_block(x, n_filters, ratio=ratio)
     return x
 ```
 
@@ -92,25 +87,25 @@ def identity_block(x, n_filters, ratio=16):
     ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
     # Dimensionality reduction
-    x = layers.Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Bottleneck layer
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Dimensionality restoration - increase the number of output filters by 4X
-    x = layers.Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
+    x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
 
     # Pass the output through the squeeze and excitation block
     x = squeeze_excite_block(x, ratio)
 
     # Add the identity link (input) to the output of the residual block
-    x = layers.add([shortcut, x])
-    x = layers.ReLU()(x)
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
     return x
 ```
 
@@ -136,25 +131,25 @@ def projection_block(x, n_filters, strides=(2,2), ratio=16):
 
     # Dimensionality reduction
     # Feature pooling when strides=(2, 2)
-    x = layers.Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Bottleneck layer
-    x = layers.Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
-    x = layers.ReLU()(x)
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Dimensionality restoration - increase the number of filters by 4X
-    x = layers.Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
-    x = layers.BatchNormalization()(x)
+    x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
 
     # Pass the output through the squeeze and excitation block
     x = squeeze_excite_block(x, ratio)
 
     # Add the projection shortcut link to the output of the residual block
-    x = layers.add([x, shortcut])
-    x = layers.ReLU()(x)
+    x = Add()([x, shortcut])
+    x = ReLU()(x)
     return x
 ```
 
@@ -176,19 +171,19 @@ def squeeze_excite_block(x, ratio=16):
 
     # Squeeze (dimensionality reduction)
     # Do global average pooling across the filters, which will the output a 1D vector
-    x = layers.GlobalAveragePooling2D()(x)
+    x = GlobalAveragePooling2D()(x)
 
     # Reshape into 1x1 feature maps (1x1xC)
-    x = layers.Reshape((1, 1, filters))(x)
+    x = Reshape((1, 1, filters))(x)
 
     # Reduce the number of filters (1x1xC/r)
-    x = layers.Dense(filters // ratio, activation='relu', kernel_initializer='he_normal', use_bias=False)(x)
+    x = Dense(filters // ratio, activation='relu', kernel_initializer='he_normal', use_bias=False)(x)
 
     # Excitation (dimensionality restoration)
     # Restore the number of filters (1x1xC)
-    x = layers.Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(x)
+    x = Dense(filters, activation='sigmoid', kernel_initializer='he_normal', use_bias=False)(x)
 
     # Scale - multiply the squeeze/excitation output with the input (WxHxC)
-    x = layers.multiply([shortcut, x])
+    x = Multiply()([shortcut, x])
     return x
 ```

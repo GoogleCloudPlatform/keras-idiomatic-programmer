@@ -176,9 +176,58 @@ def fire_block(x, n_filters, bypass=False):
 
 <img src="micro-complex.jpg">
 
+```python
+def fire_group(x, filters):
+    ''' Construct a Fire Group
+        x      : input to the group
+        filters: list of number of filters per block in group
+    '''
+    for n_filters in filters:
+        x = fire_block(x, n_filters)
+
+    # Delayed downsampling
+    x = MaxPooling2D((3, 3), strides=2)(x)
+    return x
+```
+
 ### Fire Complex Bypass Block
 
 <img src="complex-block.jpg">
+
+```python
+def fire_block(x, n_filters):
+    ''' Construct a Fire Block  with complex bypass
+        x        : input to the block
+        n_filters: number of filters in block
+    '''
+    # remember the input (identity)
+    shortcut = x
+
+    # if the number of input filters does not equal the number of output filters, then use
+    # a transition convolution to match the number of filters in identify link to output
+    if shortcut.shape[3] != 8 * n_filters:
+        shortcut = Conv2D(n_filters * 8, (1, 1), strides=1, activation='relu',
+                          padding='same', kernel_initializer='glorot_uniform')(shortcut)
+
+    # squeeze layer
+    squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
+                     padding='same', kernel_initializer='glorot_uniform')(x)
+
+    # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
+    # of filters
+    expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu',
+                      padding='same', kernel_initializer='glorot_uniform')(squeeze)
+    expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu',
+                      padding='same', kernel_initializer='glorot_uniform')(squeeze)
+
+    # concatenate the feature maps from the 1x1 and 3x3 branches
+    x = Concatenate()([expand1x1, expand3x3])
+
+    # if identity link, add (matrix addition) input filters to output filters
+    if shortcut is not None:
+        x = Add()([x, shortcut])
+    return x
+```
 
 
 

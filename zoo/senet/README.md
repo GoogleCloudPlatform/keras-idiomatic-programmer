@@ -99,6 +99,7 @@ model = Model(inputs, outputs)
 
 <img src="micro.jpg">
 
+*SE-ResNet*
 ```python
 def se_group(x, n_blocks, n_filters, ratio, strides=(2, 2)):
     """ Construct the Squeeze-Excite Group
@@ -117,10 +118,31 @@ def se_group(x, n_blocks, n_filters, ratio, strides=(2, 2)):
     return x
 ```
 
+*SE-ResNeXt*
+```python
+def se_group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):
+    """ Construct a Squeeze-Excite Group
+        x          : input to the group
+        n_blocks   : number of blocks in the group
+        filters_in : number of filters  (channels) at the input convolution
+        filters_out: number of filters  (channels) at the output convolution
+        ratio      : amount of filter reduction during squeeze
+        strides    : whether projection block is strided
+    """
+    # First block is a linear projection block
+    x = projection_block(x, filters_in, filters_out, strides=strides, ratio=ratio)
+
+    # Remaining blocks are identity links
+    for _ in range(n_blocks-1):
+        x = identity_block(x, filters_in, filters_out, ratio=ratio)
+    return x
+```
+
 ### Residual Block and Identity Shortcut w/SE Link
 
 <img src="identity-block.jpg">
 
+*SE-ResNet*
 ```python
 def identity_block(x, n_filters, ratio=16):
     """ Create a Bottleneck Residual Block with Identity Link
@@ -156,10 +178,59 @@ def identity_block(x, n_filters, ratio=16):
     return x
 ```
 
+*SE-ResNeXt*
+```python
+def identity_block(x, filters_in, filters_out, cardinality=32, ratio=16):
+    """ Construct a ResNeXT block with identity link
+        x          : input to block
+        filters_in : number of filters  (channels) at the input convolution
+        filters_out: number of filters (channels) at the output convolution
+        cardinality: width of cardinality layer
+        ratio      : amount of filter reduction during squeeze
+    """
+
+    # Remember the input
+    shortcut = x
+
+    # Dimensionality Reduction
+    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal')(shortcut)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Cardinality (Wide) Layer (split-transform)
+    filters_card = filters_in // cardinality
+    groups = []
+    for i in range(cardinality):
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
+                              filters_card + filters_card])(x)
+        groups.append(Conv2D(filters_card, kernel_size=(3, 3),
+                                    strides=(1, 1), padding='same', kernel_initializer='he_normal')(group))
+
+    # Concatenate the outputs of the cardinality layer together (merge)
+    x = Concatenate()(groups)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Dimensionality restoration
+    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
+
+    # Identity Link: Add the shortcut (input) to the output of the block
+    x = Add()([shortcut, x])
+    x = ReLU()(x)
+    return x
+```
+
 ### Residual Block and Projection Shortcut w/SE Link
 
 <img src="projection-block.jpg">
 
+*SE-ResNeXt*
 ```python
 def projection_block(x, n_filters, strides=(2,2), ratio=16):
     """ Create Bottleneck Residual Block with Projection Shortcut
@@ -196,6 +267,58 @@ def projection_block(x, n_filters, strides=(2,2), ratio=16):
 
     # Add the projection shortcut link to the output of the residual block
     x = Add()([x, shortcut])
+    x = ReLU()(x)
+    return x
+```
+
+*SE-ResNeXt*
+```python
+def projection_block(x, filters_in, filters_out, cardinality=32, strides=1, ratio=16):
+    """ Construct a ResNeXT block with projection shortcut
+        x          : input to the block
+        filters_in : number of filters  (channels) at the input convolution
+        filters_out: number of filters (channels) at the output convolution
+        cardinality: width of cardinality layer
+        strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
+        ratio      : amount of filter reduction during squeeze
+    """
+
+    # Construct the projection shortcut
+    # Increase filters by 2X to match shape when added to output of block
+    shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
+                                 padding='same', kernel_initializer='he_normal')(x)
+    shortcut = BatchNormalization()(shortcut)
+
+    # Dimensionality Reduction
+    x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Cardinality (Wide) Layer (split-transform)
+    filters_card = filters_in // cardinality
+    groups = []
+    for i in range(cardinality):
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
+                              filters_card + filters_card])(x)
+        groups.append(Conv2D(filters_card, kernel_size=(3, 3),
+                                    strides=strides, padding='same', kernel_initializer='he_normal')(group))
+
+    # Concatenate the outputs of the cardinality layer together (merge)
+    x = Concatenate()(groups)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Dimensionality restoration
+    x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
+                      padding='same', kernel_initializer='he_normal')(x)
+    x = BatchNormalization()(x)
+
+    # Pass the output through the squeeze and excitation block
+    x = squeeze_excite_block(x, ratio)
+
+    # Add the projection shortcut (input) to the output of the block
+    x = Add()([shortcut, x])
     x = ReLU()(x)
     return x
 ```

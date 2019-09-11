@@ -69,6 +69,39 @@ def entryFlow(inputs):
 
 <img src="block-projection.jpg">
 
+```python
+def projection_block(x, n_filters):
+    """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
+        x        : input into residual block
+        n_filters: number of filters
+    """
+    # Remember the input
+    shortcut = x
+    
+    # Strided convolution to double number of filters in identity link to
+    # match output of residual block for the add operation (projection shortcut)
+    shortcut = Conv2D(n_filters, (1, 1), strides=(2, 2), padding='same')(shortcut)
+    shortcut = BatchNormalization()(shortcut)
+
+    # First Depthwise Separable Convolution
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Second depthwise Separable Convolution
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Create pooled feature maps, reduce size by 75%
+    x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
+
+    # Add the projection shortcut to the output of the block
+    x = Add()([x, shortcut])
+
+    return x
+```
+
 ## Micro-Architecture - Middle Flow
 
 <img src="micro-middle.jpg">
@@ -87,6 +120,35 @@ def middleFlow(x):
 ### Middle Flow Block
 
 <img src="block-middle.jpg">
+
+```python
+def residual_block(x, n_filters):
+    """ Create a residual block using Depthwise Separable Convolutions
+        x        : input into residual block
+        n_filters: number of filters
+    """
+    # Remember the input
+    shortcut = x
+
+    # First Depthwise Separable Convolution
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Second depthwise Separable Convolution
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Third depthwise Separable Convolution
+    x = SeparableConv2D(n_filters, (3, 3), padding='same')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    
+    # Add the identity link to the output of the block
+    x = Add()([x, shortcut])
+    return x
+```
 
 ## Micro-Architecture - Exit Flow
 

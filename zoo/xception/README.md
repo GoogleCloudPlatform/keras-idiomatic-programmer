@@ -73,10 +73,6 @@ def entryFlow(inputs):
 
 <img src="micro-middle.jpg">
 
-### Middle Flow Block
-
-<img src="block-middle.jpg">
-
 ```python
 def middleFlow(x):
     """ Create the middle flow section
@@ -87,6 +83,10 @@ def middleFlow(x):
         x = residual_block(x, 728)
     return x
 ```
+
+### Middle Flow Block
+
+<img src="block-middle.jpg">
 
 ## Micro-Architecture - Exit Flow
 

@@ -21,18 +21,52 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Add, Drop
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 
 def stem(inputs):
-    ''' The stem group convolution '''
+    ''' Construct the Stem Group
+        inputs : input tensor
+    '''
     x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
                kernel_initializer='glorot_uniform')(inputs)
     x = MaxPooling2D(3, strides=2)(x)
     return x
 
-def fire(x, n_filters):
-    ''' Create a fire module with complex bypass
+def learner(x):
+    ''' Construct the Learner
+	x  : input to the learner
     '''
+    # First Fire group, progressively increase number of filters
+    x = fire_group(x, [16, 16, 32])
 
+    # Second Fire group
+    x = fire_group(x, [32, 48, 48, 64])
+
+    # Last Fire block
+    x = fire_block(x, 64)
+
+    # Dropout is delayed to end of fire modules
+    x = Dropout(0.5)(x)
+    return x
+
+def fire_group(x, filters):
+    ''' Construct a Fire Group
+	x      : input to the group
+	filters: list of number of filters per block in group
+    '''
+    for n_filters in filters:
+        x = fire_block(x, n_filters)
+
+    # Delayed downsampling
+    x = MaxPooling2D((3, 3), strides=2)(x)
+    return x
+
+
+def fire_block(x, n_filters):
+    ''' Construct a Fire Block  with complex bypass
+	x        : input to the block
+	n_filters: number of filters in block
+    '''
     # remember the input (identity)
     shortcut = x
+
     # if the number of input filters does not equal the number of output filters, then use
     # a transition convolution to match the number of filters in identify link to output
     if shortcut.shape[3] != 8 * n_filters:
@@ -59,7 +93,10 @@ def fire(x, n_filters):
     return x
 
 def classifier(x, n_classes):
-    ''' The classifier '''
+    ''' Construct the Classifier 
+	x        : input to the classifier
+        n_classes: number of output classes
+    '''
     # set the number of filters equal to number of classes
     x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
                kernel_initializer='glorot_uniform')(x)
@@ -71,32 +108,13 @@ def classifier(x, n_classes):
 # The input shape
 inputs = Input((224, 224, 3))
 
-# Create the Stem Group
+# The Stem Group
 x = stem(inputs)
 
-# Start Fire modules, progressively increase number of filters
-x = fire(x, 16)
-x = fire(x, 16)
-x = fire(x, 32)
+# The Learner
+x = learner(x)
 
-# Delayed downsampling
-x = MaxPooling2D((3, 3), strides=2)(x)
-
-x = fire(x, 32)
-x = fire(x, 48)
-x = fire(x, 48)
-x = fire(x, 64)
-
-# Delayed downsampling
-x = MaxPooling2D((3, 3), strides=2)(x)
-
-# Last fire module
-x = fire(x, 64)
-
-# Dropout is delayed to end of fire modules
-x = Dropout(0.5)(x)
-
-# Add the classifier
+# The Classifier
 outputs = classifier(x, 1000)
 
 model = Model(inputs, outputs)

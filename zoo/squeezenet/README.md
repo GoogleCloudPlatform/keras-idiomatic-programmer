@@ -123,9 +123,54 @@ def classifier(x, n_classes):
 
 <img src="micro-bypass.jpg">
 
+```python
+def fire_group(x, filters):
+    ''' Construct the Fire Group
+        x       : input to the group
+        filters : list of number of filters per fire block in group
+    '''
+    for n_filters, bypass in filters:
+        x = fire_block(x, n_filters)
+
+    # Delayed downsampling
+    x = MaxPooling2D((3, 3), strides=2)(x)
+    return x
+```
+
 ### Fire Bypass Block
 
 <img src="bypass-block.jpg">
+
+```python
+def fire_block(x, n_filters, bypass=False):
+    ''' Construct a Fire Block
+        x        : input to the block
+        n_filters: number of filters in the block
+        bypass   : whether block has an identity shortcut
+    '''
+    # remember the input
+    shortcut = x
+
+    # squeeze layer
+    squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
+                     padding='same', kernel_initializer='glorot_uniform')(x)
+
+    # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
+    # of filters
+    expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu',
+                      padding='same', kernel_initializer='glorot_uniform')(squeeze)
+    expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu',
+                      padding='same', kernel_initializer='glorot_uniform')(squeeze)
+
+    # concatenate the feature maps from the 1x1 and 3x3 branches
+    x = Concatenate()([expand1x1, expand3x3])
+
+    # if identity link, add (matrix addition) input filters to output filters
+    if bypass:
+        x = Add()([x, shortcut])
+
+    return x
+```
 
 ## Fire Complex Bypass Micro-Archirecture
 

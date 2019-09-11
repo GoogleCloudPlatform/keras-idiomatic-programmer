@@ -21,16 +21,54 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Add, Drop
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 
 def stem(inputs):
-    ''' The stem group convolution '''
+    ''' Construct the Stem Group
+        inputs : input to the stem
+    '''
     x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
                kernel_initializer='glorot_uniform')(inputs)
     x = MaxPooling2D(3, strides=2)(x)
     return x
 
-def fire(x, n_filters, shortcut=None):
-    ''' Create a fire module with simple bypass on modules 2, 4, 6 and 8 
-        shortcut: if None, then no bypass; otherwise shortcut is the input (i.e., shortcut = x)
+def learner(x):
+    ''' Construct the Learner
+        x : input to the learner
     '''
+    # Fire blocks with simple bypass on blocks 2, 4, 6 and 8 
+
+    # First Fire group, progressively increase number of filters
+    x = fire_group(x, [(16, False), (16, True), (32, False)])
+
+    # Second Fire group
+    x = fire_group(x, [(32, True), (48, False), (48, True), (64, False)])
+
+    # Last fire block
+    x = fire_block(x, 64, True)
+
+    # Dropout is delayed to end of fire groups
+    x = Dropout(0.5)(x)
+    return x
+
+def fire_group(x, filters):
+    ''' Construct the Fire Group
+	x       : input to the group
+	filters : list of number of filters per fire block in group
+    '''
+    for n_filters, bypass in filters:
+        x = fire_block(x, n_filters)
+
+    # Delayed downsampling
+    x = MaxPooling2D((3, 3), strides=2)(x)
+    return x
+
+def fire_block(x, n_filters, bypass=False):
+    ''' Construct a Fire Block
+	x        : input to the block
+        n_filters: number of filters in the block
+        bypass   : whether block has an identity shortcut
+    '''
+    # remember the input
+    shortcut = x
+
     # squeeze layer
     squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
                      padding='same', kernel_initializer='glorot_uniform')(x)
@@ -46,13 +84,13 @@ def fire(x, n_filters, shortcut=None):
     x = Concatenate()([expand1x1, expand3x3])
     
     # if identity link, add (matrix addition) input filters to output filters
-    if shortcut is not None:
+    if bypass:
         x = Add()([x, shortcut])
         
     return x
 
 def classifier(x, n_classes):
-    ''' The classifier '''
+    ''' Construct the Classifier '''
     # set the number of filters equal to number of classes
     x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
                kernel_initializer='glorot_uniform')(x)
@@ -64,32 +102,13 @@ def classifier(x, n_classes):
 # The input shape
 inputs = Input((224, 224, 3))
 
-# Create the Stem Group
+# The Stem Group
 x = stem(inputs)
 
-# Start Fire modules, progressively increase number of filters
-x = fire(x, 16)
-x = fire(x, 16, x)
-x = fire(x, 32)
+# The Learner
+x = learner(x)
 
-# Delayed downsampling
-x = MaxPooling2D((3, 3), strides=2)(x)
-
-x = fire(x, 32, x)
-x = fire(x, 48)
-x = fire(x, 48, x)
-x = fire(x, 64)
-
-# Delayed downsampling
-x = MaxPooling2D((3, 3), strides=2)(x)
-
-# Last fire module
-x = fire(x, 64, x)
-
-# Dropout is delayed to end of fire modules
-x = Dropout(0.5)(x)
-
-# Add the classifier
+# The Classifier
 outputs = classifier(x, 1000)
 
 model = Model(inputs, outputs)

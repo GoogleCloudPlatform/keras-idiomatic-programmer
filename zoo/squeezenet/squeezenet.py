@@ -21,7 +21,9 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 
 def stem(inputs):
-    ''' Construct the Stem Group  '''
+    ''' Construct the Stem Group  
+	inputs: the input tensor
+    '''
     x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
                kernel_initializer='glorot_uniform')(inputs)
     x = MaxPooling2D(3, strides=2)(x)
@@ -40,7 +42,7 @@ def learner(x):
     # Last fire block (module)
     x = fire_block(x, 64)
 
-    # Dropout is delayed to end of fire blocks (modules)
+    # Dropout is delayed to end of fire groups
     x = Dropout(0.5)(x)
     return x
 
@@ -59,8 +61,8 @@ def fire_group(x, filters):
 
 
 def fire_block(x, n_filters):
-    ''' Construct a Fire Module 
-	x        : input to the module
+    ''' Construct a Fire Block
+	x        : input to the block
         n_filters: number of filters
     '''
     # squeeze layer

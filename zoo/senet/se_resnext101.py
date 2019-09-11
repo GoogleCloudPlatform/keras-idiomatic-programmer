@@ -41,15 +41,15 @@ def learner(x, ratio):
 
     # Second ResNeXt
     # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 4, 256, 512, ratio=ratio, strides=(1, 1))
+    x = se_group(x, 4, 256, 512, ratio=ratio)
 
     # Third ResNeXt Group
     # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 23, 512, 1024, ratio=ratio, strides=(1, 1))
+    x = se_group(x, 23, 512, 1024, ratio=ratio)
 
     # Fourth ResNeXt Group
     # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 3, 1024, 2048, ratio=ratio, strides=(1, 1))
+    x = se_group(x, 3, 1024, 2048, ratio=ratio)
     return x
 
 def se_group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):

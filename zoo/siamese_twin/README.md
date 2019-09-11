@@ -75,15 +75,57 @@ def twin(input_shape):
 <img src="stem.jpg">
 
 ```python
+    def stem(input_shape):
+        ''' Construct the Stem Group
+            input_shape: input shape for input vector
+        '''
+
+        # entry convolutional layer and reduce feature maps by 75% (max pooling)
+        model.add(Conv2D(64, (10, 10), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases, input_shape=input_shape))
+        model.add(MaxPooling2D((2, 2), strides=2
 ```
 
 ### Convolutional Block
 
 <img src="block-conv.jpg">
 
+```python
+   def block():
+        ''' Construct a Convolutional Block '''
+    
+        # 2nd convolutional layer doubling the number of filters, and reduce feature maps by 75% (max pooling)
+        model.add(Conv2D(128, (7, 7), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
+        model.add(MaxPooling2D((2, 2), strides=2))
+    
+        # 3rd convolutional layer and reduce feature maps by 75% (max pooling)
+        model.add(Conv2D(128, (4, 4), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
+        model.add(MaxPooling2D((2, 2), strides=2))
+        
+        # 4th convolutional layer doubling the number of filters with no feature map downsampling
+        model.add(Conv2D(256, (4, 4), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
+        # for a 105x105 input, the feature map size will be 6x6
+```
+
 ### Encoder 
 
 <img src="encoder.jpg">
+
+```python
+   def block():
+        ''' Construct a Convolutional Block '''
+    
+        # 2nd convolutional layer doubling the number of filters, and reduce feature maps by 75% (max pooling)
+        model.add(Conv2D(128, (7, 7), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
+        model.add(MaxPooling2D((2, 2), strides=2))
+    
+        # 3rd convolutional layer and reduce feature maps by 75% (max pooling)
+        model.add(Conv2D(128, (4, 4), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
+        model.add(MaxPooling2D((2, 2), strides=2))
+        
+        # 4th convolutional layer doubling the number of filters with no feature map downsampling
+        model.add(Conv2D(256, (4, 4), activation='relu', kernel_initializer=conv_weights, bias_initializer=biases))
+        # for a 105x105 input, the feature map size will be 6x6
+```
 
 ### Classifier Group
 

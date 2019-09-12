@@ -161,4 +161,3 @@ outputs = classifier(x, 1000)
 
 # Instantiate the Model
 model = Model(inputs, outputs)
-model.summary()

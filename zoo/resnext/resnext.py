@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNeXt50
+# ResNeXt (50, 101, 152)
 # Paper: https://arxiv.org/pdf/1611.05431.pdf
 
 import tensorflow as tf
@@ -159,9 +159,9 @@ def classifier(x, n_classes):
     return outputs
 
 # Meta-parameter: number of filters in, out and number of blocks
-groups = { '50' : [ (128, 256, 2), (256, 512, 3), (512, 1024, 5), (1024, 2048, 2)],
-           '101': [ (128, 256, 2), (256, 512, 3), (512, 1024, 22), (1024, 2048, 2)],
-           '152': [ (128, 256, 2), (256, 512, 7), (512, 1024, 35), (1024, 2048, 2)] 
+groups = { '50' : [ (128, 256, 2), (256, 512, 3), (512, 1024, 5), (1024, 2048, 2)],  # ResNeXt 50
+           '101': [ (128, 256, 2), (256, 512, 3), (512, 1024, 22), (1024, 2048, 2)], # ResNeXt 101
+           '152': [ (128, 256, 2), (256, 512, 7), (512, 1024, 35), (1024, 2048, 2)]  # ResNeXt 152
          }
     
 # Meta-parameter: width of group convolution

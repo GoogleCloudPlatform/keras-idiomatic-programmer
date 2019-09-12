@@ -7,32 +7,35 @@
 
 <img src='macro.jpg'>
 
-Macro-architecture for VGG16:
-
 ```python
-def learner(x):
+def learner(x, blocks):
     """ Construct the (Feature) Learner
         x        : input to the learner
+        blocks   : list of groups: filter size and number of conv layers
     """
-    # The convolutional blocks
-    x = conv_block(x, 1, 64)
-    x = conv_block(x, 2, 128)
-    x = conv_block(x, 3, 256)
-    x = conv_block(x, 3, 512)
-    x = conv_block(x, 3, 512)
+    # The convolutional groups
+    for n_layers, n_filters in blocks:
+        x = conv_group(x, n_layers, n_filters)
     return x
     
-# The input vector 
+# Meta-parameter: list of groups: number of layers and filter size
+groups = { '16' : [ (1, 64), (2, 128), (3, 256), (3, 512), (3, 512) ],          # VGG16
+           '19' : [ (1, 64), (2, 128), (4, 256), (4, 256), (4, 256) ] }         # VGG19
+
+# The input vector
 inputs = Input( (224, 224, 3) )
 
 # The stem group
 x = stem(inputs)
 
 # The learner
-x = learner(x)
+x = learner(x, groups['16'])
 
 # The classifier
 outputs = classifier(x, 1000)
+
+# Instantiate the Model
+model = Model(inputs, outputs)
 ```
 
 ## Micro-Architecture 
@@ -42,9 +45,9 @@ outputs = classifier(x, 1000)
 <img src='micro-conv.jpg'>
 
 ```python
-def conv_block(x, n_layers, n_filters):
-    """ Construct a Convolutional Block
-        x        : input to the block
+def conv_group(x, n_layers, n_filters):
+    """ Construct a Convolutional Group
+        x        : input to the group
         n_layers : number of convolutional layers
         n_filters: number of filters
     """

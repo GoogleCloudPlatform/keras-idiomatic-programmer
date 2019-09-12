@@ -8,26 +8,29 @@
 <img src='macro.jpg'>
 
 ```python
-def learner(x, cardinality=32):
+def learner(x, groups, cardinality=32):
     """ Construct the Learner
         x          : input to the learner
-	cardinality: width of group convolution
+        groups     : list of groups: filters in, filters out, number of blocks
+        cardinality: width of group convolution
     """
-    # First ResNeXt Group
-    x = residual_group(x, 128, 256, 2, cardinality=cardinality, strides=(1, 1))
+    # First ResNeXt Group (not-strided)
+    group = groups.pop(0)
+    x = residual_group(x, group[0], group[1], group[2], strides=(1, 1), cardinality=cardinality)
 
-    # Second ResNeXt 
-    x = residual_group(x, 256, 512, 3, cardinality=cardinality)
-
-    # Third ResNeXt Group
-    x = residual_group(x, 512, 1024, 5, cardinality=cardinality)
-
-    # Fourth ResNeXt Group
-    x = residual_group(x, 1024, 2048, 2, cardinality=cardinality)
+    # Remaining ResNeXt groups
+    for filters_in, filters_out, n_blocks in groups:
+        x = residual_group(x, filters_in, filters_out, n_blocks, cardinality=cardinality)
     return x
 
+# Meta-parameter: number of filters in, out and number of blocks
+groups = { '50' : [ (128, 256, 2), (256, 512, 3), (512, 1024, 5), (1024, 2048, 2)],
+           '101': [ (128, 256, 2), (256, 512, 3), (512, 1024, 22), (1024, 2048, 2)],
+           '152': [ (128, 256, 2), (256, 512, 7), (512, 1024, 35), (1024, 2048, 2)]
+         }
+
 # Meta-parameter: width of group convolution
-cardinality=32
+cardinality = 32
 
 # The input tensor
 inputs = Input(shape=(224, 224, 3))
@@ -36,8 +39,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learner
-x = learner(x, cardinality=cardinality)
-
+x = learner(x, groups['50'], cardinality)
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)
 

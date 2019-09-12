@@ -37,8 +37,8 @@ def learner(x, blocks):
     return x
 
 def conv_group(x, n_layers, n_filters):
-    """ Construct a Convolutional Block
-        x        : input to the block
+    """ Construct a Convolutional Group
+        x        : input to the group
         n_layers : number of convolutional layers
         n_filters: number of filters
     """

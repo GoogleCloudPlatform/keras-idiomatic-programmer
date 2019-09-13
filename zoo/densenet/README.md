@@ -16,8 +16,10 @@ reduction = 0.5
 # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
 n_filters = 32
 
-# number of residual blocks in each dense block
-blocks = [6, 12, 24, 16]
+# Meta-parameter: number of residual blocks in each dense group
+groups = { '121' : [6, 12, 24, 16],     # DenseNet 121
+           '169' : [6, 12, 32, 32],     # DenseNet 169
+           '201' : [6, 12, 48, 32] }    # DenseNet 201
 
 # The input vector
 inputs = Input(shape=(224, 224, 3))
@@ -26,7 +28,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs, n_filters)
 
 # The Learner
-x = learner(x, blocks, n_filters, reduction)
+x = learner(x, groups['50'], n_filters, reduction)
 
 # Classifier for 1000 classes
 outputs = classifier(x, 1000)

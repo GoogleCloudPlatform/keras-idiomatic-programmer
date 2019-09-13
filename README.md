@@ -59,6 +59,13 @@ Tianzi Cai
 [Hobson Lane](https://www.linkedin.com/in/hobsonlane)<br/>
 [Enoch Tetteh](https://www.linkedin.com/in/enoch-tetteh-80450211a)<br/>
 
+## Quotes
+
+*This is an absolutely exellent tutorial. I love the style and level of detail---not too much, not too little.* -- Andrew Moore, VP of Enginnering, Google Cloud
+
+*The Keras Idiomatic Programmer repository is a neat collection of workshops and handbooks introducing key machine learning concepts to the developer audience. I think it's a great project with very useful content*. -- Francois Chollet (creater of Keras)
+
+
 ## Disclaimer
 
 This is not an officially supported Google product.

@@ -36,12 +36,12 @@ def learner(x, blocks, n_groups, filters, reduction):
 	x        : input to the learner
         blocks   : number of shuffle blocks per shuffle group
         n_groups : number of groups to partition feature maps (channels) into.
-        filters  : dict that maps n_groups to list of output filters per block
+        filters  : number of filters per shuffle group
         reduction: dimensionality reduction on entry to a shuffle block
     '''
     # Assemble the shuffle groups
     for i in range(3):
-        x = shuffle_group(x, n_groups, blocks[i], filters[n_groups][i+1], reduction)
+        x = shuffle_group(x, n_groups, blocks[i], filters[i+1], reduction)
     return x
     
 def shuffle_group(x, n_groups, n_blocks, n_filters, reduction):
@@ -212,7 +212,7 @@ inputs = Input( (224, 224, 3) )
 x = stem(inputs)
 
 # The Learner
-x = learner(x, blocks, n_groups, filters, reduction)
+x = learner(x, blocks, n_groups, filters[n_groups], reduction)
 
 # The Classifier
 outputs = classifier(x, 1000)

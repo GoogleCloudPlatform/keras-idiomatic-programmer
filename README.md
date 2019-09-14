@@ -65,7 +65,7 @@ Tianzi Cai
 
 *The Keras Idiomatic Programmer repository is a neat collection of workshops and handbooks introducing key machine learning concepts to the developer audience. I think it's a great project with very useful content*. -- Francois Chollet (creater of Keras)
 
-*Roozbeh Sanaei This collection is literally my Keras bible. a great one.* - Roozebh Sanaei, Computer Vision Engineer at Rapsodo
+*This collection is literally my Keras bible. a great one.* - Roozebh Sanaei, Computer Vision Engineer at Rapsodo
 
 
 ## Disclaimer

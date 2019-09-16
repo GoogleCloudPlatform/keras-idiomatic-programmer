@@ -1,6 +1,10 @@
 
 # ResNeXt
 
+resnext.py - academic - procedural
+resnext_cifar10.py - academic - procedural
+resnext_c.py - composable - OOP
+
 [Paper](https://arxiv.org/pdf/1611.05431.pdf)
 
 ## Macro-Architecture

@@ -1,6 +1,9 @@
 
 # VGG
 
+    vgg.py - academic - procedural
+    vgg_c.py - composable - OOP
+
 [Paper](https://arxiv.org/pdf/1409.1556.pdf)
 
 ## Macro-Architecture
@@ -94,3 +97,32 @@ def classifier(x, n_classes):
     x = Dense(n_classes, activation='softmax')(x)
     return x
 ```
+
+## Composable
+
+*Example Instantiate a VGG model*
+
+```python
+# VGG16 from research paper
+vgg = VGG(16)
+
+# VGG16 custom input shape/classes
+vgg = VGG(16, input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = vgg.model
+```
+
+*Example: Composable Group*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# VGG group: 1 conv layer, 128 filters
+x = VGG.group(1, 128)(x)
+# VGG group: 2 conv layers, 256 filters
+x = VGG.group(2, 256)(x)
+x = Flatten()(x)
+x = Dense(50, activation='softmax')
+```
+

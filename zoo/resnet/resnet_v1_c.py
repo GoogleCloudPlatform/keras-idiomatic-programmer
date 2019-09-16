@@ -92,7 +92,7 @@ class ResNetV1(object):
         return x
 
     @staticmethod
-    def group(x, n_filters, n_blocks, strides=(2, 2)):
+    def group(x, n_filters, n_blocks, strides=(2, 2), init_weights=None):
         """ Construct a Residual Group 
             x         : input into the group
             n_filters : number of filters for the group
@@ -100,11 +100,11 @@ class ResNetV1(object):
             strides   : whether the projection block is a strided convolution
         """
         # Double the size of filters to fit the first Residual Group
-        x = ResNetV1.projection_block(x, n_filters, strides=strides)
+        x = ResNetV1.projection_block(x, n_filters, strides=strides, init_weights=init_weights)
 
         # Identity residual blocks
         for _ in range(n_blocks):
-            x = ResNetV1.identity_block(x, n_filters)
+            x = ResNetV1.identity_block(x, n_filters, init_weights)
         return x
 
     @staticmethod

@@ -15,7 +15,7 @@ def learner(x, blocks):
     """
     # The convolutional groups
     for n_layers, n_filters in blocks:
-        x = conv_group(x, n_layers, n_filters)
+        x = group(x, n_layers, n_filters)
     return x
     
 # Meta-parameter: list of groups: number of layers and filter size
@@ -45,7 +45,7 @@ model = Model(inputs, outputs)
 <img src='micro-conv.jpg'>
 
 ```python
-def conv_group(x, n_layers, n_filters):
+def group(x, n_layers, n_filters):
     """ Construct a Convolutional Group
         x        : input to the group
         n_layers : number of convolutional layers

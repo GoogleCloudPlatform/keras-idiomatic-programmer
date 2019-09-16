@@ -48,10 +48,10 @@ def learner(x, groups):
 
     # Remaining Residual Block Groups (strided)
     for n_filters, n_blocks in groups:
-    	x = residual_group(x, n_filters, n_blocks)
+    	x = group(x, n_filters, n_blocks)
     return x
 
-def residual_group(x, n_filters, n_blocks, strides=(2, 2)):
+def group(x, n_filters, n_blocks, strides=(2, 2)):
     """ Construct a Residual Group 
         x         : input into the group
         n_filters : number of filters for the group

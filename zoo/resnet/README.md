@@ -303,7 +303,7 @@ def classifier(x, n_classes):
 ```
 ## Composable
 
-*Example Instantiate a VGG model*
+*Example Instantiate a ResNet model*
 
 ```python
 # ResNet50 v1.0 from research paper
@@ -316,7 +316,7 @@ resnet = ResNetV1(50, input_shape=(128, 128, 3), n_classes=50)
 model = resnet.model
 ```
 
-*Example: Composable Group*/
+*Example: Composable Group/Block*/
 
 ```python
 inputs = Input((32, 32, 3))

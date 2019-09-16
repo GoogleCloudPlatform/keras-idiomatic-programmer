@@ -32,7 +32,10 @@ class ResNetV1(object):
     _model = None
     
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
-        """ Construct a Residul Convolutional Neural Network V1
+        """ Construct a Residual Convolutional Neural Network V1
+	    n_layers   : number of layers
+	    input_shape: input shape
+    	    n_classes  : number of output classes
         """
         if n_layers not in [50, 101, 152]:
             raise Exception("ResNet: Invalid value for n_layers")

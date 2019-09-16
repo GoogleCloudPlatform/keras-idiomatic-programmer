@@ -12,18 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNetb (50, 101, 152 + composable) version 1.5
-# Paper: https://arxiv.org/pdf/1512.03385.pdf
-# The strides=2 in the projection_block is moved from the 1x1 convolution to the 
-# 3x3 convolution. Gained 0.5% more accuracy on ImageNet
+# ResNet (50, 101, 152 + composable) version 2
+# Paper: https://arxiv.org/pdf/1603.05027.pdf
+# In this version, the BatchNormalization and ReLU activation are moved to be before the convolution in the bottleneck/projection blocks.
+# In v1 and v1.5 they were after. 
+# Note, this means that the ReLU that appeared after the add operation is now replaced as the ReLU proceeding the ending 1x1
+# convolution in the block.
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D, BatchNormalization
-from tensorflow.keras.layers import ReLU, Dense, GlobalAveragePooling2D, Add
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D, BatchNormalization, ReLU
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Add
 
-class ResNetV1_5(object):
-    """ Construct a Residual Convoluntional Network V1.5 """
+class ResNetV2(object):
+    """ Construct a Residual Convolution Network Network V2 """
     # Meta-parameter: list of groups: filter size and number of blocks
     groups = { 50 : [ (64, 2), (128, 3), (256, 5),  (512, 2) ],           # ResNet50
                101: [ (64, 2), (128, 3), (256, 22), (512, 2) ],           # ResNet101
@@ -31,9 +33,9 @@ class ResNetV1_5(object):
              }
     _model = None
     init_weights = 'he_normal'
-    
+
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
-        """ Construct a Residual Convolutional Neural Network V1.5
+        """ Construct a Residual Convolutional Neural Network V2
             n_layers   : number of layers
             input_shape: input shape
             n_classes  : number of output classes
@@ -63,7 +65,7 @@ class ResNetV1_5(object):
     @model.setter
     def model(self, _model):
         self._model = _model
-    
+
     def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
@@ -87,14 +89,14 @@ class ResNetV1_5(object):
             groups: list of groups: number of filters and blocks
         """
         # First Residual Block Group (not strided)
-        group = groups.pop(0)
-        x = ResNetV1_5.group(x, group[0], group[1], strides=(1, 1))
+        n_filters, n_blocks = groups.pop(0)
+        x = ResNetV2.group(x, n_filters, n_blocks, strides=(1, 1))
 
         # Remaining Residual Block Groups (strided)
         for n_filters, n_blocks in groups:
-            x = ResNetV1_5.group(x, n_filters, n_blocks)
+            x = ResNetV2.group(x, n_filters, n_blocks)
         return x
-
+    
     @staticmethod
     def group(x, n_filters, n_blocks, strides=(2, 2), init_weights=None):
         """ Construct a Residual Group
@@ -104,11 +106,11 @@ class ResNetV1_5(object):
             strides   : whether the projection block is a strided convolution
         """
         # Double the size of filters to fit the first Residual Group
-        x = ResNetV1_5.projection_block(x, n_filters, strides=strides, init_weights=None)
+        x = ResNetV2.projection_block(x, n_filters, strides=strides, init_weights=init_weights)
 
         # Identity residual blocks
         for _ in range(n_blocks):
-            x = ResNetV1_5.identity_block(x, n_filters, init_weights=None)
+            x = ResNetV2.identity_block(x, n_filters, init_weights=init_weights)
         return x
 
     @staticmethod
@@ -118,68 +120,65 @@ class ResNetV1_5(object):
             n_filters: number of filters
         """
         if init_weights is None:
-            init_weights = ResNetV1_5.init_weights
+            init_weights = ResNetV2.init_weights
     
         # Save input vector (feature maps) for the identity link
         shortcut = x
     
-        ## Construct the 1x1, 3x3, 1x1 residual block
+        ## Construct the 1x1, 3x3, 1x1 convolution block
     
         # Dimensionality reduction
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=init_weights)(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
         return x
 
     @staticmethod
     def projection_block(x, n_filters, strides=(2,2), init_weights=None):
-        """ Construct Bottleneck Residual Block of Convolutions with Projection Shortcut
+        """ Construct a Bottleneck Residual Block of Convolutions with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
             n_filters: number of filters
             strides  : whether the first convolution is strided
         """
-        if init_weights is None:
-            init_weights = ResNetV1_5.init_weights
-    
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights)(x)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = BatchNormalization()(x)
+        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(shortcut)
 
-        ## Construct the 1x1, 3x3, 1x1 residual block
-
+        ## Construct the 1x1, 3x3, 1x1 convolution block
+    
         # Dimensionality reduction
-        x = Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, kernel_initializer='he_normal')(x)
 
         # Bottleneck layer
         # Feature pooling when strides=(2, 2)
-        x = Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
+        x = Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, kernel_initializer='he_normal')(x)
 
-        # Dimensionality restoration - increase the number of output filters by 4X
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        # Dimensionality restoration - increase the number of filters by 4X
         x = BatchNormalization()(x)
+        x = ReLU()(x)
+        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
 
         # Add the projection shortcut to the output of the residual block
         x = Add()([x, shortcut])
-        x = ReLU()(x)
         return x
 
     def classifier(self, x, n_classes):
@@ -194,6 +193,5 @@ class ResNetV1_5(object):
         outputs = Dense(n_classes, activation='softmax')(x)
         return outputs
 
-
-# Example of a ResNet50 V1.5
-# resnet = ResNetV1_5(50)
+# Example
+# resnet = ResNetV2(50)

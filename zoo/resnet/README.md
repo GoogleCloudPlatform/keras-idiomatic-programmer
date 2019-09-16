@@ -323,9 +323,9 @@ inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
 # Residual group: 2 blocks, 128 filters
 x = ResNetV1.group(2, 128)(x)
-# Residual residual block with projection, 256 filters
+# Residual block with projection, 256 filters
 x = ResNetV1.projection_block(256)
-# Residual residual block with identity, 256 filters
+# Residual block with identity, 256 filters
 x = ResNetV1.identity_block(256)
 x = Flatten()(x)
 x = Dense(100, activation='softmax')

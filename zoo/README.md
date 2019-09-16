@@ -1,7 +1,9 @@
 # Model Zoo
 
-All the models here are coded using the idiomatic methodology. The models are based on their corresponding research paper and
-presented in an academic style (documented in comments and w/o production wrapping).
+All the models here are coded using the idiomatic design pattern for models. The models are based on their corresponding research paper and presented in two styles:
+
+  1. Academic - procedural, documented in comments and w/o production wrapping.
+  2. Composable (end in _c.py) - OOP with composable groups and blocks for reuse.
 
 | Model       | Paper |<br/>
 *Deep Convolutional Neural Networks*<br/>

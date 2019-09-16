@@ -1,8 +1,9 @@
 
 # ResNet
 
-    resnet.py - academic - procedural
-    resnet_c.py - composable - OOP
+    resnet(v1/v1.5/v2).py - academic - procedural
+    resnet_cifar10(v1/v2).py - academic - procedural
+    resnet(v1/v1.5/v2)_c.py - composable - OOP
 
 [Paper](https://arxiv.org/pdf/1512.03385.pdf)
 
@@ -299,4 +300,33 @@ def classifier(x, n_classes):
   # Final Dense Outputting Layer for the outputs
   outputs = Dense(n_classes, activation='softmax')(x)
   return outputs
+```
+## Composable
+
+*Example Instantiate a VGG model*
+
+```python
+# ResNet50 v1.0 from research paper
+resnet = ResNetV1(50)
+
+# ResNet50 v1.0 custom input shape/classes
+resnet = ResNetV1(50, input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = resnet.model
+```
+
+*Example: Composable Group*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# Residual group: 2 blocks, 128 filters
+x = ResNetV1.group(2, 128)(x)
+# Residual residual block with projection, 256 filters
+x = ResNetV1.projection_block(256)
+# Residual residual block with identity, 256 filters
+x = ResNetV1.identity_block(256)
+x = Flatten()(x)
+x = Dense(100, activation='softmax')
 ```

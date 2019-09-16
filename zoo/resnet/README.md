@@ -14,12 +14,12 @@ def learner(x, groups):
         groups: list of groups: number of filters and blocks
     """
     # First Residual Block Group (not strided)
-    group = groups.pop(0)
-    x = group(x, group[0], group[1], strides=(1, 1))
+    _group = groups.pop(0)
+    x = group(x, _group[0], _group[1], strides=(1, 1))
 
     # Remaining Residual Block Groups (strided)
     for n_filters, n_blocks in groups:
-        x = residual_group(x, n_filters, n_blocks)
+        x = group(x, n_filters, n_blocks)
     return x
 
 # Meta-parameter: list of groups: filter size and number of blocks

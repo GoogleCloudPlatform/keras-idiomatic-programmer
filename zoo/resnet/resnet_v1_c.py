@@ -83,8 +83,8 @@ class ResNetV1(object):
             groups: list of groups: number of filters and blocks
         """
         # First Residual Block Group (not strided)
-        group = groups.pop(0)
-        x = self.group(x, group[0], group[1], strides=(1, 1))
+        n_filters, n_blocks = groups.pop(0)
+        x = self.group(x, n_filters, n_blocks, strides=(1, 1))
 
         # Remaining Residual Block Groups (strided)
         for n_filters, n_blocks in groups:

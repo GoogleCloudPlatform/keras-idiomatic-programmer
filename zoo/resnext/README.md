@@ -1,9 +1,9 @@
 
 # ResNeXt
 
-resnext.py - academic - procedural
-resnext_cifar10.py - academic - procedural
-resnext_c.py - composable - OOP
+	resnext.py - academic - procedural
+	resnext_cifar10.py - academic - procedural
+	resnext_c.py - composable - OOP
 
 [Paper](https://arxiv.org/pdf/1611.05431.pdf)
 
@@ -208,4 +208,34 @@ def classifier(x, n_classes):
   # Final Dense Outputting Layer for the outputs
   outputs = Dense(n_classes, activation='softmax')(x)
   return outputs
+```
+
+## Composable
+
+*Example Instantiate a ResNeXt model*
+
+```python
+# ResNeXt50 from research paper
+resnext = ResNeXt(50)
+
+# ResNeXt50 custom input shape/classes
+resnext = ResNeXt(50, input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = resnext.model
+```
+
+*Example: Composable Group/Block*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# Residual Next group: 2 blocks, 128 filters
+x = ResNeXt.group(2, 128)(x)
+# Residual Next block with projection, 256 filters
+x = ResNeXt.projection_block(256)
+# Residual Next block with identity, 256 filters
+x = ResNeXt.identity_block(256)
+x = Flatten()(x)
+x = Dense(100, activation='softmax')
 ```

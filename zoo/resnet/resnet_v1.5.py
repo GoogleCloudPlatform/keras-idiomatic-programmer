@@ -146,9 +146,9 @@ def classifier(x, n_classes):
     return outputs
 
 # Meta-parameter: list of groups: filter size and number of blocks
-groups = { '50' : [ (64, 2), (128, 3), (256, 5),  (512, 2) ],           # ResNet50
-           '101': [ (64, 2), (128, 3), (256, 22), (512, 2) ],           # ResNet101
-           '101': [ (64, 2), (128, 7), (256, 35), (512, 2) ]            # ResNet152
+groups = { 50 : [ (64, 2), (128, 3), (256, 5),  (512, 2) ],           # ResNet50
+           101: [ (64, 2), (128, 3), (256, 22), (512, 2) ],           # ResNet101
+           152: [ (64, 2), (128, 7), (256, 35), (512, 2) ]            # ResNet152
          }
 
 # The input tensor
@@ -158,7 +158,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The learner
-x = learner(x, groups['50'])
+x = learner(x, groups[50])
 
 # The classifier for 1000 classes
 outputs = classifier(x, 1000)

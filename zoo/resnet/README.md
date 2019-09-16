@@ -1,6 +1,9 @@
 
 # ResNet
 
+    resnet.py - academic - procedural
+    resnet_c.py - composable - OOP
+
 [Paper](https://arxiv.org/pdf/1512.03385.pdf)
 
 ## Macro-Architecture

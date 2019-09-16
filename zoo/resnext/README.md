@@ -15,18 +15,18 @@ def learner(x, groups, cardinality=32):
         cardinality: width of group convolution
     """
     # First ResNeXt Group (not-strided)
-    group = groups.pop(0)
-    x = residual_group(x, group[0], group[1], group[2], strides=(1, 1), cardinality=cardinality)
+    filters_in, filters_out, n_blocks = groups.pop(0)
+    x = group(x, filters_in, filters_out, n_blocks, strides=(1, 1), cardinality=cardinality)
 
     # Remaining ResNeXt groups
     for filters_in, filters_out, n_blocks in groups:
-        x = residual_group(x, filters_in, filters_out, n_blocks, cardinality=cardinality)
+        x = group(x, filters_in, filters_out, n_blocks, cardinality=cardinality)
     return x
 
 # Meta-parameter: number of filters in, out and number of blocks
-groups = { '50' : [ (128, 256, 2), (256, 512, 3), (512, 1024, 5), (1024, 2048, 2)],   # ResNeXt 50
-           '101': [ (128, 256, 2), (256, 512, 3), (512, 1024, 22), (1024, 2048, 2)],  # ResNeXt 101
-           '152': [ (128, 256, 2), (256, 512, 7), (512, 1024, 35), (1024, 2048, 2)]   # ResNeXt 152
+groups = { 50 : [ (128, 256, 2), (256, 512, 3), (512, 1024, 5), (1024, 2048, 2)],   # ResNeXt 50
+           101: [ (128, 256, 2), (256, 512, 3), (512, 1024, 22), (1024, 2048, 2)],  # ResNeXt 101
+           152: [ (128, 256, 2), (256, 512, 7), (512, 1024, 35), (1024, 2048, 2)]   # ResNeXt 152
          }
 
 # Meta-parameter: width of group convolution
@@ -39,7 +39,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learner
-x = learner(x, groups['50'], cardinality)
+x = learner(x, groups[50], cardinality)
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)
 
@@ -52,7 +52,7 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-def residual_group(x, filters_in, filters_out, n_blocks, cardinality=32, strides=(2, 2)):
+def group(x, filters_in, filters_out, n_blocks, cardinality=32, strides=(2, 2)):
     """ Create a Residual group
 	x          : input to the group
         filters_in : number of filters  (channels) at the input convolution

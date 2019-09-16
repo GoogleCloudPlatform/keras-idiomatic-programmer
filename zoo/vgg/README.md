@@ -19,8 +19,8 @@ def learner(x, blocks):
     return x
     
 # Meta-parameter: list of groups: number of layers and filter size
-groups = { '16' : [ (1, 64), (2, 128), (3, 256), (3, 512), (3, 512) ],          # VGG16
-           '19' : [ (1, 64), (2, 128), (4, 256), (4, 256), (4, 256) ] }         # VGG19
+groups = { 16 : [ (1, 64), (2, 128), (3, 256), (3, 512), (3, 512) ],          # VGG16
+           19 : [ (1, 64), (2, 128), (4, 256), (4, 256), (4, 256) ] }         # VGG19
 
 # The input vector
 inputs = Input( (224, 224, 3) )
@@ -29,7 +29,7 @@ inputs = Input( (224, 224, 3) )
 x = stem(inputs)
 
 # The learner
-x = learner(x, groups['16'])
+x = learner(x, groups[16])
 
 # The classifier
 outputs = classifier(x, 1000)

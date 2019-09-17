@@ -33,7 +33,7 @@ def stem(inputs, alpha):
     
     # Convolutional block
     x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
+    x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU(6.)(x)
 
@@ -109,7 +109,7 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     # Dimensionality Expansion (non-first block)
     if expansion > 1:
         # 1x1 linear convolution
-        x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False)(x)
+        x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
         
         x = BatchNormalization()(x)
         x = ReLU(6.)(x)
@@ -122,12 +122,12 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
         padding = 'same'
 
     # Depthwise Convolution
-    x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
+    x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
     # Linear Pointwise Convolution
-    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
+    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     
     # Number of input filters matches the number of output filters
@@ -144,7 +144,7 @@ def classifier(x, n_classes):
     x = GlobalAveragePooling2D()(x)
 
     # Dense layer for final classification
-    x = Dense(n_classes, activation='softmax')(x)
+    x = Dense(n_classes, activation='softmax', kernel_initializer='glorot_uniform')(x)
     return x
 
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.

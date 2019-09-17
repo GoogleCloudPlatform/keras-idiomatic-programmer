@@ -99,7 +99,7 @@ def classifier(x, nclasses):
     """
     # Final Dense Outputting Layer for the outputs
     x = GlobalAveragePooling2D()(x)
-    outputs = Dense(nclasses, activation='softmax')(x)
+    outputs = Dense(nclasses, activation='softmax', kernel_initializer='he_normal')(x)
     return outputs
 
 # Meta-parameter: width of group convolutional

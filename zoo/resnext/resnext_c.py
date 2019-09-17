@@ -207,7 +207,7 @@ class ResNeXt(object):
         """
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
-        outputs = Dense(n_classes, activation='softmax')(x)
+        outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
         return outputs
 
 

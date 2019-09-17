@@ -366,3 +366,32 @@ def squeeze_excite_block(x, ratio=16):
     x = Multiply()([shortcut, x])
     return x
 ```
+
+## Composable
+
+*Example Instantiate a SE-ResNet model*
+
+```python
+# SE-ResNet50 from research paper
+senet = SEResNet(50)
+
+# ResNet50 custom input shape/classes
+senet = SEResNet(50, input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = senet.model
+```
+
+*Example: Composable Group/Block*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# SE Residual group: 2 blocks, 128 filters
+x = SEResNet.group(2, 128)(x)
+# SE Residual block with projection, 256 filters
+x = SEResNet.projection_block(256)
+# Residual block with identity, 256 filters
+x = SEResNet.identity_block(256)
+x = Flatten()(x)
+x = Dense(100, activation='softmax')

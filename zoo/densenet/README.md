@@ -10,15 +10,15 @@
 Macro-architecture code for DenseNet 121:
 
 ```python
-def learner(x, blocks, n_filters, reduction):
+def learner(x, groups, n_filters, reduction):
     """ Construct the Learner
         x         : input to the learner
     """
     # pop off the list the last dense block
-    last = blocks.pop()
+    last = groups.pop()
 
     # Create the dense groups and interceding transition blocks
-    for n_blocks in blocks:
+    for n_blocks in groups:
         x = group(x, n_blocks, n_filters)
         x = trans_block(x, reduction)
 

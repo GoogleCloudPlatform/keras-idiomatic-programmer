@@ -140,7 +140,7 @@ def classifier(x, n_classes):
     x = Flatten()(x)
 
     # Final Dense Outputting Layer 
-    outputs = Dense(n_classes, activation='softmax')(x)
+    outputs = Dense(n_classes, activation='softmax', kernel_initializer='he_normal')(x)
     return outputs
 
 #-------------------

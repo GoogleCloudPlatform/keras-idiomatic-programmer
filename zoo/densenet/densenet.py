@@ -39,18 +39,18 @@ def stem(inputs, n_filters):
     x = MaxPooling2D((3, 3), strides=2)(x)
     return x
     
-def learner(x, blocks, n_filters, reduction):
+def learner(x, groups, n_filters, reduction):
     """ Construct the Learner
         x         : input to the learner
-        blocks    : set of number of blocks per group
+        groups    : set of number of blocks per group
         n_filters : number of filters (growth rate)
         reduction : the amount to reduce (compress) feature maps by
     """
     # pop off the list the last dense block
-    last = blocks.pop()
+    last = groups.pop()
 
     # Create the dense groups and interceding transition blocks
-    for n_blocks in blocks:
+    for n_blocks in groups:
         x = group(x, n_blocks, n_filters)
         x = trans_block(x, reduction)
 

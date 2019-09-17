@@ -7,30 +7,30 @@
 
 <img src="macro.jpg">
 
-Macro-architectures for SE-ResNet50 and SE-ResNext50:
+Macro-architectures for SE-ResNet50 and SE-ResNeXt50:
 
 *SE-ResNet*
 ```python
-def learner(x, ratio):
+def learner(x, groups, ratio):
     """ Construct the Learner
-        x    : input to the learner
-        ratio: amount of filter reduction in squeeze
+        x     : input to the learner
+	groups: list of groups: number of filters and blocks
+        ratio : amount of filter reduction in squeeze
     """
-    # First Residual Block Group of 64 filters
-    x = se_group(x, 3, 64, ratio, strides=(1, 1))
+    # First Residual Block Group (not strided)
+    n_filters, n_blocks = groups.pop(0)
+    x = group(x, n_filters, n_blocks, ratio, strides=(1, 1))
 
-    # Second Residual Block Group of 128 filters
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 4, 128, ratio)
+    # Remaining Residual Block Groups (strided)
+    for n_filters, n_blocks in groups:
+    	x = group(x, n_filters, n_blocks, ratio)
+    return x	
 
-    # Third Residual Block Group of 256 filters
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 6, 256, ratio)
-
-    # Fourth Residual Block Group of 512 filters
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 3, 512, ratio)
-    return x
+# Meta-parameter: # Meta-parameter: list of groups: filter size and number of blocks
+groups = { 50 : [ (64, 2), (128, 3), (256, 5),  (512, 2) ],		# SE-ResNet50
+           101: [ (64, 2), (128, 3), (256, 22), (512, 2) ],		# SE-ResNet101
+           152: [ (64, 2), (128, 7), (256, 35), (512, 2) ]		# SE-ResNet152
+         }
 
 # Meta-parameter: Amount of filter reduction in squeeze operation
 ratio = 16
@@ -42,7 +42,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learnet
-x = learner(x, ratio)
+x = learner(x, group[50], ratio)
 
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)
@@ -101,7 +101,7 @@ model = Model(inputs, outputs)
 
 *SE-ResNet*
 ```python
-def se_group(x, n_blocks, n_filters, ratio, strides=(2, 2)):
+def group(x, n_blocks, n_filters, ratio, strides=(2, 2)):
     """ Construct the Squeeze-Excite Group
         x        : input to the group
         n_blocks : number of blocks

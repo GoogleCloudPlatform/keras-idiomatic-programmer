@@ -30,22 +30,23 @@ def stem(inputs):
     x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
     return x
 
-def learner(x, groups, ratio):
+def learner(x, groups, cardinality, ratio):
     """ Construct the Learner
-	x     : input to the learner
+	x          : input to the learner
         groups     : list of groups: filters in, filters out, number of blocks
-	ratio : amount of filter reduction during squeeze
+	cardinality: width of group convolution
+	ratio      : amount of filter reduction during squeeze
     """
     # First ResNeXt Group (not strided)
     filters_in, filters_out, n_blocks = groups.pop(0)
-    x = group(x, n_blocks, filters_in, filters_out, ratio=ratio, strides=(1, 1))
+    x = group(x, n_blocks, filters_in, filters_out, cardinality=cardinality, ratio=ratio, strides=(1, 1))
 
     # Remaining ResNeXt Groups
     for filters_in, filters_out, n_blocks in groups:
-    	x = group(x, n_blocks, filters_in, filters_out, ratio=ratio)
+    	x = group(x, n_blocks, filters_in, filters_out, cardinality=cardinality, ratio=ratio)
     return x
 
-def group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):
+def group(x, n_blocks, filters_in, filters_out, cardinality, ratio, strides=(2, 2)):
     """ Construct a Squeeze-Excite Group
         x          : input to the group
         n_blocks   : number of blocks in the group
@@ -55,11 +56,11 @@ def group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):
         strides    : whether projection block is strided
     """
     # First block is a linear projection block
-    x = projection_block(x, filters_in, filters_out, strides=strides, ratio=ratio)
+    x = projection_block(x, filters_in, filters_out, strides=strides, cardinality=cardinality, ratio=ratio)
 
     # Remaining blocks are identity links
     for _ in range(n_blocks-1):
-        x = identity_block(x, filters_in, filters_out, ratio=ratio) 
+        x = identity_block(x, filters_in, filters_out, cardinality=cardinality, ratio=ratio) 
     return x
 
 def squeeze_excite_block(x, ratio=16):
@@ -201,6 +202,9 @@ groups = { 50 : [ (128, 256, 3), (256, 512, 4), (512, 1024, 6),  (1024, 2048, 3)
            152: [ (128, 256, 3), (256, 512, 8), (512, 1024, 36), (1024, 2048, 3)]  # SE-ResNeXt 152
          }
 
+# Meta-parameter: width of group convolution
+cardinality = 32
+
 # Meta-parameter: Amount of filter reduction in squeeze operation
 ratio = 16
 
@@ -211,7 +215,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learner
-x = learner(x, groups[50], ratio)
+x = learner(x, groups[50], cardinality, ratio)
 
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)

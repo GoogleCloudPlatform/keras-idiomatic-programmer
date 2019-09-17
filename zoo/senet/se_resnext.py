@@ -24,7 +24,7 @@ def stem(inputs):
     """ Construct the Stem Convolution Group
         inputs : input vector
     """
-    x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', kernel_initializer='he_normal')(inputs)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(inputs)
     x = BatchNormalization()(x)
     x = ReLU()(x)
     x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)

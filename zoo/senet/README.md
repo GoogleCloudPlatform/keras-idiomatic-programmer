@@ -101,7 +101,7 @@ model = Model(inputs, outputs)
 
 *SE-ResNet*
 ```python
-def group(x, n_blocks, n_filters, ratio, strides=(2, 2)):
+def group(x, n_filters, n_blocks, ratio, strides=(2, 2)):
     """ Construct the Squeeze-Excite Group
         x        : input to the group
         n_blocks : number of blocks

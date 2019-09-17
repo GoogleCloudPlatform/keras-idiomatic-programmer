@@ -1,6 +1,11 @@
 
 # SE-Net
 
+    se_resnet.py - academic - procedural
+    se_resnext.py - academic - procedural
+    se_resnet_c.py - composable - OOP
+    se_resnext_c.py - composable - OOP
+
 [Paper](https://arxiv.org/pdf/1709.01507.pdf)
 
 ## Macro-Architecture

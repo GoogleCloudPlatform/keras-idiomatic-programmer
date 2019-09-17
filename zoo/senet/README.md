@@ -54,19 +54,20 @@ model = Model(inputs, outputs)
 *SE-ResNeXt*
 
 ```python
-def learner(x, groups, ratio):
+def learner(x, groups, cardinality, ratio):
     """ Construct the Learner
-        x     : input to the learner
+        x          : input to the learner
         groups     : list of groups: filters in, filters out, number of blocks
-        ratio : amount of filter reduction during squeeze
+	cardinality: width of group convolution
+        ratio      : amount of filter reduction during squeeze
     """
     # First ResNeXt Group (not strided)
     filters_in, filters_out, n_blocks = groups.pop(0)
-    x = group(x, n_blocks, filters_in, filters_out, ratio=ratio, strides=(1, 1))
+    x = group(x, n_blocks, filters_in, filters_out, cardinality, ratio, strides=(1, 1))
 
     # Remaining ResNeXt Groups
     for filters_in, filters_out, n_blocks in groups:
-        x = group(x, n_blocks, filters_in, filters_out, ratio=ratio)
+        x = group(x, n_blocks, filters_in, filters_out, cardinality, ratio)
     return x
 
 # Meta-parameter: # Meta-parameter: list of groups: filter size and number of blocks
@@ -74,6 +75,9 @@ groups = { 50 : [ (64, 3), (128, 4), (256, 6),  (512, 3) ],		# SE-ResNet50
            101: [ (64, 3), (128, 4), (256, 23), (512, 3) ],		# SE-ResNet101
            152: [ (64, 3), (128, 8), (256, 36), (512, 3) ]		# SE-ResNet152
          }
+	 
+# Meta-parameter: Width of group convolution
+cardinality = 32
 
 # Meta-parameter: Amount of filter reduction in squeeze operation
 ratio = 16
@@ -85,7 +89,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The Learner
-x = learner(x, ratio)
+x = learner(x, cardinality, ratio)
 
 # The Classifier for 1000 classes
 outputs = classifier(x, 1000)
@@ -119,21 +123,22 @@ def group(x, n_filters, n_blocks, ratio, strides=(2, 2)):
 
 *SE-ResNeXt*
 ```python
-def group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):
+def group(x, n_blocks, filters_in, filters_out, cardinality, ratio, strides=(2, 2)):
     """ Construct a Squeeze-Excite Group
         x          : input to the group
         n_blocks   : number of blocks in the group
         filters_in : number of filters  (channels) at the input convolution
         filters_out: number of filters  (channels) at the output convolution
         ratio      : amount of filter reduction during squeeze
+	cardinality: width of group convolution
         strides    : whether projection block is strided
     """
     # First block is a linear projection block
-    x = projection_block(x, filters_in, filters_out, strides=strides, ratio=ratio)
+    x = projection_block(x, filters_in, filters_out, strides=strides, cardinality=cardinality, ratio=ratio)
 
     # Remaining blocks are identity links
     for _ in range(n_blocks-1):
-        x = identity_block(x, filters_in, filters_out, ratio=ratio)
+        x = identity_block(x, filters_in, filters_out, cardinality=cardinality, ratio=ratio)
     return x
 ```
 

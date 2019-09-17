@@ -27,9 +27,9 @@ def learner(x, groups, ratio):
     return x	
 
 # Meta-parameter: # Meta-parameter: list of groups: filter size and number of blocks
-groups = { 50 : [ (64, 2), (128, 3), (256, 5),  (512, 2) ],		# SE-ResNet50
-           101: [ (64, 2), (128, 3), (256, 22), (512, 2) ],		# SE-ResNet101
-           152: [ (64, 2), (128, 7), (256, 35), (512, 2) ]		# SE-ResNet152
+groups = { 50 : [ (64, 3), (128, 4), (256, 6),  (512, 3) ],		# SE-ResNet50
+           101: [ (64, 3), (128, 4), (256, 23), (512, 3) ],		# SE-ResNet101
+           152: [ (64, 3), (128, 8), (256, 36), (512, 3) ]		# SE-ResNet152
          }
 
 # Meta-parameter: Amount of filter reduction in squeeze operation
@@ -54,28 +54,27 @@ model = Model(inputs, outputs)
 *SE-ResNeXt*
 
 ```python
-def learner(x, ratio):
+def learner(x, groups, ratio):
     """ Construct the Learner
         x     : input to the learner
+        groups     : list of groups: filters in, filters out, number of blocks
         ratio : amount of filter reduction during squeeze
     """
-    # First ResNeXt Group
-    # Double the size of filters to fit the first Residual Group
-    x = se_group(x, 3, 128, 256, ratio=ratio, strides=(1, 1))
+    # First ResNeXt Group (not strided)
+    filters_in, filters_out, n_blocks = groups.pop(0)
+    x = group(x, n_blocks, filters_in, filters_out, ratio=ratio, strides=(1, 1))
 
-    # Second ResNeXt
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 4, 256, 512, ratio=ratio)
-
-    # Third ResNeXt Group
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 6, 512, 1024, ratio=ratio)
-
-    # Fourth ResNeXt Group
-    # Double the size of filters and reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-    x = se_group(x, 3, 1024, 2048, ratio=ratio)
+    # Remaining ResNeXt Groups
+    for filters_in, filters_out, n_blocks in groups:
+        x = group(x, n_blocks, filters_in, filters_out, ratio=ratio)
     return x
-    
+
+# Meta-parameter: # Meta-parameter: list of groups: filter size and number of blocks
+groups = { 50 : [ (64, 3), (128, 4), (256, 6),  (512, 3) ],		# SE-ResNet50
+           101: [ (64, 3), (128, 4), (256, 23), (512, 3) ],		# SE-ResNet101
+           152: [ (64, 3), (128, 8), (256, 36), (512, 3) ]		# SE-ResNet152
+         }
+
 # Meta-parameter: Amount of filter reduction in squeeze operation
 ratio = 16
 
@@ -120,7 +119,7 @@ def group(x, n_filters, n_blocks, ratio, strides=(2, 2)):
 
 *SE-ResNeXt*
 ```python
-def se_group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):
+def group(x, n_blocks, filters_in, filters_out, ratio, strides=(2, 2)):
     """ Construct a Squeeze-Excite Group
         x          : input to the group
         n_blocks   : number of blocks in the group

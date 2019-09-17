@@ -114,8 +114,7 @@ def identity_block(x, filters_in, filters_out, cardinality=32, ratio=16):
     filters_card = filters_in // cardinality
     groups = []
     for i in range(cardinality):
-        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
-                              filters_card + filters_card])(x)
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
         groups.append(Conv2D(filters_card, kernel_size=(3, 3),
                                     strides=(1, 1), padding='same', kernel_initializer='he_normal')(group))
 
@@ -163,10 +162,9 @@ def projection_block(x, filters_in, filters_out, cardinality=32, strides=1, rati
     filters_card = filters_in // cardinality
     groups = []
     for i in range(cardinality):
-        group = Lambda(lambda z: z[:, :, :, i * filters_card:i *
-                              filters_card + filters_card])(x)
+        group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
         groups.append(Conv2D(filters_card, kernel_size=(3, 3),
-                                    strides=strides, padding='same', kernel_initializer='he_normal')(group))
+                             strides=strides, padding='same', kernel_initializer='he_normal')(group))
 
     # Concatenate the outputs of the cardinality layer together (merge)
     x = Concatenate()(groups)

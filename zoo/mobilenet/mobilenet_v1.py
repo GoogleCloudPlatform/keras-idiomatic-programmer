@@ -28,9 +28,9 @@ def stem(inputs, alpha):
     """
     # Convolutional block
     x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-    x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False)(x)
+    x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
-    x = ReLU()(x)
+    x = ReLU(6.0)(x)
 
     # Depthwise Separable Convolution Block
     x = depthwise_block(x, 64, alpha, (1, 1))
@@ -42,19 +42,19 @@ def learner(x, alpha):
         alpha  : width multiplier
     """
     # First Depthwise Separable Convolution Group
-    x = depthwise_group(x, 128, 2, alpha)
+    x = group(x, 128, 2, alpha)
 
     # Second Depthwise Separable Convolution Group
-    x = depthwise_group(x, 256, 2, alpha)
+    x = group(x, 256, 2, alpha)
 
     # Third Depthwise Separable Convolution Group
-    x = depthwise_group(x, 512, 6, alpha)
+    x = group(x, 512, 6, alpha)
 
     # Fourth Depthwise Separable Convolution Group
-    x = depthwise_group(x, 1024, 2, alpha)
+    x = group(x, 1024, 2, alpha)
     return x
     
-def depthwise_group(x, n_filters, n_blocks, alpha):
+def group(x, n_filters, n_blocks, alpha):
     """ Construct a Depthwise Separable Convolution Group
         x         : input to the group
         n_filters : number of filters
@@ -87,14 +87,14 @@ def depthwise_block(x, n_filters, alpha, strides):
         padding = 'same'
 
     # Depthwise Convolution
-    x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
+    x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
-    x = ReLU()(x)
+    x = ReLU(6.0)(x)
 
     # Pointwise Convolution
-    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
+    x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
-    x = ReLU()(x)
+    x = ReLU(6.0)(x)
     return x
 
 def classifier(x, alpha, dropout, n_classes):
@@ -114,7 +114,7 @@ def classifier(x, alpha, dropout, n_classes):
     x = Dropout(dropout)(x)
 
     # Use convolution for classifying (emulates a fully connected layer)
-    x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax')(x)
+    x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax', kernel_initializer='glorot_uniform')(x)
     # Reshape the resulting output to 1D vector of number of classes
     x = Reshape((n_classes, ))(x)
     return x

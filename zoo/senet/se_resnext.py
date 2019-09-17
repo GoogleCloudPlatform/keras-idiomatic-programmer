@@ -193,7 +193,7 @@ def classifier(x, n_classes):
     """
     # Final Dense Outputting Layer 
     x = GlobalAveragePooling2D()(x)
-    outputs = Dense(n_classes, activation='softmax')(x)
+    outputs = Dense(n_classes, activation='softmax', kernel_initializer='he_normal')(x)
     return outputs
 
 # Meta-parameter: number of filters in, out and number of blocks

@@ -233,7 +233,7 @@ class SEResNet(object):
       x = GlobalAveragePooling2D()(x)
 
       # Final Dense Outputting Layer for the outputs
-      outputs = Dense(n_classes, activation='softmax')(x)
+      outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
       return outputs
 
 # Example

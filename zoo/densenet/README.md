@@ -1,6 +1,10 @@
 
 # DenseNet
 
+    densenet.py - academic - procedural
+    densenet_c.py - composable - OOP
+
+
 [Paper](https://arxiv.org/pdf/1608.06993.pdf)
 
 ## Macro-Architecture

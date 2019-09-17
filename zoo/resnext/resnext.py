@@ -159,9 +159,9 @@ def classifier(x, n_classes):
     return outputs
 
 # Meta-parameter: number of filters in, out and number of blocks
-groups = { 50 : [ (128, 256, 2), (256, 512, 3), (512, 1024, 5), (1024, 2048, 2)],  # ResNeXt 50
-           101: [ (128, 256, 2), (256, 512, 3), (512, 1024, 22), (1024, 2048, 2)], # ResNeXt 101
-           152: [ (128, 256, 2), (256, 512, 7), (512, 1024, 35), (1024, 2048, 2)]  # ResNeXt 152
+groups = { 50 : [ (128, 256, 3), (256, 512, 4), (512, 1024, 6),  (1024, 2048, 3)], # ResNeXt 50
+           101: [ (128, 256, 3), (256, 512, 4), (512, 1024, 23), (1024, 2048, 3)], # ResNeXt 101
+           152: [ (128, 256, 3), (256, 512, 8), (512, 1024, 36), (1024, 2048, 3)]  # ResNeXt 152
          }
     
 # Meta-parameter: width of group convolution

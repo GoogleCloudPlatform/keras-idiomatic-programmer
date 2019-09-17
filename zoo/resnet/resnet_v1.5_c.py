@@ -25,9 +25,9 @@ from tensorflow.keras.layers import ReLU, Dense, GlobalAveragePooling2D, Add
 class ResNetV1_5(object):
     """ Construct a Residual Convoluntional Network V1.5 """
     # Meta-parameter: list of groups: filter size and number of blocks
-    groups = { 50 : [ (64, 2), (128, 3), (256, 5),  (512, 2) ],           # ResNet50
-               101: [ (64, 2), (128, 3), (256, 22), (512, 2) ],           # ResNet101
-               152: [ (64, 2), (128, 7), (256, 35), (512, 2) ]            # ResNet152
+    groups = { 50 : [ (64, 3), (128, 4), (256, 6),  (512, 3) ],           # ResNet50
+               101: [ (64, 3), (128, 4), (256, 23), (512, 3) ],           # ResNet101
+               152: [ (64, 3), (128, 8), (256, 36), (512, 3) ]            # ResNet152
              }
     _model = None
     init_weights = 'he_normal'

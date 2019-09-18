@@ -179,7 +179,7 @@ def learner(x, alpha, expansion=6):
     """ Construct the Learner
         x        : input to the learner
         alpha    : width multiplier
-        expansion: 
+        expansion: multiplier to expand number of filters
     """
     # First Inverted Residual Convolution Group
     x = inverted_group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
@@ -210,7 +210,10 @@ def learner(x, alpha, expansion=6):
     return x
 
 # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
-alpha      = 1   
+alpha = 1
+
+# Meta-parameter: multiplier to expand number of filters
+expansion = 6
 
 inputs = Input(shape=(224, 224, 3))
 
@@ -218,7 +221,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs, alpha)    
 
 # The Learner
-x = learner(x, alpha)
+x = learner(x, alpha, expansion)
 
 # The classifier for 1000 classes
 outputs = classifier(x, 1000)

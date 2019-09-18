@@ -68,7 +68,7 @@ def learner(x, alpha, expansion=6):
     
     # Last block is a 1x1 linear convolutional layer,
     # expanding the number of filters to 1280.
-    x = Conv2D(1280, (1, 1), use_bias=False)(x)
+    x = Conv2D(1280, (1, 1), use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU(6.)(x)
     return x

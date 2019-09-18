@@ -182,29 +182,29 @@ def learner(x, alpha, expansion=6):
         expansion: multiplier to expand number of filters
     """
     # First Inverted Residual Convolution Group
-    x = inverted_group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
+    x = group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
     
     # Second Inverted Residual Convolution Group
-    x = inverted_group(x, 24, 2, alpha)
+    x = group(x, 24, 2, alpha)
 
     # Third Inverted Residual Convolution Group
-    x = inverted_group(x, 32, 3, alpha)
+    x = group(x, 32, 3, alpha)
     
     # Fourth Inverted Residual Convolution Group
-    x = inverted_group(x, 64, 4, alpha)
+    x = group(x, 64, 4, alpha)
     
     # Fifth Inverted Residual Convolution Group
-    x = inverted_group(x, 96, 3, alpha, strides=(1, 1))
+    x = group(x, 96, 3, alpha, strides=(1, 1))
     
     # Sixth Inverted Residual Convolution Group
-    x = inverted_group(x, 160, 3, alpha)
+    x = group(x, 160, 3, alpha)
     
     # Seventh Inverted Residual Convolution Group
-    x = inverted_group(x, 320, 1, alpha, strides=(1, 1))
+    x = group(x, 320, 1, alpha, strides=(1, 1))
     
     # Last block is a 1x1 linear convolutional layer,
     # expanding the number of filters to 1280.
-    x = Conv2D(1280, (1, 1), use_bias=False)(x)
+    x = Conv2D(1280, (1, 1), use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU(6.)(x)
     return x
@@ -315,7 +315,7 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     # Depthwise Convolution
     x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False)(x)
     x = BatchNormalization()(x)
-    x = ReLU()(x)
+    x = ReLU(6.)(x)
 
     # Linear Pointwise Convolution
     x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False)(x)

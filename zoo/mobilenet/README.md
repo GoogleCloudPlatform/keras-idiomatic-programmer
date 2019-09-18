@@ -3,6 +3,9 @@
 
 [Paper](https://arxiv.org/pdf/1704.04861.pdf)
 
+    mobilenet(v1/v2).py - academic - procedural
+    mobilenet(v1/v2)_c.py - composable - OOP
+
 ## Macro-Architecture
 
 <img src='macro.jpg'>

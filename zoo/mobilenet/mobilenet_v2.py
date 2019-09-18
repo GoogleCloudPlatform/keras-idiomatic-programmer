@@ -49,22 +49,22 @@ def learner(x, alpha, expansion=6):
     x = inverted_group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
     
     # Second Inverted Residual Convolution Group
-    x = inverted_group(x, 24, 2, alpha)
+    x = inverted_group(x, 24, 2, alpha, expansion)
 
     # Third Inverted Residual Convolution Group
-    x = inverted_group(x, 32, 3, alpha)
+    x = inverted_group(x, 32, 3, alpha, expansion)
     
     # Fourth Inverted Residual Convolution Group
-    x = inverted_group(x, 64, 4, alpha)
+    x = inverted_group(x, 64, 4, alpha, expansion)
     
     # Fifth Inverted Residual Convolution Group
-    x = inverted_group(x, 96, 3, alpha, strides=(1, 1))
+    x = inverted_group(x, 96, 3, alpha, expansion, strides=(1, 1))
     
     # Sixth Inverted Residual Convolution Group
-    x = inverted_group(x, 160, 3, alpha)
+    x = inverted_group(x, 160, 3, alpha, expansion)
     
     # Seventh Inverted Residual Convolution Group
-    x = inverted_group(x, 320, 1, alpha, strides=(1, 1))
+    x = inverted_group(x, 320, 1, alpha, expansion, strides=(1, 1))
     
     # Last block is a 1x1 linear convolutional layer,
     # expanding the number of filters to 1280.

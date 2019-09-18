@@ -24,8 +24,8 @@ class DenseNet(object):
     """ Construct a Densely Connected Convolution Neural Network """
     # Meta-parameter: number of residual blocks in each dense group
     groups = { 121 : [6, 12, 24, 16],	# DenseNet 121
-           169 : [6, 12, 32, 32],	# DenseNet 169
-           201 : [6, 12, 48, 32] }	# DenseNet 201
+               169 : [6, 12, 32, 32],	# DenseNet 169
+               201 : [6, 12, 48, 32] }	# DenseNet 201
     # Meta-parameter: amount to reduce feature maps by (compression factor) during transition blocks
     reduction = 0.5
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
@@ -145,6 +145,7 @@ class DenseNet(object):
         x = Concatenate()([shortcut, x])
         return x
 
+    @staticmethod
     def trans_block(x, reduction, init_weights=None):
         """ Construct a Transition Block
             x        : input layer

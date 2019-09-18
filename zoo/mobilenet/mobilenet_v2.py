@@ -46,25 +46,25 @@ def learner(x, alpha, expansion=6):
         expansion: multipler to expand number of filters
     """
     # First Inverted Residual Convolution Group
-    x = inverted_group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
+    x = group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
     
     # Second Inverted Residual Convolution Group
-    x = inverted_group(x, 24, 2, alpha, expansion)
+    x = group(x, 24, 2, alpha, expansion)
 
     # Third Inverted Residual Convolution Group
-    x = inverted_group(x, 32, 3, alpha, expansion)
+    x = group(x, 32, 3, alpha, expansion)
     
     # Fourth Inverted Residual Convolution Group
-    x = inverted_group(x, 64, 4, alpha, expansion)
+    x = group(x, 64, 4, alpha, expansion)
     
     # Fifth Inverted Residual Convolution Group
-    x = inverted_group(x, 96, 3, alpha, expansion, strides=(1, 1))
+    x = group(x, 96, 3, alpha, expansion, strides=(1, 1))
     
     # Sixth Inverted Residual Convolution Group
-    x = inverted_group(x, 160, 3, alpha, expansion)
+    x = group(x, 160, 3, alpha, expansion)
     
     # Seventh Inverted Residual Convolution Group
-    x = inverted_group(x, 320, 1, alpha, expansion, strides=(1, 1))
+    x = group(x, 320, 1, alpha, expansion, strides=(1, 1))
     
     # Last block is a 1x1 linear convolutional layer,
     # expanding the number of filters to 1280.
@@ -73,7 +73,7 @@ def learner(x, alpha, expansion=6):
     x = ReLU(6.)(x)
     return x
     
-def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
+def group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
     """ Construct an Inverted Residual Group
         x         : input to the group
         n_filters : number of filters
@@ -83,14 +83,14 @@ def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
         strides   : whether first inverted residual block is strided.
     """   
     # In first block, the inverted residual block maybe strided - feature map size reduction
-    x = inverted_block(x, n_filters, alpha, expansion=expansion, strides=strides)
+    x = inverted_block(x, n_filters, alpha, expansion, strides=strides)
     
     # Remaining blocks
     for _ in range(n_blocks - 1):
-        x = inverted_block(x, n_filters, alpha, strides=(1, 1))
+        x = inverted_block(x, n_filters, alpha, expansion, strides=(1, 1))
     return x
 
-def inverted_block(x, n_filters, alpha, strides, expansion=6):
+def inverted_block(x, n_filters, alpha, expansion=6, strides=(1, 1)):
     """ Construct an Inverted Residual Block
         x         : input to the block
         n_filters : number of filters

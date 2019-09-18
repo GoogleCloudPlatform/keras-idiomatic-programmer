@@ -245,11 +245,11 @@ def inverted_group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
         strides   : whether first inverted residual block is strided.
     """   
     # In first block, the inverted residual block maybe strided - feature map size reduction
-    x = inverted_block(x, n_filters, alpha, expansion=expansion, strides=strides)
+    x = inverted_block(x, n_filters, alpha, expansion, strides=strides)
     
     # Remaining blocks
     for _ in range(n_blocks - 1):
-        x = inverted_block(x, n_filters, alpha, strides=(1, 1))
+        x = inverted_block(x, n_filters, alpha, expansion, strides=(1, 1))
     return x
 ```
 
@@ -281,7 +281,7 @@ def stem(inputs, alpha):
 <img src='inverted-block.jpg'>
 
 ```python
-def inverted_block(x, n_filters, alpha, strides, expansion=6):
+def inverted_block(x, n_filters, alpha, expansion=6, strides=(1, 1)):
     """ Construct an Inverted Residual Block
         x         : input to the block
         n_filters : number of filters

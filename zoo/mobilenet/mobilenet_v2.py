@@ -109,8 +109,7 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     # Dimensionality Expansion (non-first block)
     if expansion > 1:
         # 1x1 linear convolution
-        x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
-        
+        x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)     
         x = BatchNormalization()(x)
         x = ReLU(6.)(x)
 
@@ -124,7 +123,7 @@ def inverted_block(x, n_filters, alpha, strides, expansion=6):
     # Depthwise Convolution
     x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
-    x = ReLU()(x)
+    x = ReLU(6.)(x)
 
     # Linear Pointwise Convolution
     x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)

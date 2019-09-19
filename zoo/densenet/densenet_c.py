@@ -64,7 +64,6 @@ class DenseNet(object):
     def model(self, _model):
         self._model = _model
 
-    
     def stem(self, inputs, n_filters):
         """ Construct the Stem Convolution Group
             inputs   : input tensor
@@ -89,30 +88,34 @@ class DenseNet(object):
             x         : input to the learner
             blocks    : set of number of blocks per group
             n_filters : number of filters (growth rate)
-            reduction : the amount to reduce (compress) feature maps by
+            reduction : amount to reduce (compress) feature maps by
         """
         # pop off the list the last dense block
         last = groups.pop()
 
         # Create the dense groups and interceding transition blocks
         for n_blocks in groups:
-            x = DenseNet.group(x, n_blocks, n_filters)
-            x = DenseNet.trans_block(x, reduction)
+            x = DenseNet.group(x, n_blocks, n_filters, reduction)
 
         # Add the last dense group w/o a following transition block
         x = DenseNet.group(x, last, n_filters)
         return x
 
     @staticmethod
-    def group(x, n_blocks, n_filters, init_weights=None):
+    def group(x, n_blocks, n_filters, reduction=None, init_weights=None):
         """ Construct a Dense Block
             x         : input to the block
             n_blocks  : number of residual blocks in dense block
-            n_filters : number of filters in convolution layer in residual block
+            n_filters : number of filters in convolution layer 
+            reduction : amount to reduce (compress) feature maps by
         """
         # Construct a group of residual blocks
         for _ in range(n_blocks):
             x = DenseNet.residual_block(x, n_filters, init_weights=init_weights)
+
+        # Construct interceding transition block
+        if reduction is not None:
+            x = DenseNet.trans_block(x, reduction)
         return x
 
     @staticmethod

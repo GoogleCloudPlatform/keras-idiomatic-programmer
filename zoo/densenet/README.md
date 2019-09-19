@@ -209,7 +209,7 @@ x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
 # DenseNet group: 6 blocks, 32 filters
 x = DenseNet.group(6, 32)(x)
 # Residual block with 32 filters
-x = DensetNet.residual_block(32)
+x = DensetNet.dense_block(32)
 x = Flatten()(x)
 x = Dense(100, activation='softmax')
 ```

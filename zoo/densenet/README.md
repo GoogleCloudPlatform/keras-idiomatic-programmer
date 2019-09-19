@@ -17,14 +17,16 @@ Macro-architecture code for DenseNet 121:
 def learner(x, groups, n_filters, reduction):
     """ Construct the Learner
         x         : input to the learner
+        groups    : set of number of blocks per group
+        n_filters : number of filters (growth rate)
+        reduction : the amount to reduce (compress) feature maps by
     """
     # pop off the list the last dense block
     last = groups.pop()
 
     # Create the dense groups and interceding transition blocks
     for n_blocks in groups:
-        x = group(x, n_blocks, n_filters)
-        x = trans_block(x, reduction)
+        x = group(x, n_blocks, n_filters, reduction)
 
     # Add the last dense group w/o a following transition block
     x = group(x, last, n_filters)
@@ -62,15 +64,20 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-def group(x, n_blocks, n_filters):
+def group(x, n_blocks, n_filters, reduction=None):
     """ Construct a Dense Block
         x         : input to the block
         n_blocks  : number of residual blocks in dense block
         n_filters : number of filters in convolution layer in residual block
+        reduction : amount to reduce feature maps by
     """
-    # Construct a group of residual blocks
+    # Construct a group of densely connected residual blocks
     for _ in range(n_blocks):
-        x = residual_block(x, n_filters)
+        x = dense_block(x, n_filters)
+
+    # Construct interceding transition block
+    if reduction is not None:
+        x = trans_block(x, reduction)
     return x
 ```
 
@@ -104,7 +111,31 @@ def stem(inputs, n_filters):
 <img src="dense-block.jpg">
 
 ```python
+def dense_block(x, n_filters):
+    """ Construct a Densely Connected Residual Block
+        x        : input to the block
+        n_filters: number of filters in convolution layer in residual block
+    """
+    # Remember input tensor into residual block
+    shortcut = x
 
+    # BN-RE-Conv pre-activation form of convolutions
+
+    # Dimensionality expansion, expand filters by 4 (DenseNet-B)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Bottleneck convolution
+    # 3x3 convolution with padding=same to preserve same shape of feature maps
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Concatenate the input (identity) with the output of the residual block
+    # Concatenation (vs. merging) provides Feature Reuse between layers
+    x = Concatenate()([shortcut, x])
+    return x
 ```
 
 ### Transitional Block
@@ -137,33 +168,6 @@ def trans_block(x, reduction):
 
 <img src="residual-block.jpg">
 
-```python
-def residual_block(x, n_filters):
-    """ Construct a Residual Block
-        x        : input to the block
-        n_filters: number of filters in convolution layer in residual block
-    """
-    # Remember input tensor into residual block
-    shortcut = x 
-    
-    # BN-RE-Conv pre-activation form of convolutions
-
-    # Dimensionality expansion, expand filters by 4 (DenseNet-B)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
-    x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
-    
-    # Bottleneck convolution
-    # 3x3 convolution with padding=same to preserve same shape of feature maps
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
-    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-
-    # Concatenate the input (identity) with the output of the residual block
-    # Concatenation (vs. merging) provides Feature Reuse between layers
-    x = Concatenate()([shortcut, x])
-    return x
-```
 
 ### Classifier
 

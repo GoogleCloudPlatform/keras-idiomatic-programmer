@@ -352,3 +352,31 @@ def classifier(x, n_classes):
     x = Dense(n_classes, activation='softmax')(x)
     return x
 ```
+
+## Composable
+
+*Example Instantiate a MobileNet V2 model*
+
+```python
+# MobileNet v2.0 from research paper
+resnet = MobileNetV2()
+
+# MobileNet v2.0 custom input shape/classes
+resnet = MobileNetV2(input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = resnet.model
+```
+
+*Example: Composable Group/Block*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# Inverted Residual group: 2 blocks, 16 filters
+x = MobileNetV2.group(x, 2, 16, 1, alpha=1, expansion=1)
+# Inverted Residual block: 32 filters, strided
+x = MobileNetV2.inverted_block(x, 32, alpha=1, expansion=6, strides=(2, 2))
+x = Flatten()(x)
+x = Dense(100, activation='softmax')
+```

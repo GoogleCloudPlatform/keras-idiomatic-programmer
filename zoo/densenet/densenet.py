@@ -51,22 +51,26 @@ def learner(x, groups, n_filters, reduction):
 
     # Create the dense groups and interceding transition blocks
     for n_blocks in groups:
-        x = group(x, n_blocks, n_filters)
-        x = trans_block(x, reduction)
+        x = group(x, n_blocks, n_filters, reduction)
 
     # Add the last dense group w/o a following transition block
     x = group(x, last, n_filters)
     return x
 
-def group(x, n_blocks, n_filters):
+def group(x, n_blocks, n_filters, reduction=None):
     """ Construct a Dense Block
         x         : input to the block
         n_blocks  : number of residual blocks in dense block
         n_filters : number of filters in convolution layer in residual block
+        reduction : amount to reduce feature maps by
     """
     # Construct a group of densely connected residual blocks
     for _ in range(n_blocks):
         x = dense_block(x, n_filters)
+
+    # Construct interceding transition block
+    if reduction is not None:
+        x = trans_block(x, reduction)
     return x
 
 def dense_block(x, n_filters):

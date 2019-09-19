@@ -62,7 +62,16 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-
+def group(x, n_blocks, n_filters):
+    """ Construct a Dense Block
+        x         : input to the block
+        n_blocks  : number of residual blocks in dense block
+        n_filters : number of filters in convolution layer in residual block
+    """
+    # Construct a group of residual blocks
+    for _ in range(n_blocks):
+        x = residual_block(x, n_filters)
+    return x
 ```
 
 ### Stem Group
@@ -95,16 +104,7 @@ def stem(inputs, n_filters):
 <img src="dense-block.jpg">
 
 ```python
-def dense_group(x, n_blocks, n_filters):
-    """ Construct a Dense Block
-        x         : input to the block
-        n_blocks  : number of residual blocks in dense block
-        n_filters : number of filters in convolution layer in residual block
-    """
-    # Construct a group of residual blocks
-    for _ in range(n_blocks):
-        x = residual_block(x, n_filters)
-    return x
+
 ```
 
 ### Transitional Block

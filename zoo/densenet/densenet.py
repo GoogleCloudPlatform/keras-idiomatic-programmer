@@ -64,13 +64,13 @@ def group(x, n_blocks, n_filters):
         n_blocks  : number of residual blocks in dense block
         n_filters : number of filters in convolution layer in residual block
     """
-    # Construct a group of residual blocks
+    # Construct a group of densely connected residual blocks
     for _ in range(n_blocks):
-        x = residual_block(x, n_filters)
+        x = dense_block(x, n_filters)
     return x
 
-def residual_block(x, n_filters):
-    """ Construct a Residual Block
+def dense_block(x, n_filters):
+    """ Construct a Densely Connected Residual Block
         x        : input to the block
         n_filters: number of filters in convolution layer in residual block
     """

@@ -181,3 +181,31 @@ def classifier(x, n_classes):
     x = Dense(n_classes, activation='softmax', kernel_initializer='he_normal')(x)
     return x
 ```
+
+## Composable
+
+*Example Instantiate a DenseNet model*
+
+```python
+# DenseNet121 from research paper
+densenet = DenseNet(121)
+
+# DenseNet121 custom input shape/classes
+resnet = DenseNet(121, input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = densenet.model
+```
+
+*Example: Composable Group/Block*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# DenseNet group: 6 blocks, 32 filters
+x = DenseNet.group(6, 32)(x)
+# Residual block with 32 filters
+x = DensetNet.residual_block(32)
+x = Flatten()(x)
+x = Dense(100, activation='softmax')
+```

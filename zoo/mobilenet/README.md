@@ -359,13 +359,13 @@ def classifier(x, n_classes):
 
 ```python
 # MobileNet v2.0 from research paper
-resnet = MobileNetV2()
+mobilenet = MobileNetV2()
 
 # MobileNet v2.0 custom input shape/classes
-resnet = MobileNetV2(input_shape=(128, 128, 3), n_classes=50)
+mobilenet = MobileNetV2(input_shape=(128, 128, 3), n_classes=50)
 
 # getter for the tf.keras model
-model = resnet.model
+model = mobilenet.model
 ```
 
 *Example: Composable Group/Block*/

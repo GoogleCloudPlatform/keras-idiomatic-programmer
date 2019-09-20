@@ -8,21 +8,21 @@
 <img src='macro.png'>
 
 ```python
-def learner(x, groups, n_groups, filters, reduction):
+def learner(x, groups, n_partitions, filters, reduction):
     ''' Construct the Learner
-	x        : input to the learner
-        groups   : number of shuffle blocks per shuffle group
-        n_groups : number of groups to partition feature maps (channels) into.
-        filters  : number of filters per shuffle group
-        reduction: dimensionality reduction on entry to a shuffle block
+	x           : input to the learner
+        groups      : number of shuffle blocks per shuffle group
+        n_partitions: number of groups to partition feature maps (channels) into.
+        filters     : number of filters per shuffle group
+        reduction   : dimensionality reduction on entry to a shuffle block
     '''
     # Assemble the shuffle groups
     for i in range(3):
-        x = group(x, n_groups, groups[i], filters[i+1], reduction)
+        x = group(x, n_partitions, groups[i], filters[i+1], reduction)
     return x
     
 # meta-parameter: The number of groups to partition the filters (channels)
-n_groups=2
+n_partitions=2
 
 # meta-parameter: number of groups to partition feature maps (key), and
 # corresponding number of output filters (value)
@@ -47,7 +47,7 @@ inputs = Input( (224, 224, 3) )
 x = stem(inputs)
 
 # The Learner
-x = learner(x, groups, n_groups, filters[n_groups], reduction)
+x = learner(x, groups, n_groups, filters[n_partitions], reduction)
 ```
 
 ## Micro-Architecture
@@ -55,21 +55,21 @@ x = learner(x, groups, n_groups, filters[n_groups], reduction)
 <img src='micro.png'>
 
 ```python
-def group(x, n_groups, n_blocks, n_filters, reduction):
+def group(x, n_partitions, n_blocks, n_filters, reduction):
     ''' Construct a Shuffle Group 
-        x        : input to the group
-        n_groups : number of groups to partition feature maps (channels) into.
-        n_blocks : number of shuffle blocks for this group
-        n_filters: number of output filters
-        reduction: dimensionality reduction
+        x           : input to the group
+        n_partitions: number of groups to partition feature maps (channels) into.
+        n_blocks    : number of shuffle blocks for this group
+        n_filters   : number of output filters
+        reduction   : dimensionality reduction
     '''
     
     # first block is a strided shuffle block
-    x = strided_shuffle_block(x, n_groups, n_filters, reduction)
+    x = strided_shuffle_block(x, n_partitions, n_filters, reduction)
     
     # remaining shuffle blocks in group
     for _ in range(n_blocks-1):
-        x = shuffle_block(x, n_groups, n_filters, reduction)
+        x = shuffle_block(x, n_partitions, n_filters, reduction)
     return x
 ```
 
@@ -96,29 +96,29 @@ def stem(inputs):
 ```python
 
     
-def shuffle_block(x, n_groups, n_filters, reduction):
+def shuffle_block(x, n_partitions, n_filters, reduction):
     ''' Construct a shuffle Shuffle block  
-        x         : input to the block
-        n_groups  : number of groups to partition feature maps (channels) into.
-        n_filters : number of filters
-        reduction : dimensionality reduction factor (e.g, 0.25)
+        x           : input to the block
+        n_partitions: number of groups to partition feature maps (channels) into.
+        n_filters   : number of filters
+        reduction   : dimensionality reduction factor (e.g, 0.25)
     '''
     # identity shortcut
     shortcut = x
     
     # pointwise group convolution, with dimensionality reduction
-    x = pw_group_conv(x, n_groups, int(reduction * n_filters))
+    x = pw_group_conv(x, n_partitions, int(reduction * n_filters))
     x = ReLU()(x)
     
     # channel shuffle layer
-    x = channel_shuffle(x, n_groups)
+    x = channel_shuffle(x, n_partitions)
     
     # Depthwise 3x3 Convolution
     x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False)(x)
     x = BatchNormalization()(x)
     
     # pointwise group convolution, with dimensionality restoration
-    x = pw_group_conv(x, n_groups, n_filters)
+    x = pw_group_conv(x, n_paritions, n_filters)
     
     # Add the identity shortcut (input added to output)
     x = Add()([shortcut, x])

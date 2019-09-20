@@ -125,19 +125,19 @@ def shuffle_block(x, n_partitions, n_filters, reduction):
     x = ReLU()(x)
     return x
 
-def pw_group_conv(x, n_groups, n_filters):
+def pw_group_conv(x, n_partitions, n_filters):
     ''' A Pointwise Group Convolution  
-        x        : input tensor
-        n_groups : number of groups to partition feature maps (channels) into.
-        n_filers : number of filters
+        x           : input tensor
+        n_partitions: number of groups to partition feature maps (channels) into.
+        n_filers    : number of filters
     '''
     # Calculate the number of input filters (channels)
     in_filters = x.shape[3]
 
     # Derive the number of input filters (channels) per group
-    grp_in_filters  = in_filters // n_groups
+    grp_in_filters  = in_filters // n_partitions
     # Derive the number of output filters per group (Note the rounding up)
-    grp_out_filters = int(n_filters / n_groups + 0.5)
+    grp_out_filters = int(n_filters / n_partitions + 0.5)
       
     # Perform convolution across each channel group
     groups = []
@@ -156,19 +156,19 @@ def pw_group_conv(x, n_groups, n_filters):
     x = BatchNormalization()(x)
     return x
     
-def channel_shuffle(x, n_groups):
+def channel_shuffle(x, n_partitions):
     ''' Implements the channel shuffle layer 
-        x        : input tensor
-        n_groups : number of groups to partition feature maps (channels) into.
+        x           : input tensor
+        n_partitions: number of groups to partition feature maps (channels) into.
     '''
     # Get dimensions of the input tensor
     batch, height, width, n_filters = x.shape
 
     # Derive the number of input filters (channels) per group
-    grp_in_filters  = n_filters // n_groups
+    grp_in_filters  = n_filters // n_partitions
 
     # Separate out the channel groups
-    x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_groups, grp_in_filters]))(x)
+    x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_partitions, grp_in_filters]))(x)
     # Transpose the order of the channel groups (i.e., 3, 4 => 4, 3)
     x = Lambda(lambda z: K.permute_dimensions(z, (0, 1, 2, 4, 3)))(x)
     # Restore shape
@@ -181,10 +181,10 @@ def channel_shuffle(x, n_groups):
 <img src='strided-block.png'>
 
 ```python
-def strided_shuffle_block(x, n_groups, n_filters, reduction):
+def strided_shuffle_block(x, n_partitions, n_filters, reduction):
     ''' Construct a Strided Shuffle Block 
         x           : input to the block
-        n_groups    : number of groups to partition feature maps (channels) into.
+        n_partitions: number of groups to partition feature maps (channels) into.
         n_filters   : number of filters
         reduction   : dimensionality reduction factor (e.g, 0.25)
     '''
@@ -198,18 +198,18 @@ def strided_shuffle_block(x, n_groups, n_filters, reduction):
     n_filters -= int(x.shape[3])
     
     # pointwise group convolution, with dimensionality reduction
-    x = pw_group_conv(x, n_groups, int(reduction * n_filters))
+    x = pw_group_conv(x, n_partitions, int(reduction * n_filters))
     x = ReLU()(x)
     
     # channel shuffle layer
-    x = channel_shuffle(x, n_groups)
+    x = channel_shuffle(x, n_partitions)
 
     # Depthwise 3x3 Strided Convolution
     x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False)(x)
     x = BatchNormalization()(x)
 
     # pointwise group convolution, with dimensionality restoration
-    x = pw_group_conv(x, n_groups, n_filters)
+    x = pw_group_conv(x, n_paritions, n_filters)
     
     # Concatenate the projection shortcut to the output
     x = Concatenate()([shortcut, x])

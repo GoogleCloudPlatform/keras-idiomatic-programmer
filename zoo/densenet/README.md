@@ -195,7 +195,7 @@ def classifier(x, n_classes):
 densenet = DenseNet(121)
 
 # DenseNet121 custom input shape/classes
-resnet = DenseNet(121, input_shape=(128, 128, 3), n_classes=50)
+densenet = DenseNet(121, input_shape=(128, 128, 3), n_classes=50)
 
 # getter for the tf.keras model
 model = densenet.model

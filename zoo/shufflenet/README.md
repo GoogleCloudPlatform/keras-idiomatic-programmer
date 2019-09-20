@@ -1,6 +1,9 @@
 
 # ShuffleNet v1.0
 
+    shufflenet.py - academic - procedural
+    shufflenet_c.py - composable - OOP
+
 [Paper](https://arxiv.org/pdf/1707.01083.pdf)
 
 ## Macro-Architecture

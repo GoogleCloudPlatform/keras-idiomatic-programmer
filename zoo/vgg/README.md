@@ -119,9 +119,9 @@ model = vgg.model
 inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
 # VGG group: 1 conv layer, 128 filters
-x = VGG.group(1, 128)(x)
+x = VGG.group(x, 1, 128)
 # VGG group: 2 conv layers, 256 filters
-x = VGG.group(2, 256)(x)
+x = VGG.group(x, 2, 256)
 x = Flatten()(x)
 x = Dense(50, activation='softmax')
 ```

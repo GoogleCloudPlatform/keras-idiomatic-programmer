@@ -236,3 +236,31 @@ def classifier(x, n_classes):
     x = Dense(n_classes, activation='softmax')(x)
     return x
 ```
+
+## Composable
+
+*Example Instantiate a ShuffleNet model*
+
+```python
+# ShuffleNet v1 from research paper
+shufflenet = ShuffleNet()
+
+# DenseNet121 custom input shape/classes
+shufflenet = ShuffleNet(input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = shufflenet.model
+```
+
+*Example: Composable Group/Block*/
+
+```python
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+# Shuffle Group:  
+x = DenseNet.group(??)(x)
+# Shuffle Block
+x = DensetNet.shuffle_block(x, ??)
+x = Flatten()(x)
+x = Dense(100, activation='softmax')
+```

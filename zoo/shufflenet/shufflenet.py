@@ -31,20 +31,20 @@ def stem(inputs):
     x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
     return x
 
-def learner(x, blocks, n_groups, filters, reduction):
+def learner(x, groups, n_groups, filters, reduction):
     ''' Construct the Learner
 	x        : input to the learner
-        blocks   : number of shuffle blocks per shuffle group
+        groups   : number of shuffle blocks per shuffle group
         n_groups : number of groups to partition feature maps (channels) into.
         filters  : number of filters per shuffle group
         reduction: dimensionality reduction on entry to a shuffle block
     '''
     # Assemble the shuffle groups
     for i in range(3):
-        x = shuffle_group(x, n_groups, blocks[i], filters[i+1], reduction)
+        x = group(x, n_groups, groups[i], filters[i+1], reduction)
     return x
     
-def shuffle_group(x, n_groups, n_blocks, n_filters, reduction):
+def group(x, n_groups, n_blocks, n_filters, reduction):
     ''' Construct a Shuffle Group 
         x        : input to the group
         n_groups : number of groups to partition feature maps (channels) into.
@@ -203,7 +203,7 @@ filters = {
 reduction = 0.25
 
 # meta-parameter: number of shuffle blocks per shuffle group
-blocks = [4, 8, 4 ]
+groups = [4, 8, 4 ]
 
 # input tensor
 inputs = Input( (224, 224, 3) )
@@ -212,7 +212,7 @@ inputs = Input( (224, 224, 3) )
 x = stem(inputs)
 
 # The Learner
-x = learner(x, blocks, n_groups, filters[n_groups], reduction)
+x = learner(x, groups, n_groups, filters[n_groups], reduction)
 
 # The Classifier
 outputs = classifier(x, 1000)

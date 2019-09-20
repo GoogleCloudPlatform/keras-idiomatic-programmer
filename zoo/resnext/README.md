@@ -231,11 +231,11 @@ model = resnext.model
 inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
 # Residual Next group: 2 blocks, 128 filters
-x = ResNeXt.group(2, 128)(x)
+x = ResNeXt.group(x, 2, 128)
 # Residual Next block with projection, 256 filters
-x = ResNeXt.projection_block(256)
+x = ResNeXt.projection_block(x, 256)
 # Residual Next block with identity, 256 filters
-x = ResNeXt.identity_block(256)
+x = ResNeXt.identity_block(x, 256)
 x = Flatten()(x)
 x = Dense(100, activation='softmax')
 ```

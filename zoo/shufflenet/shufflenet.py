@@ -31,40 +31,40 @@ def stem(inputs):
     x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
     return x
 
-def learner(x, groups, n_groups, filters, reduction):
+def learner(x, groups, n_partitions, filters, reduction):
     ''' Construct the Learner
-	x        : input to the learner
-        groups   : number of shuffle blocks per shuffle group
-        n_groups : number of groups to partition feature maps (channels) into.
-        filters  : number of filters per shuffle group
-        reduction: dimensionality reduction on entry to a shuffle block
+	x            : input to the learner
+        groups       : number of shuffle blocks per shuffle group
+        n_partitions : number of groups to partition feature maps (channels) into.
+        filters      : number of filters per shuffle group
+        reduction    : dimensionality reduction on entry to a shuffle block
     '''
     # Assemble the shuffle groups
     for i in range(3):
-        x = group(x, n_groups, groups[i], filters[i+1], reduction)
+        x = group(x, n_partitions, groups[i], filters[i+1], reduction)
     return x
     
-def group(x, n_groups, n_blocks, n_filters, reduction):
+def group(x, n_partitions, n_blocks, n_filters, reduction):
     ''' Construct a Shuffle Group 
-        x        : input to the group
-        n_groups : number of groups to partition feature maps (channels) into.
-        n_blocks : number of shuffle blocks for this group
-        n_filters: number of output filters
-        reduction: dimensionality reduction
+        x            : input to the group
+        n_partitions : number of groups to partition feature maps (channels) into.
+        n_blocks     : number of shuffle blocks for this group
+        n_filters    : number of output filters
+        reduction    : dimensionality reduction
     '''
     
     # first block is a strided shuffle block
-    x = strided_shuffle_block(x, n_groups, n_filters, reduction)
+    x = strided_shuffle_block(x, n_partitions, n_filters, reduction)
     
     # remaining shuffle blocks in group
     for _ in range(n_blocks-1):
-        x = shuffle_block(x, n_groups, n_filters, reduction)
+        x = shuffle_block(x, n_partitions, n_filters, reduction)
     return x
     
-def strided_shuffle_block(x, n_groups, n_filters, reduction):
+def strided_shuffle_block(x, n_partitions, n_filters, reduction):
     ''' Construct a Strided Shuffle Block 
         x           : input to the block
-        n_groups    : number of groups to partition feature maps (channels) into.
+        n_partitions: number of groups to partition feature maps (channels) into.
         n_filters   : number of filters
         reduction   : dimensionality reduction factor (e.g, 0.25)
     '''
@@ -78,54 +78,54 @@ def strided_shuffle_block(x, n_groups, n_filters, reduction):
     n_filters -= int(x.shape[3])
     
     # pointwise group convolution, with dimensionality reduction
-    x = pw_group_conv(x, n_groups, int(reduction * n_filters))
+    x = pw_group_conv(x, n_partitions, int(reduction * n_filters))
     x = ReLU()(x)
     
     # channel shuffle layer
-    x = channel_shuffle(x, n_groups)
+    x = channel_shuffle(x, n_partitions)
 
     # Depthwise 3x3 Strided Convolution
     x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False)(x)
     x = BatchNormalization()(x)
 
     # pointwise group convolution, with dimensionality restoration
-    x = pw_group_conv(x, n_groups, n_filters)
+    x = pw_group_conv(x, n_partitions, n_filters)
     
     # Concatenate the projection shortcut to the output
     x = Concatenate()([shortcut, x])
     x = ReLU()(x)
     return x
     
-def shuffle_block(x, n_groups, n_filters, reduction):
+def shuffle_block(x, n_partitions, n_filters, reduction):
     ''' Construct a shuffle Shuffle block  
-        x         : input to the block
-        n_groups  : number of groups to partition feature maps (channels) into.
-        n_filters : number of filters
-        reduction : dimensionality reduction factor (e.g, 0.25)
+        x           : input to the block
+        n_partitions: number of groups to partition feature maps (channels) into.
+        n_filters   : number of filters
+        reduction   : dimensionality reduction factor (e.g, 0.25)
     '''
     # identity shortcut
     shortcut = x
     
     # pointwise group convolution, with dimensionality reduction
-    x = pw_group_conv(x, n_groups, int(reduction * n_filters))
+    x = pw_group_conv(x, n_partitions, int(reduction * n_filters))
     x = ReLU()(x)
     
     # channel shuffle layer
-    x = channel_shuffle(x, n_groups)
+    x = channel_shuffle(x, n_partitions)
     
     # Depthwise 3x3 Convolution
     x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False)(x)
     x = BatchNormalization()(x)
     
     # pointwise group convolution, with dimensionality restoration
-    x = pw_group_conv(x, n_groups, n_filters)
+    x = pw_group_conv(x, n_partitions, n_filters)
     
     # Add the identity shortcut (input added to output)
     x = Add()([shortcut, x])
     x = ReLU()(x)
     return x
 
-def pw_group_conv(x, n_groups, n_filters):
+def pw_group_conv(x, n_partitions, n_filters):
     ''' A Pointwise Group Convolution  
         x        : input tensor
         n_groups : number of groups to partition feature maps (channels) into.
@@ -135,13 +135,13 @@ def pw_group_conv(x, n_groups, n_filters):
     in_filters = x.shape[3]
 
     # Derive the number of input filters (channels) per group
-    grp_in_filters  = in_filters // n_groups
+    grp_in_filters  = in_filters // n_partitions
     # Derive the number of output filters per group (Note the rounding up)
-    grp_out_filters = int(n_filters / n_groups + 0.5)
+    grp_out_filters = int(n_filters / n_partitions + 0.5)
       
     # Perform convolution across each channel group
     groups = []
-    for i in range(n_groups):
+    for i in range(n_partitions):
         # Slice the input across channel group
         group = Lambda(lambda x: x[:, :, :, grp_in_filters * i: grp_in_filters * (i + 1)])(x)
 
@@ -156,19 +156,19 @@ def pw_group_conv(x, n_groups, n_filters):
     x = BatchNormalization()(x)
     return x
     
-def channel_shuffle(x, n_groups):
+def channel_shuffle(x, n_partitions):
     ''' Implements the channel shuffle layer 
-        x        : input tensor
-        n_groups : number of groups to partition feature maps (channels) into.
+        x            : input tensor
+        n_partitions : number of groups to partition feature maps (channels) into.
     '''
     # Get dimensions of the input tensor
     batch, height, width, n_filters = x.shape
 
     # Derive the number of input filters (channels) per group
-    grp_in_filters  = n_filters // n_groups
+    grp_in_filters  = n_filters // n_partitions
 
     # Separate out the channel groups
-    x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_groups, grp_in_filters]))(x)
+    x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_partitions, grp_in_filters]))(x)
     # Transpose the order of the channel groups (i.e., 3, 4 => 4, 3)
     x = Lambda(lambda z: K.permute_dimensions(z, (0, 1, 2, 4, 3)))(x)
     # Restore shape
@@ -187,7 +187,7 @@ def classifier(x, n_classes):
     return x
     
 # meta-parameter: The number of groups to partition the filters (channels)
-n_groups=2
+n_partitions=2
 
 # meta-parameter: number of groups to partition feature maps (key), and
 # corresponding number of output filters (value)
@@ -212,7 +212,7 @@ inputs = Input( (224, 224, 3) )
 x = stem(inputs)
 
 # The Learner
-x = learner(x, groups, n_groups, filters[n_groups], reduction)
+x = learner(x, groups, n_partitions, filters[n_partitions], reduction)
 
 # The Classifier
 outputs = classifier(x, 1000)

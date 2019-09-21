@@ -36,10 +36,10 @@ def learner(x):
     # Fire blocks with simple bypass on blocks 2, 4, 6 and 8 
 
     # First Fire group, progressively increase number of filters
-    x = fire_group(x, [(16, False), (16, True), (32, False)])
+    x = group(x, [(16, False), (16, True), (32, False)])
 
     # Second Fire group
-    x = fire_group(x, [(32, True), (48, False), (48, True), (64, False)])
+    x = group(x, [(32, True), (48, False), (48, True), (64, False)])
 
     # Last fire block
     x = fire_block(x, 64, True)
@@ -48,7 +48,7 @@ def learner(x):
     x = Dropout(0.5)(x)
     return x
 
-def fire_group(x, filters):
+def group(x, filters):
     ''' Construct the Fire Group
 	x       : input to the group
 	filters : list of number of filters per fire block in group

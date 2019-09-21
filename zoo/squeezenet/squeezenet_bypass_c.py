@@ -38,7 +38,7 @@ class SqueezeNetBypass(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = learner(x, dropout)
+        x = self.learner(x, dropout)
 
         # The Classifier
         outputs = self.classifier(x, n_classes)
@@ -76,61 +76,70 @@ class SqueezeNetBypass(object):
         x = SqueezeNetBypass.group(x, [(32, True), (48, False), (48, True), (64, False)])
 
         # Last fire block
-        x = SqueezeNet.fire_block(x, 64, True)
+        x = SqueezeNetBypass.fire_block(x, 64, True)
 
         # Dropout is delayed to end of fire groups
         x = Dropout(0.5)(x)
         return x
 
-def group(x, filters):
-    ''' Construct the Fire Group
-	x       : input to the group
-	filters : list of number of filters per fire block in group
-    '''
-    for n_filters, bypass in filters:
-        x = fire_block(x, n_filters)
+    @staticmethod
+    def group(x, filters, init_weights=None):
+        ''' Construct the Fire Group
+            x       : input to the group
+            filters : list of number of filters per fire block in group
+        '''
+        if init_weights is None:
+            init_weights = SqueezeNetBypass.init_weights
+            
+        for n_filters, bypass in filters:
+            x = SqueezeNetBypass.fire_block(x, n_filters, init_weights=init_weights)
 
-    # Delayed downsampling
-    x = MaxPooling2D((3, 3), strides=2)(x)
-    return x
+        # Delayed downsampling
+        x = MaxPooling2D((3, 3), strides=2)(x)
+        return x
 
-def fire_block(x, n_filters, bypass=False):
-    ''' Construct a Fire Block
-	x        : input to the block
-        n_filters: number of filters in the block
-        bypass   : whether block has an identity shortcut
-    '''
-    # remember the input
-    shortcut = x
+    @staticmethod
+    def fire_block(x, n_filters, bypass=False, init_weights=None):
+        ''' Construct a Fire Block
+            x        : input to the block
+            n_filters: number of filters in the block
+            bypass   : whether block has an identity shortcut
+        '''
+        if init_weights is None:
+            init_weights = SqueezeNetBypass.init_weights
+            
+        # remember the input
+        shortcut = x
 
-    # squeeze layer
-    squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
-                     padding='same', kernel_initializer='glorot_uniform')(x)
+        # squeeze layer
+        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
+                         padding='same', kernel_initializer=init_weights)(x)
 
-    # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
-    # of filters
-    expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu',
-                      padding='same', kernel_initializer='glorot_uniform')(squeeze)
-    expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu',
-                      padding='same', kernel_initializer='glorot_uniform')(squeeze)
+        # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
+        # of filters
+        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu',
+                           padding='same', kernel_initializer=init_weights)(squeeze)
+        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu',
+                           padding='same', kernel_initializer=init_weights)(squeeze)
 
-    # concatenate the feature maps from the 1x1 and 3x3 branches
-    x = Concatenate()([expand1x1, expand3x3])
+        # concatenate the feature maps from the 1x1 and 3x3 branches
+        x = Concatenate()([expand1x1, expand3x3])
     
-    # if identity link, add (matrix addition) input filters to output filters
-    if bypass:
-        x = Add()([x, shortcut])
+        # if identity link, add (matrix addition) input filters to output filters
+        if bypass:
+            x = Add()([x, shortcut])
         
-    return x
+        return x
 
-def classifier(x, n_classes):
-    ''' Construct the Classifier '''
-    # set the number of filters equal to number of classes
-    x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
-               kernel_initializer='glorot_uniform')(x)
-    # reduce each filter (class) to a single value
-    x = GlobalAveragePooling2D()(x)
-    x = Activation('softmax')(x)
-    return x
+    def classifier(self, x, n_classes):
+        ''' Construct the Classifier '''
+        # set the number of filters equal to number of classes
+        x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
+                   kernel_initializer=self.init_weights)(x)
+        # reduce each filter (class) to a single value
+        x = GlobalAveragePooling2D()(x)
+        x = Activation('softmax')(x)
+        return x
 
-
+# Example
+# squeezenet = SqueezeNetBypass()

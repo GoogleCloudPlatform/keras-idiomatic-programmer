@@ -13,10 +13,10 @@ def learner(x):
         x    : input to the learner
     '''
     # First fire group, progressively increase number of filters
-    x = fire_group(x, [16, 16, 32])
+    x = group(x, [16, 16, 32])
 
     # Second fire group
-    x = fire_group(x, [32, 48, 48, 64])
+    x = group(x, [32, 48, 48, 64])
 
     # Last fire block (module)
     x = fire_block(x, 64)
@@ -46,7 +46,7 @@ model = Model(inputs, outputs)
 <img src='micro.jpg'>
 
 ```python
-def fire_group(x, filters):
+def group(x, filters):
     ''' Construct a Fire Group
         x     : input to the group
         filters: list of number of filters per fire block (module)

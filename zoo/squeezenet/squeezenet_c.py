@@ -65,7 +65,8 @@ class SqueezeNet(object):
 
     def learner(self, x, dropout=0.5):
         ''' Construct the Learner
-            x    : input to the learner
+            x      : input to the learner
+            dropout: percent of dropout
         '''
         # First fire group, progressively increase number of filters
         x = SqueezeNet.group(x, [16, 16, 32])

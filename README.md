@@ -31,7 +31,7 @@ The repository is organized by:
 |               | Transfer Learning |
 |               | Production |
 | `notebooks`   | notebooks for production-grade solutions |
-| `zoo`         | tf.keras model zoo (coded in idiomatic programming style) - Apache 2.0 license |
+| `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
 
 ## Reviewers
 

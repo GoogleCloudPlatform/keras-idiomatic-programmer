@@ -238,12 +238,12 @@ inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner
-# Residual Next group: 2 blocks, 128 filters
-# Residual Next block with projection, 256 filters
+# Residual Next group: 2 blocks, 64 to 128 filters
+# Residual Next block with projection, 128 to 256 filters
 # Residual Next block with identity, 256 filters
-x = ResNeXt.group(x, 2, 128)
-x = ResNeXt.projection_block(x, 256)
-x = ResNeXt.identity_block(x, 256)
+x = ResNeXt.group(x, 64, 128, 2)
+x = ResNeXt.projection_block(x, 128, 256)
+x = ResNeXt.identity_block(x, 256, 256)
 
 # Classifier
 x = Flatten()(x)
@@ -254,6 +254,28 @@ model.summary()
 ```
 
 ```python
+# Removed for brevity
+
+batch_normalization_427 (BatchN (None, 8, 8, 256)    1024        concatenate_9[0][0]              
+__________________________________________________________________________________________________
+re_lu_420 (ReLU)                (None, 8, 8, 256)    0           batch_normalization_427[0][0]    
+__________________________________________________________________________________________________
+conv2d_743 (Conv2D)             (None, 8, 8, 256)    65536       re_lu_420[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_428 (BatchN (None, 8, 8, 256)    1024        conv2d_743[0][0]                 
+__________________________________________________________________________________________________
+add_140 (Add)                   (None, 8, 8, 256)    0           re_lu_418[0][0]                  
+                                                                 batch_normalization_428[0][0]    
+__________________________________________________________________________________________________
+re_lu_421 (ReLU)                (None, 8, 8, 256)    0           add_140[0][0]                    
+__________________________________________________________________________________________________
+flatten_1 (Flatten)             (None, 16384)        0           re_lu_421[0][0]                  
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 10)           163850      flatten_1[0][0]                  
+==================================================================================================
+Total params: 461,450
+Trainable params: 456,586
+Non-trainable params: 4,864
 ```
 
 ```python
@@ -263,4 +285,7 @@ x_train = (x_train / 255.0).astype(np.float32)
 x_test  = (x_test  / 255.0).astype(np.float32)
 
 model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
+```
+
+```python
 ```

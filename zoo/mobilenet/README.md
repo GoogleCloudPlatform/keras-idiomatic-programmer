@@ -399,3 +399,16 @@ model.summary()
 
 ```python
 ```
+
+```python
+from tensorflow.keras.datasets import cifar10
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = (x_train / 255.0).astype(np.float342)
+x_test  = (x_test  / 255.0).astype(np.float342)
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
+```
+
+```python
+```

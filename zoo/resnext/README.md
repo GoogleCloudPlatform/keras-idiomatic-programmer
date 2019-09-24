@@ -226,15 +226,15 @@ resnext = ResNeXt(50, input_shape=(128, 128, 3), n_classes=50)
 model = resnext.model
 ```
 
-*Example: Composable Group/Block*/
+*Example: Composable Group/Block*
 
 ```python
 # Make mini-ResNeXt for CIFAR-10
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, Flatten, Dense
-inputs = Input((32, 32, 3))
 
 # Stem
+inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner
@@ -292,4 +292,6 @@ Epoch 1/10
 45000/45000 [==============================] - 579s 13ms/sample - loss: 1.9641 - acc: 0.4374 - val_loss: 1.5466 - val_acc: 0.4746
 Epoch 2/10
 45000/45000 [==============================] - 561s 12ms/sample - loss: 1.0568 - acc: 0.6242 - val_loss: 1.0967 - val_acc: 0.6214
+Epoch 3/10
+45000/45000 [==============================] - 566s 13ms/sample - loss: 0.8438 - acc: 0.7045 - val_loss: 1.0291 - val_acc: 0.6468
 ```

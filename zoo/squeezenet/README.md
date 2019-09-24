@@ -1,6 +1,11 @@
 
 # SqueezeNet
 
+```python
+squeezenet(_bypass/_complex).py - academic - procedural
+squeezenet(_bypass/_complex)_c.py - composable - OOP
+```python
+
 [Paper](https://arxiv.org/pdf/1602.07360.pdf)
 
 ## Macro-Architecture
@@ -254,15 +259,15 @@ from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+x = Conv2D(16, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner
-# SqueezeNet group: ??
-# SqueezeNet block with projection, 128 to 256 filters
-# SqueezeNet block with identity, 256 filters
-x = SqueezeNet.group(??)
-x = SqueezeNet.projection_block(x, ??)
-x = ResNeXt.identity_block(x, ??)
+# SqueezeNet group: 2 blocks, 16 and 32 filters
+# SqueezeNet fire block with 64 filters
+# SqueezeNet fire block with 128 filters
+x = SqueezeNet.group(x, [16, 32])
+x = SqueezeNet.fire_block(x, 64)
+x = SqueezeNet.fire_block(x, 128)
 
 # Classifier
 x = Flatten()(x)
@@ -288,4 +293,4 @@ model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verb
 ```
 
 ```python
-
+```

@@ -242,25 +242,54 @@ def classifier(x, n_classes):
 *Example Instantiate a ShuffleNet model*
 
 ```python
+from shufflenet_c import ShuffleNet
+
 # ShuffleNet v1 from research paper
 shufflenet = ShuffleNet()
 
-# DenseNet121 custom input shape/classes
+# ShuffleNet v1 custom input shape/classes
 shufflenet = ShuffleNet(input_shape=(128, 128, 3), n_classes=50)
 
 # getter for the tf.keras model
 model = shufflenet.model
 ```
 
-*Example: Composable Group/Block*/
+*Example: Composable Group/Block*
 
 ```python
+# Make a mini-shufflenet for CIFAR-10
+
+# Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
 # Shuffle Group:  
-x = DenseNet.group(??)(x)
+x = ShuffleNet.group(??)(x)
 # Shuffle Block
-x = DensetNet.shuffle_block(x, ??)
+x = ShuffletNet.shuffle_block(x, ??)
+
+# Classifier
 x = Flatten()(x)
-x = Dense(100, activation='softmax')
+outputs = Dense(10, activation='softmax')(x)
+model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
+```
+
+
+```python
+```
+
+```python
+from tensorflow.keras.datasets import cifar10
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = (x_train / 255.0).astype(np.float342)
+x_test  = (x_test  / 255.0).astype(np.float342)
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
+```
+
+```python
 ```

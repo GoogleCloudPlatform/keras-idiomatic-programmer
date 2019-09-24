@@ -66,6 +66,6 @@ In my experience, I find the sweetspot for utilization on a single instance is 7
 
 This notebook demonstrates a compilation of techniques one might consider when training in a modern production environment. Covered are:
 
-  * Model Aggregation
+  * Model Aggregation & Model Cutout
   * Adding Layers to Trained Models
   * Auxilliary Classifiers (why not to use them)

@@ -115,13 +115,15 @@ vgg = VGG(16, input_shape=(128, 128, 3), n_classes=50)
 model = vgg.model
 ```
 
-*Example: Composable Group*/
+*Example: Composable Group*
 
 ```python
 # make mini-VGG for CIFAR-10
-inputs = Input((32, 32, 3))
+from tensorflow.keras import Input, Model
+from tensorflow.keras import Conv2D, Flatten, Dense
 
 # Stem
+inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner

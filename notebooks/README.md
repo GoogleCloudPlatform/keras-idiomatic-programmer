@@ -8,6 +8,7 @@ These notebooks address *goto production (GTP)* questions that I receive as a me
 | `Pre-Stem Deconvolution`              | Using deconvolution (transpose) to learn optimal transformations for different input sizes to existing model |
 | `Building Data preprocessing into Graph` | Using TF 2.0 Subclassing and @tf.function decorator to put the data preprocessing as part of the model graph |
 | `Estimating the CPU/GPU utilization for training` | Using pre-warmpup methods to estimate utilization across compute resources, for the purpose of planning the optimal utilization prior to full training. |
+| `Fun with ML in Production`            | A composition of fun things (tricks) that one may try in ML production environment |
 
 ### Prediction with Example Key
 
@@ -58,3 +59,13 @@ Things you might consider when under utilizing. Do I scale up (larger instances)
 In this notebook, we use short training runs (warm-start) combined with the `psutil` module to see what our utilization will be when we do a full training run. Since we are only interested in utilization, we don't care what the accuracy is --we can just use a defacto (best guess) on hyperparameters.
 
 In my experience, I find the sweetspot for utilization on a single instance is 70%. That leaves enough compute power from background processes pre-empting the training and if training headless, to be able to ssh in and monitor the system.
+
+### Fun with ML in Production
+
+#### Topics
+
+This notebook demonstrates a compilation of techniques one might consider when training in a modern production environment. Covered are:
+
+  * Model Aggregation
+  * Adding Layers to Trained Models
+  * Auxilliary Classifiers (why not to use them)

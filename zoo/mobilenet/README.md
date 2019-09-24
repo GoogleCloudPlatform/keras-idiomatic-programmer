@@ -358,6 +358,8 @@ def classifier(x, n_classes):
 *Example Instantiate a MobileNet V2 model*
 
 ```python
+from mobilenet_v2_c import MobileNetV2
+
 # MobileNet v2.0 from research paper
 mobilenet = MobileNetV2()
 
@@ -371,12 +373,29 @@ model = mobilenet.model
 *Example: Composable Group/Block*/
 
 ```python
+# Make mini-mobilenet for CIFAR-10
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
+
+# Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
 # Inverted Residual group: 2 blocks, 16 filters
-x = MobileNetV2.group(x, 2, 16, 1, alpha=1, expansion=1)
 # Inverted Residual block: 32 filters, strided
+# Inverted Residual block: 32 filters, non-strided
+x = MobileNetV2.group(x, 2, 16, 1, alpha=1, expansion=1)
 x = MobileNetV2.inverted_block(x, 32, alpha=1, expansion=6, strides=(2, 2))
+x = MobileNetV2.inverted_block(x, 32, alpha=1, expansion=6, strides=(1, 1))
+
+# Classifier
 x = Flatten()(x)
-x = Dense(100, activation='softmax')
+outputs = Dense(10, activation='softmax')(x)
+model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
+```
+
+```python
 ```

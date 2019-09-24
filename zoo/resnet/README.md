@@ -318,13 +318,15 @@ resnet = ResNetV1(50, input_shape=(128, 128, 3), n_classes=50)
 model = resnet.model
 ```
 
-*Example: Composable Group/Block*/
+*Example: Composable Group/Block*
 
 ```python
 # Make mini-ResNetV1 for CIFAR-10
-inputs = Input((32, 32, 3))
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
+inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner
@@ -337,7 +339,7 @@ x = ResNetV1.identity_block(x, 256)
 
 # Classifier
 x = Flatten()(x)
-ouputs = Dense(100, activation='softmax')(x)
+ouputs = Dense(10, activation='softmax')(x)
 model = Model(inputs, outputs)
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
 model.summary()

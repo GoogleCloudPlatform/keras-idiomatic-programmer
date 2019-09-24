@@ -387,24 +387,28 @@ model = senet.model
 *Example: Composable Group/Block*
 
 ```python
-# Construct mini-SE-ResNet for CIFAR-10
+# Make a mini-SE-ResNet for CIFAR-10
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
 # SE Residual group: 2 blocks, 128 filters
-x = SEResNet.group(x, 2, 128)
 # SE Residual block with projection, 256 filters
+# SE Residual block with identity, 256 filters
+x = SEResNet.group(x, 2, 128)
 x = SEResNet.projection_block(x, 256)
-# Residual block with identity, 256 filters
 x = SEResNet.identity_block(x, 256)
 
 # Classifier
 x = Flatten()(x)
 outputs = Dense(10, activation='softmax')(x)
 model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
 ```
 
 

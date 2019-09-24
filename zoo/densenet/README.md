@@ -191,6 +191,8 @@ def classifier(x, n_classes):
 *Example Instantiate a DenseNet model*
 
 ```python
+from densenet_c import DenseNet
+
 # DenseNet121 from research paper
 densenet = DenseNet(121)
 
@@ -204,12 +206,22 @@ model = densenet.model
 *Example: Composable Group/Block*/
 
 ```python
+# Make a mini-densenet for CIFAR-10
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
+
+# Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
 # DenseNet group: 6 blocks, 32 filters
-x = DenseNet.group(x, 6, 32)
 # Residual block with 32 filters
+x = DenseNet.group(x, 6, 32)
 x = DensetNet.dense_block(x, 32)
+
+# Classifier
 x = Flatten()(x)
-x = Dense(100, activation='softmax')
+outputs = Dense(10, activation='softmax')(x)
+model = Model(inputs, outputs)
 ```

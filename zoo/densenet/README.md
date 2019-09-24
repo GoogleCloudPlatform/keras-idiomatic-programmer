@@ -73,7 +73,7 @@ def group(x, n_blocks, n_filters, reduction=None):
     """
     # Construct a group of densely connected residual blocks
     for _ in range(n_blocks):
-        x = dense_block(x, n_filters)
+        x = residual_block(x, n_filters)
 
     # Construct interceding transition block
     if reduction is not None:
@@ -111,7 +111,7 @@ def stem(inputs, n_filters):
 <img src="dense-block.jpg">
 
 ```python
-def dense_block(x, n_filters):
+def residual_block(x, n_filters):
     """ Construct a Densely Connected Residual Block
         x        : input to the block
         n_filters: number of filters in convolution layer in residual block
@@ -215,12 +215,14 @@ inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner
-# DenseNet group: 6 blocks, 32 filters
+# DenseNet group: 6 blocks, 32 filters, 50% reduction
 # Residual block with 32 filters
+# Transitional block with 50% reduction
 # Residual block with 32 filters
-x = DenseNet.group(x, 6, 32)
-x = DensetNet.dense_block(x, 32)
-x = DensetNet.dense_block(x, 32)
+x = DenseNet.group(x, 6, 32, reduction=0.5)
+x = DensetNet.residual_block(x, 32)
+x = DenseNet.trans_block(x, reduction=0.5)
+x = DensetNet.residual_block(x, 32)
 
 # Classifier
 x = Flatten()(x)
@@ -231,6 +233,37 @@ model.summary()
 ```
 
 ```python
+# Removed for brevity
+
+conv2d_816 (Conv2D)             (None, 16, 16, 32)   36864       re_lu_485[0][0]                  
+__________________________________________________________________________________________________
+concatenate_41 (Concatenate)    (None, 16, 16, 144)  0           average_pooling2d_2[0][0]        
+                                                                 conv2d_816[0][0]                 
+__________________________________________________________________________________________________
+batch_normalization_496 (BatchN (None, 16, 16, 144)  576         concatenate_41[0][0]             
+__________________________________________________________________________________________________
+conv2d_817 (Conv2D)             (None, 16, 16, 72)   10368       batch_normalization_496[0][0]    
+__________________________________________________________________________________________________
+average_pooling2d_3 (AveragePoo (None, 8, 8, 72)     0           conv2d_817[0][0]                 
+__________________________________________________________________________________________________
+batch_normalization_497 (BatchN (None, 8, 8, 72)     288         average_pooling2d_3[0][0]        
+__________________________________________________________________________________________________
+re_lu_486 (ReLU)                (None, 8, 8, 72)     0           batch_normalization_497[0][0]    
+__________________________________________________________________________________________________
+conv2d_818 (Conv2D)             (None, 8, 8, 128)    9216        re_lu_486[0][0]                  
+__________________________________________________________________________________________________
+batch_normalization_498 (BatchN (None, 8, 8, 128)    512         conv2d_818[0][0]                 
+__________________________________________________________________________________________________
+re_lu_487 (ReLU)                (None, 8, 8, 128)    0           batch_normalization_498[0][0]    
+__________________________________________________________________________________________________
+conv2d_819 (Conv2D)             (None, 8, 8, 32)     36864       re_lu_487[0][0]                  
+__________________________________________________________________________________________________
+concatenate_42 (Concatenate)    (None, 8, 8, 104)    0           average_pooling2d_3[0][0]        
+                                                                 conv2d_819[0][0]                 
+==================================================================================================
+Total params: 449,824
+Trainable params: 445,328
+Non-trainable params: 4,496
 ```
 
 ```python

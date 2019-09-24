@@ -203,7 +203,7 @@ densenet = DenseNet(121, input_shape=(128, 128, 3), n_classes=50)
 model = densenet.model
 ```
 
-*Example: Composable Group/Block*/
+*Example: Composable Group/Block*
 
 ```python
 # Make a mini-densenet for CIFAR-10
@@ -217,11 +217,31 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Learner
 # DenseNet group: 6 blocks, 32 filters
 # Residual block with 32 filters
+# Residual block with 32 filters
 x = DenseNet.group(x, 6, 32)
+x = DensetNet.dense_block(x, 32)
 x = DensetNet.dense_block(x, 32)
 
 # Classifier
 x = Flatten()(x)
 outputs = Dense(10, activation='softmax')(x)
 model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
+```
+
+```python
+```
+
+```python
+from tensorflow.keras.datasets import cifar10
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = (x_train / 255.0).astype(np.float342)
+x_test  = (x_test  / 255.0).astype(np.float342)
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
+```
+
+```python
 ```

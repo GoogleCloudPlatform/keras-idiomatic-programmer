@@ -215,6 +215,7 @@ def classifier(x, n_classes):
 *Example Instantiate a ResNeXt model*
 
 ```python
+from resnext_c import ResNeXt
 # ResNeXt50 from research paper
 resnext = ResNeXt(50)
 
@@ -228,14 +229,38 @@ model = resnext.model
 *Example: Composable Group/Block*/
 
 ```python
+# Make mini-ResNeXt for CIFAR-10
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+
+# Stem
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
 # Residual Next group: 2 blocks, 128 filters
-x = ResNeXt.group(x, 2, 128)
 # Residual Next block with projection, 256 filters
-x = ResNeXt.projection_block(x, 256)
 # Residual Next block with identity, 256 filters
+x = ResNeXt.group(x, 2, 128)
+x = ResNeXt.projection_block(x, 256)
 x = ResNeXt.identity_block(x, 256)
+
+# Classifier
 x = Flatten()(x)
-x = Dense(100, activation='softmax')
+outputs = Dense(10, activation='softmax')(x)
+model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
+```
+
+```python
+```
+
+```python
+from tensorflow.keras.datasets import cifar10
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = (x_train / 255.0).astype(np.float32)
+x_test  = (x_test  / 255.0).astype(np.float32)
+
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
 ```

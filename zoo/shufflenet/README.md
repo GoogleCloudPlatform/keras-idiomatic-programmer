@@ -258,6 +258,8 @@ model = shufflenet.model
 
 ```python
 # Make a mini-shufflenet for CIFAR-10
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
 inputs = Input((32, 32, 3))

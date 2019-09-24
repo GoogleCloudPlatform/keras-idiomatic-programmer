@@ -306,6 +306,8 @@ def classifier(x, n_classes):
 *Example Instantiate a ResNet model*
 
 ```python
+from resnet_v1_c import ResNetV1
+
 # ResNet50 v1.0 from research paper
 resnet = ResNetV1(50)
 
@@ -319,14 +321,52 @@ model = resnet.model
 *Example: Composable Group/Block*/
 
 ```python
+# Make mini-ResNetV1 for CIFAR-10
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
+
+# Stem
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
 # Residual group: 2 blocks, 128 filters
-x = ResNetV1.group(x, 2, 128)
 # Residual block with projection, 256 filters
-x = ResNetV1.projection_block(x, 256)
 # Residual block with identity, 256 filters
+x = ResNetV1.group(x, 2, 128)
+x = ResNetV1.projection_block(x, 256)
 x = ResNetV1.identity_block(x, 256)
+
+# Classifier
 x = Flatten()(x)
-x = Dense(100, activation='softmax')
+ouputs = Dense(100, activation='softmax')(x)
+model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
+```
+
+```python
+# removed for brevity
+__________________
+batch_normalization_394 (BatchN (None, 8, 8, 1024)   4096        conv2d_396[0][0]                 
+__________________________________________________________________________________________________
+add_130 (Add)                   (None, 8, 8, 1024)   0           re_lu_389[0][0]                  
+                                                                 batch_normalization_394[0][0]    
+__________________________________________________________________________________________________
+re_lu_392 (ReLU)                (None, 8, 8, 1024)   0           add_130[0][0]                    
+__________________________________________________________________________________________________
+flatten (Flatten)               (None, 65536)        0           re_lu_392[0][0]                  
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 10)           655370      flatten[0][0]                    
+==================================================================================================
+Total params: 2,664,270
+Trainable params: 2,652,966
+Non-trainable params: 11,304
+```
+
+```python
+from tensorflow.keras.datasets import cifar10
+(x_train, y_train), (x_test, y_test) = cifar.load_data()
+x_train = (x_train / 255.0).astype(np.float32)
+x_test  = (x_test  / 255.0).astype(np.float32)
+
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
 ```

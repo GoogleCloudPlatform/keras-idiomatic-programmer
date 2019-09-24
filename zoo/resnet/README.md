@@ -370,3 +370,11 @@ x_test  = (x_test  / 255.0).astype(np.float32)
 
 model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
 ```
+
+```python
+Train on 45000 samples, validate on 5000 samples
+Epoch 1/10
+45000/45000 [==============================] - 1229s 27ms/sample - loss: 4.3040 - acc: 0.1834 - val_loss: 2.1594 - val_acc: 0.2208
+Epoch 2/10
+45000/45000 [==============================] - 1029s 23ms/sample - loss: 2.0595 - acc: 0.2479 - val_loss: 1.9784 - val_acc: 0.2804
+```

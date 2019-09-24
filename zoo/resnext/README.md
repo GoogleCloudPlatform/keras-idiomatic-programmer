@@ -280,10 +280,11 @@ Non-trainable params: 4,864
 
 ```python
 from tensorflow.keras.datasets import cifar10
+import numpy as np
+
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 x_train = (x_train / 255.0).astype(np.float32)
 x_test  = (x_test  / 255.0).astype(np.float32)
-
 model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
 ```
 
@@ -294,4 +295,6 @@ Epoch 2/10
 45000/45000 [==============================] - 561s 12ms/sample - loss: 1.0568 - acc: 0.6242 - val_loss: 1.0967 - val_acc: 0.6214
 Epoch 3/10
 45000/45000 [==============================] - 566s 13ms/sample - loss: 0.8438 - acc: 0.7045 - val_loss: 1.0291 - val_acc: 0.6468
+Epoch 4/10
+45000/45000 [==============================] - 565s 13ms/sample - loss: 0.6881 - acc: 0.7590 - val_loss: 1.1972 - val_acc: 0.6144
 ```

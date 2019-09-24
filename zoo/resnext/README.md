@@ -288,4 +288,8 @@ model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verb
 ```
 
 ```python
+Epoch 1/10
+45000/45000 [==============================] - 579s 13ms/sample - loss: 1.9641 - acc: 0.4374 - val_loss: 1.5466 - val_acc: 0.4746
+Epoch 2/10
+45000/45000 [==============================] - 561s 12ms/sample - loss: 1.0568 - acc: 0.6242 - val_loss: 1.0967 - val_acc: 0.6214
 ```

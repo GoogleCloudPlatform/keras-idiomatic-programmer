@@ -372,6 +372,8 @@ def squeeze_excite_block(x, ratio=16):
 *Example Instantiate a SE-ResNet model*
 
 ```python
+from senet_c import SEResNet
+
 # SE-ResNet50 from research paper
 senet = SEResNet(50)
 
@@ -382,9 +384,14 @@ senet = SEResNet(50, input_shape=(128, 128, 3), n_classes=50)
 model = senet.model
 ```
 
-*Example: Composable Group/Block*/
+*Example: Composable Group/Block*
 
 ```python
+# Construct mini-SE-ResNet for CIFAR-10
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
+
+# Stem
 inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), padding='same', activation='relu')(inputs)
 # SE Residual group: 2 blocks, 128 filters
@@ -393,5 +400,26 @@ x = SEResNet.group(x, 2, 128)
 x = SEResNet.projection_block(x, 256)
 # Residual block with identity, 256 filters
 x = SEResNet.identity_block(x, 256)
+
+# Classifier
 x = Flatten()(x)
-x = Dense(100, activation='softmax')
+outputs = Dense(10, activation='softmax')(x)
+model = Model(inputs, outputs)
+```
+
+
+```python
+```
+
+```python
+from tensorflow.keras.datasets import cifar10
+import numpy as np
+
+(x_train, y_train), (x_test, y_test) = cifar10.load_data()
+x_train = (x_train / 255.0).astype(np.float342)
+x_test  = (x_test  / 255.0).astype(np.float342)
+model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
+```
+
+```python
+```

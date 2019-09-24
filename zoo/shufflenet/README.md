@@ -266,12 +266,12 @@ inputs = Input((32, 32, 3))
 x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 
 # Learner
-# Shuffle Group: 2 partitions, 4 blocks, 200 filters
-x = ShuffleNet.group(x, 2, 4, 200)
-# Shuffle Block:
-# Shuffle Block:
-x = ShuffletNet.shuffle_block(x, ??)
-x = ShuffletNet.shuffle_block(x, ??)
+# Shuffle Group: 2 partitions, 4 blocks, 256 filters
+x = ShuffleNet.group(x, 2, 4, 128)
+# Shuffle Block: 2 partitions, 256 filters, strided
+# Shuffle Block: 2 partitions, 256 filters, non-strided
+x = ShuffletNet.strided_shuffle_block(x, 2, 256)
+x = ShuffletNet.shuffle_block(x, 2, 256)
 
 # Classifier
 x = Flatten()(x)

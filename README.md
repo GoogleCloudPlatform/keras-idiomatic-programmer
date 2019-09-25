@@ -44,7 +44,7 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 [Yu-Han Liu](https://www.linkedin.com/in/yu-han-liu-7719281a)<br/>
 [Shahin Saadati](https://www.linkedin.com/in/shahinsaadati)<br/>
 [Torry Yang](https://www.linkedin.com/in/torryyang)<br/>
-Gonzalo Gasca Meza<br/>
+[Gonzalo Gasca Meza](https://www.linkedin.com/in/gogasca)<br/>
 Amy Unruh<br/>
 Martin Groner<br/>
 Brad Miro<br/>
@@ -59,6 +59,7 @@ Sara Robinson
 
 [Hobson Lane](https://www.linkedin.com/in/hobsonlane)<br/>
 [Enoch Tetteh](https://www.linkedin.com/in/enoch-tetteh-80450211a)<br/>
+[Bill Liu](https://www.linkedin.com/in/billliu1202)
 
 ## Quotes
 

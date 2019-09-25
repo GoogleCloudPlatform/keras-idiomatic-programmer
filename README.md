@@ -43,12 +43,13 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 [Noah Negrey](https://www.linkedin.com/in/noah-negrey-bb0a395a)<br/>
 [Yu-Han Liu](https://www.linkedin.com/in/yu-han-liu-7719281a)<br/>
 [Shahin Saadati](https://www.linkedin.com/in/shahinsaadati)<br/>
-Torry Yang<br/>
+[Torry Yang](https://www.linkedin.com/in/torryyang)<br/>
 Gonzalo Gasca Meza<br/>
 Amy Unruh<br/>
 Martin Groner<br/>
 Brad Miro<br/>
-Tianzi Cai
+Tianzi Cai<br/>
+Sara Robinson
 
 *Google Developer Experts (GDE)*
 

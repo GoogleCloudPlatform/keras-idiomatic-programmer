@@ -1,6 +1,11 @@
 
 # Xception
 
+```python
+xception.py (procedural - academic)
+xception_c.py (OOP - composable)
+```
+
 [Paper](https://arxiv.org/pdf/1610.02357.pdf)
 
 ## Macro-Architecture
@@ -225,3 +230,4 @@ def exitFlow(x, n_classes):
 ### Exit Flow Classifier
 
 <img src="classifier.jpg">
+

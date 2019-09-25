@@ -252,4 +252,25 @@ model = xception.model
 # Make a mini-xception for CIFAR-10
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, Flatten, Dense
+
+# Stem
+inputs = Input((32, 32, 3))
+x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+
+# Learner
+# Xception entry: 
+# Xception middle:
+# Xception exit:
+x = Xception.entry(x, [64, 128, 256])
+x = Xception.middle(x, [256, 256, 512])
+
+
+# Classifier
+outputs = Xception.exit(x, ??)
+model = Model(inputs, outputs)
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+model.summary()
+```
+
+```python
 ```

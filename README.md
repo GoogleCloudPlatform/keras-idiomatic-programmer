@@ -67,10 +67,7 @@ Tianzi Cai
 
 *This collection is literally my Keras bible. a great one.* - Roozebh Sanaei, Computer Vision Engineer at Rapsodo
 
-* This [composable design pattern] is so amazing of an effort.* -  Sayak Paul, GDE/ML and Data Science instructor at Pyimagesearch
-
-
-
+*This [composable design pattern] is so amazing of an effort.* -  Sayak Paul, GDE/ML and Data Science instructor at Pyimagesearch
 
 ## Disclaimer
 

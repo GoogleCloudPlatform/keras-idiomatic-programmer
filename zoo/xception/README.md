@@ -1,10 +1,8 @@
 
 # Xception
 
-```python
-xception.py (procedural - academic)
-xception_c.py (OOP - composable)
-```
+    xception.py (procedural - academic)
+    xception_c.py (OOP - composable)
 
 [Paper](https://arxiv.org/pdf/1610.02357.pdf)
 
@@ -231,3 +229,27 @@ def exitFlow(x, n_classes):
 
 <img src="classifier.jpg">
 
+## Composable
+
+*Example Instantiate a Xception model*
+
+```python
+from xception_c import Xception
+
+# Xception from research paper
+xception = Xception()
+
+# Xception custom input shape/classes
+xception = Xception(input_shape=(128, 128, 3), n_classes=50)
+
+# getter for the tf.keras model
+model = xception.model
+```
+
+*Example: Composable Group/Block*
+
+```python
+# Make a mini-xception for CIFAR-10
+from tensorflow.keras import Input, Model
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
+```

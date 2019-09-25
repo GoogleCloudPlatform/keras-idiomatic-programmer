@@ -45,11 +45,17 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 [Shahin Saadati](https://www.linkedin.com/in/shahinsaadati)<br/>
 [Torry Yang](https://www.linkedin.com/in/torryyang)<br/>
 [Gonzalo Gasca Meza](https://www.linkedin.com/in/gogasca)<br/>
-Amy Unruh<br/>
+[Amy Unruh](https://www.linkedin.com/in/amyunruh)<br/>
 Martin Groner<br/>
-Brad Miro<br/>
+[Brad Miro](https://www.linkedin.com/in/brad-miro)<br/>
 Tianzi Cai<br/>
-Sara Robinson
+Sara Robinson<br/>
+Puneith Kaul
+
+Other Current/Former Googlers
+
+William Barret<br/>
+Sharon Maher
 
 *Google Developer Experts (GDE)*
 

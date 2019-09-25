@@ -33,7 +33,7 @@ The repository is organized by:
 | `notebooks`   | notebooks for production-grade solutions |
 | `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
 
-## Reviewers
+## Reviewers and Contributers
 
 We thank the following for their reviews and contributions to the Idiomatic Programmer:
 
@@ -48,14 +48,14 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 [Amy Unruh](https://www.linkedin.com/in/amyunruh)<br/>
 Martin Groner<br/>
 [Brad Miro](https://www.linkedin.com/in/brad-miro)<br/>
-Tianzi Cai<br/>
-Sara Robinson<br/>
-Puneith Kaul
+[Tianzi Cai](https://www.linkedin.com/in/tianzi)<br/>
+[Sara Robinson](https://www.linkedin.com/in/sara-robinson-40377924)<br/>
+[Puneith Kaul](https://www.linkedin.com/in/puneith)
 
-Other Current/Former Googlers
+*Other Current/Former Googlers*
 
 William Barret<br/>
-Sharon Maher
+[Sharon Maher](https://www.linkedin.com/in/sharonmeetworld)
 
 *Google Developer Experts (GDE)*
 

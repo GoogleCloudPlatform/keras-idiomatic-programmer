@@ -261,18 +261,52 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Xception entry: 
 # Xception middle:
 # Xception exit:
-x = Xception.entry(x, [64, 128, 256])
-x = Xception.middle(x, [256, 256, 512])
+x = Xception.entry(x, [16, 32, 64])
+x = Xception.middle(x, [64, 64, 64])
 
 
 # Classifier
-outputs = Xception.exit(x, ??)
+outputs = Xception.exit(x, n_classes=10)
 model = Model(inputs, outputs)
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
 model.summary()
 ```
 
 ```python
+# REMOVED for Brevity
+
+batch_normalization_67 (BatchNo (None, 2, 2, 1024)   4096        separable_conv2d_47[0][0]        
+__________________________________________________________________________________________________
+re_lu_54 (ReLU)                 (None, 2, 2, 1024)   0           batch_normalization_67[0][0]     
+__________________________________________________________________________________________________
+conv2d_20 (Conv2D)              (None, 1, 1, 1024)   66560       add_18[0][0]                     
+__________________________________________________________________________________________________
+max_pooling2d_11 (MaxPooling2D) (None, 1, 1, 1024)   0           re_lu_54[0][0]                   
+__________________________________________________________________________________________________
+batch_normalization_65 (BatchNo (None, 1, 1, 1024)   4096        conv2d_20[0][0]                  
+__________________________________________________________________________________________________
+add_19 (Add)                    (None, 1, 1, 1024)   0           max_pooling2d_11[0][0]           
+                                                                 batch_normalization_65[0][0]     
+__________________________________________________________________________________________________
+separable_conv2d_48 (SeparableC (None, 1, 1, 1556)   1604116     add_19[0][0]                     
+__________________________________________________________________________________________________
+batch_normalization_68 (BatchNo (None, 1, 1, 1556)   6224        separable_conv2d_48[0][0]        
+__________________________________________________________________________________________________
+re_lu_55 (ReLU)                 (None, 1, 1, 1556)   0           batch_normalization_68[0][0]     
+__________________________________________________________________________________________________
+separable_conv2d_49 (SeparableC (None, 1, 1, 2048)   3202740     re_lu_55[0][0]                   
+__________________________________________________________________________________________________
+batch_normalization_69 (BatchNo (None, 1, 1, 2048)   8192        separable_conv2d_49[0][0]        
+__________________________________________________________________________________________________
+re_lu_56 (ReLU)                 (None, 1, 1, 2048)   0           batch_normalization_69[0][0]     
+__________________________________________________________________________________________________
+global_average_pooling2d (Globa (None, 2048)         0           re_lu_56[0][0]                   
+__________________________________________________________________________________________________
+dense (Dense)                   (None, 1000)         2049000     global_average_pooling2d[0][0]   
+==================================================================================================
+Total params: 7,829,824
+Trainable params: 7,815,048
+Non-trainable params: 14,776
 ```
 
 from tensorflow.keras.datasets import cifar10

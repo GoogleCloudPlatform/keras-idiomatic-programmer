@@ -320,7 +320,7 @@ dense_521 (Dense)               (None, 10)           163850      flatten_5[0][0]
 ==================================================================================================
 Total params: 206,178
 Trainable params: 203,586
-Non-trainable params: 2,59
+Non-trainable params: 2,592
 ```
 
 ```python
@@ -334,4 +334,14 @@ model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verb
 ```
 
 ```python
+Epoch 1/10
+45000/45000 [==============================] - 322s 7ms/sample - loss: 2.3249 - acc: 0.4306 - val_loss: 1.7007 - val_acc: 0.4998
+Epoch 2/10
+45000/45000 [==============================] - 238s 5ms/sample - loss: 1.1253 - acc: 0.6103 - val_loss: 1.0819 - val_acc: 0.6272
+Epoch 3/10
+45000/45000 [==============================] - 218s 5ms/sample - loss: 0.9220 - acc: 0.6786 - val_loss: 1.0302 - val_acc: 0.6430
+Epoch 4/10
+45000/45000 [==============================] - 216s 5ms/sample - loss: 0.7979 - acc: 0.7236 - val_loss: 0.8848 - val_acc: 0.7008
+Epoch 5/10
+45000/45000 [==============================] - 215s 5ms/sample - loss: 0.7032 - acc: 0.7544 - val_loss: 0.9978 - val_acc: 0.6596
 ```

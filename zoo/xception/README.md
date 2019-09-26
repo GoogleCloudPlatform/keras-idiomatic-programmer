@@ -319,14 +319,18 @@ model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verb
 ```python
 
 ```python
-Epoch 1/5
+Epoch 1/10
 45000/45000 [==============================] - 467s 10ms/sample - loss: 1.5985 - acc: 0.4127 - val_loss: 1.8141 - val_acc: 0.3506
-Epoch 2/5
+Epoch 2/10
 45000/45000 [==============================] - 461s 10ms/sample - loss: 1.3191 - acc: 0.5251 - val_loss: 1.3030 - val_acc: 0.5358
-Epoch 3/5
+Epoch 3/10
 45000/45000 [==============================] - 463s 10ms/sample - loss: 1.1777 - acc: 0.5784 - val_loss: 1.3208 - val_acc: 0.5198
-Epoch 4/5
+Epoch 4/10
 45000/45000 [==============================] - 461s 10ms/sample - loss: 1.0758 - acc: 0.6188 - val_loss: 1.2506 - val_acc: 0.5522
-Epoch 5/5
+Epoch 5/10
 45000/45000 [==============================] - 478s 11ms/sample - loss: 0.9912 - acc: 0.6474 - val_loss: 1.3534 - val_acc: 0.5602
+Epoch 6/10
+45000/45000 [==============================] - 469s 10ms/sample - loss: 0.9333 - acc: 0.6712 - val_loss: 0.9447 - val_acc: 0.6672
+Epoch 7/10
+45000/45000 [==============================] - 468s 10ms/sample - loss: 0.8793 - acc: 0.6921 - val_loss: 0.9720 - val_acc: 0.6538
 ```

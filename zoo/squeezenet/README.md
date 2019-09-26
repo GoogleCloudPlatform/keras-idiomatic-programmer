@@ -240,14 +240,14 @@ def fire_block(x, n_filters):
 
 ```python
 from squeezenet_c import SqueezeNet
-# ResNeXt50 from research paper
-resnext = ResNeXt(50)
+# SqueezeNet from research paper
+squeezenet = SqueezeNet()
 
 # ResNeXt50 custom input shape/classes
-resnext = ResNeXt(50, input_shape=(128, 128, 3), n_classes=50)
+squeezenet = SqueezeNet(input_shape=(128, 128, 3), n_classes=50)
 
 # getter for the tf.keras model
-model = resnext.model
+model = squeezenet.model
 ```
 
 *Example: Composable Group/Block*

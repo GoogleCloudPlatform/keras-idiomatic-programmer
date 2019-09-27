@@ -75,15 +75,18 @@ def stem(inputs):
     x = ZeroPadding2D(padding=(3, 3))(inputs)
     
     # First Convolutional layer which uses a large (coarse) filter 
-    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', kernel_initializer='glorot_uniform')(x)
     x = ReLU()(x)
     
     # Pooled feature maps will be reduced by 75%
     x = ZeroPadding2D(padding=(1, 1))(x)
     x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    # Second Convolutional layer which uses a mid-size filter 
-    x = Conv2D(64, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    # 1x1 Reduction before 3x3 filter
+    x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', kernel_initializer='glorot_uniform')(x)
+
+    # Second Convolutional layer which uses a mid-size filter
+    x = Conv2D(192, (3, 3), strides=(2, 2), padding='valid', kernel_initializer='glorot_uniform')(x)
     x = ReLU()(x)
     
     # Pooled feature maps will be reduced by 75%

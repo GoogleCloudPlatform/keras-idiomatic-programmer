@@ -66,6 +66,32 @@ def group(x, n_blocks, n_filters)
 
 <img src="stem-v1.jpg">
 
+```python
+def stem(inputs):
+    """ Construct the Stem Convolutional Group 
+        inputs : the input vector
+    """
+    # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
+    x = ZeroPadding2D(padding=(3, 3))(inputs)
+    
+    # First Convolutional layer which uses a large (coarse) filter 
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = ReLU()(x)
+    
+    # Pooled feature maps will be reduced by 75%
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+
+    # Second Convolutional layer which uses a mid-size filter 
+    x = Conv2D(64, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = ReLU()(x)
+    
+    # Pooled feature maps will be reduced by 75%
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+    return x
+```
+
 ### Stem v4.0
 
 <img src="stem-v4.jpg">

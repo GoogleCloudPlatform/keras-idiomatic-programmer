@@ -50,6 +50,19 @@ model = Model(inputs, outputs)
 
 <img src="micro.jpg">
 
+```python
+def group(x, n_blocks, n_filters)
+    """ Construct a Residual Group 
+        x         : input into the group
+        n_blocks  : number of blocks (modules)
+        n_filters : number of filters for convolutional layers
+    """
+    # Construct the inception blocks
+    for _ in range(n_blocks):
+        x = inception_block(x, n_filters)
+    return x
+```
+
 ### Stem v4.0
 
 <img src="stem-v4.jpg">

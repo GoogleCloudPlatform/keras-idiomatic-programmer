@@ -12,39 +12,84 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Inception v1 (GoogleNet)
-# Paper: https://arxiv.org/pdf/1409.4842.pdf
-
-### IN PROGRESS
+# Inception v1: v1.0
+# Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
-from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D
+from tensorflow.keras import Model, Input
+from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D
+from tensorflow.keras.layers import MaxPooling2D, Dense, Add, GlobalAveragePooling2D
 
 def stem(inputs):
-    """ Construct Stem Group 
-        inputs : input vector
+    """ Construct the Stem Convolutional Group 
+        inputs : the input vector
     """
-    # Zero pad the image, such that the 224x224 becomes 230x230
-    x = ZeroPadding2D((3, 3))(inputs)
-    # Do convolution with a coarse filter (7x7)
-    x = Conv2D( 64, (7, 7), strides=2, activation='relu')(x)
+    # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
+    x = ZeroPadding2D(padding=(3, 3))(inputs)
     
-    # Reduce the feature map size by 75%
-    x = ZeroPadding2D((1, 1))(inputs)
-    x = MaxPooling2D((3, 3), strides=2)(x)
+    # First Convolutional layer which uses a large (coarse) filter 
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='he_normal')(x)
+    x = ReLU()(x)
     
-    x = Conv2D( 192, (1, 1), strides=1, activation='relu')(x)
-    x = Conv2D( 192, (3, 3), strides=1, activation='relu')(x)
-    
-    # Reduce the feature map size by 75%
-    x = MaxPooling2D((3, 3), strides=2)(x)
+    # Pooled feature maps will be reduced by 75%
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
     return x
     
-inputs = Input((224, 224, 3))
+def learner(x, n_classes):
+    """ Construct the Learner
+        x        : input to the learner
+        n_classes: number of output classes
+    """
+    # Dimensiionality Expansion Groups
+    x = group(x, 3, 64)
+    x = group(x, 1, 128)
+    # Auxiliary Classifier
+    x = auxiliary(x, n_classes) 
+    x = group(x, 2, 192)
 
+    # Dimensionality Reduction Groups
+    x = group(x, 1, 160)
+    # Auxiliary Classifier
+    x = auxiliary(x, n_classes)
+    x = group(x, 2, 128)
+    return x
+
+def group(x)
+    """ Construct a Residual Group 
+        x         : input into the group
+    """
+    return x
+
+def classifier(x, n_classes, dropout=0.4):
+  """ Construct the Classifier Group 
+      x         : input to the classifier
+      n_classes : number of output classes
+      dropout   : percentage for dropout rate
+  """
+  # Pool at the end of all the convolutional residual blocks
+  x = AveragePooling2D((7, 7))(x)
+  x = Flatten()(x)
+  x = Dropout(dropout)
+
+  # Final Dense Outputting Layer for the outputs
+  outputs = Dense(n_classes, activation='softmax', kernel_initializer='glorot_uniform')(x)
+  return outputs
+
+# Meta-parameter: dropout percentage
+dropout = 0.4
+
+# The input tensor
+inputs = Input(shape=(224, 224, 3))
+
+# The stem convolutional group
 x = stem(inputs)
 
-model = Model(inputs, x)
-model.summary()
-    
+# The learner
+x = learner(x)
+
+# The classifier for 1000 classes
+outputs = classifier(x, 1000, dropout)
+
+# Instantiate the Model
+model = Model(inputs, outputs)

@@ -18,7 +18,7 @@
 import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D
-from tensorflow.keras.layers import MaxPooling2D, Dense, Add, AveragePooling2D
+from tensorflow.keras.layers import MaxPooling2D, Dense, Concatenate, AveragePooling2D
 
 def stem(inputs):
     """ Construct the Stem Convolutional Group 
@@ -28,20 +28,23 @@ def stem(inputs):
     x = ZeroPadding2D(padding=(3, 3))(inputs)
     
     # First Convolutional layer which uses a large (coarse) filter 
-    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', kernel_initializer='glorot_uniform')(x)
     x = ReLU()(x)
-    
+
     # Pooled feature maps will be reduced by 75%
     x = ZeroPadding2D(padding=(1, 1))(x)
     x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    # Second Convolutional layer which uses a mid-size filter 
-    x = Conv2D(64, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    # Second Convolutional layer which uses a mid-size filter
+    x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
+    x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', kernel_initializer='glorot_uniform')(x)
     x = ReLU()(x)
+    print(x)
     
     # Pooled feature maps will be reduced by 75%
     x = ZeroPadding2D(padding=(1, 1))(x)
     x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+    print(x)
     return x
     
 def learner(x, n_classes):
@@ -103,6 +106,19 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
     b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
     b3x3 = ZeroPadding2D((1,1))(b3x3)
     b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer='glorot_uniform')(b3x3)
+
+    # 5x5 branch
+    b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
+    b5x5 = ZeroPadding2D((1,1))(b5x5)
+    b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer='glorot_uniform')(b5x5)
+
+    # Pooling branch
+    bpool = MaxPooling2D((3, 3), strides=1, padding='same')(x)
+    bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer='glorot_uniform')(bpool)
+
+    # Concatenate the outputs (filters) of the branches
+    x = Concatenate()([b1x1, b3x3, b5x5, bpool])
+    print(x)
     return x
 
 def auxiliary(x, n_classes):

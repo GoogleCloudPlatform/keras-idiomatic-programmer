@@ -62,6 +62,9 @@ def group(x, n_blocks, n_filters)
         x = inception_block(x, n_filters)
     return x
 ```
+### Stem v1.0
+
+<img src="stem-v1.jpg">
 
 ### Stem v4.0
 

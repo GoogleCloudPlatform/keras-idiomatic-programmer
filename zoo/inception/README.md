@@ -13,20 +13,28 @@ def learner(x, n_classes):
         x        : input to the learner
         n_classes: number of output classes
     """
-    # Dimensiionality Expansion Groups
-    x = group(x, 3, 64)
-    x = group(x, 1, 128)
-    # Auxiliary Classifier
-    x = auxiliary(x, n_classes) 
-    x = group(x, 2, 192)
+    # Group 3
+    x = group(x, (64,),  (96,128),   (16, 32), (32,)) # 3a
+    x = group(x, (128,), (128, 192), (32, 96), (64,)) # 3b
+    x = MaxPooling2D((3, 3), strides=2)(x)
 
-    # Dimensionality Reduction Groups
-    x = group(x, 1, 160)
+    # Group 4
+    x = group(x, (192,),  (96, 208), (16, 48), (64,)) # 4a
     # Auxiliary Classifier
-    x = auxiliary(x, n_classes)
-    x = group(x, 2, 128)
+    auxiliary(x, n_classes)
+    x = group(x, (160,), (112, 224), (24, 64), (64,)) # 4b
+    x = group(x, (128,), (128, 256), (24, 64), (64,)) # 4c
+    x = group(x, (112,), (144, 288), (32, 64), (64,)) # 4d
+    # Auxiliary Classifier
+    auxiliary(x, n_classes)
+    x = group(x, (256,), (160, 320), (32, 128), (128,)) # 4e
+    x = MaxPooling2D((3, 3), strides=2)(x)
+
+    # Group 5
+    x = group(x, (256,), (160, 320), (32, 128), (128,)) # 5a
+    x = group(x, (384,), (192, 384), (48, 128), (128,)) # 5b
     return x
-    
+
 # Meta-parameter: dropout percentage
 dropout = 0.4
 

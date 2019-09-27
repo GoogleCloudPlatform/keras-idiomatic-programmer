@@ -57,15 +57,23 @@ model = Model(inputs, outputs)
 <img src="micro.jpg">
 
 ```python
-def group(x, n_blocks, n_filters)
-    """ Construct a Residual Group 
+def group(x, blocks, pooling=True, n_classes=1000):
+    """ Construct an Inception group
         x         : input into the group
-        n_blocks  : number of blocks (modules)
-        n_filters : number of filters for convolutional layers
+        blocks    : filters for each block in the group
+        pooling   : whether to end the group with max pooling
+        n_classes : number of classes for auxiliary classifier
     """
-    # Construct the inception blocks
-    for _ in range(n_blocks):
-        x = inception_block(x, n_filters)
+    # Construct the inception blocks (modules)
+    for block in blocks:
+        # Add auxiliary classifier
+        if block is None:
+            auxiliary(x, n_classes)
+        else:
+            x = inception_block(x, block[0], block[1], block[2], block[3])           
+
+    if pooling:
+        x = MaxPooling2D((3, 3), strides=2)(x)
     return x
 ```
 ### Stem v1.0

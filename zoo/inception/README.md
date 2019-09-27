@@ -37,7 +37,7 @@ inputs = Input(shape=(224, 224, 3))
 x = stem(inputs)
 
 # The learner
-x = learner(x)
+x = learner(x, 1000)
 
 # The classifier for 1000 classes
 outputs = classifier(x, 1000, dropout)

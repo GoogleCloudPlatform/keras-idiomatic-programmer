@@ -17,7 +17,7 @@
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D
+from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D, Flatten, Dropout
 from tensorflow.keras.layers import MaxPooling2D, Dense, Concatenate, AveragePooling2D
 
 def stem(inputs):
@@ -28,8 +28,7 @@ def stem(inputs):
     x = ZeroPadding2D(padding=(3, 3))(inputs)
     
     # First Convolutional layer which uses a large (coarse) filter 
-    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', kernel_initializer='glorot_uniform')(x)
-    x = ReLU()(x)
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', activation='relu', kernel_initializer='glorot_uniform')(x)
 
     # Pooled feature maps will be reduced by 75%
     x = ZeroPadding2D(padding=(1, 1))(x)
@@ -37,14 +36,12 @@ def stem(inputs):
 
     # Second Convolutional layer which uses a mid-size filter
     x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
-    x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', kernel_initializer='glorot_uniform')(x)
-    x = ReLU()(x)
-    print(x)
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', activation='relu', kernel_initializer='glorot_uniform')(x)
     
     # Pooled feature maps will be reduced by 75%
     x = ZeroPadding2D(padding=(1, 1))(x)
     x = MaxPooling2D((3, 3), strides=(2, 2))(x)
-    print(x)
     return x
     
 def learner(x, n_classes):
@@ -88,6 +85,7 @@ def group(x, blocks, pooling=True, n_classes=1000):
             x = inception_block(x, block[0], block[1], block[2], block[3])           
 
     if pooling:
+        x = ZeroPadding2D(padding=(1, 1))(x)
         x = MaxPooling2D((3, 3), strides=2)(x)
     return x
 
@@ -118,7 +116,6 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
 
     # Concatenate the outputs (filters) of the branches
     x = Concatenate()([b1x1, b3x3, b5x5, bpool])
-    print(x)
     return x
 
 def auxiliary(x, n_classes):
@@ -137,7 +134,7 @@ def classifier(x, n_classes, dropout=0.4):
     # Pool at the end of all the convolutional residual blocks
     x = AveragePooling2D((7, 7))(x)
     x = Flatten()(x)
-    x = Dropout(dropout)
+    x = Dropout(dropout)(x)
 
     # Final Dense Outputting Layer for the outputs
     outputs = Dense(n_classes, activation='softmax', kernel_initializer='glorot_uniform')(x)

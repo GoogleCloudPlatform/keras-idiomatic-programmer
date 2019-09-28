@@ -178,6 +178,8 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
 
 ### Classifier
 
+<img src='classifier.jpg'>
+
 ```python
 def classifier(x, n_classes, dropout=0.4):
     """ Construct the Classifier Group
@@ -196,6 +198,8 @@ def classifier(x, n_classes, dropout=0.4):
 ```
 
 ### Auxiliary Classifier
+
+<img src='auxiliary.jpg'>
 
 ```python
 def auxiliary(x, n_classes):

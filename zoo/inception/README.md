@@ -133,6 +133,8 @@ def stem(inputs):
 
 ### Inception Block v1.0
 
+<img src="block-v1.jpg">
+
 ```python
 def inception_block(x, f1x1, f3x3, f5x5, fpool):
     """ Construct an Inception block (module)

@@ -50,23 +50,23 @@ def learner(x, n_classes):
         n_classes: number of output classes
     """
     # Group 3
-    x = group(x, [((64,),  (96,128),   (16, 32), (32,)),  # 3a
-                  ((128,), (128, 192), (32, 96), (64,))]) # 3b
+    x, _ = group(x, [((64,),  (96,128),   (16, 32), (32,)),  # 3a
+                     ((128,), (128, 192), (32, 96), (64,))]) # 3b
 
     # Group 4
-    x = group(x, [((192,),  (96, 208), (16, 48), (64,)), # 4a
-                  None, 				 # auxiliary classifier
-                  ((160,), (112, 224), (24, 64), (64,)), # 4b
-                  ((128,), (128, 256), (24, 64), (64,)), # 4c
-                  ((112,), (144, 288), (32, 64), (64,)), # 4d
-                  None,                                  # auxiliary classifier
-                  ((256,), (160, 320), (32, 128), (128,))], # 4e
-                  n_classes=n_classes) 
+    x, _ = group(x, [((192,),  (96, 208), (16, 48), (64,)), # 4a
+                     None, 				 # auxiliary classifier
+                     ((160,), (112, 224), (24, 64), (64,)), # 4b
+                     ((128,), (128, 256), (24, 64), (64,)), # 4c
+                     ((112,), (144, 288), (32, 64), (64,)), # 4d
+                     None,                                  # auxiliary classifier
+                     ((256,), (160, 320), (32, 128), (128,))], # 4e
+                     n_classes=n_classes) 
 
     # Group 5
-    x = group(x, [((256,), (160, 320), (32, 128), (128,)), # 5a
-                  ((384,), (192, 384), (48, 128), (128,))],# 5b
-                 pooling=False) 
+    x, _ = group(x, [((256,), (160, 320), (32, 128), (128,)), # 5a
+                     ((384,), (192, 384), (48, 128), (128,))],# 5b
+                     pooling=False) 
     return x
 
 def group(x, blocks, pooling=True, n_classes=1000):
@@ -76,18 +76,20 @@ def group(x, blocks, pooling=True, n_classes=1000):
         pooling   : whether to end the group with max pooling
         n_classes : number of classes for auxiliary classifier
     """
+    outputs = [] # Auxiliary Outputs
+
     # Construct the inception blocks (modules)
     for block in blocks:
         # Add auxiliary classifier
         if block is None:
-            auxiliary(x, n_classes)
+            outputs.append(auxiliary(x, n_classes))
         else:
             x = inception_block(x, block[0], block[1], block[2], block[3])           
 
     if pooling:
         x = ZeroPadding2D(padding=(1, 1))(x)
         x = MaxPooling2D((3, 3), strides=2)(x)
-    return x
+    return x, outputs
 
 def inception_block(x, f1x1, f3x3, f5x5, fpool):
     """ Construct an Inception block (module)
@@ -123,7 +125,13 @@ def auxiliary(x, n_classes):
         x        : input to the auxiliary classifier
         n_classes: number of output classes
     """
-    pass
+    x = AveragePooling2D((5, 5), strides=(3, 3))(x)
+    x = Conv2D(128, (1, 1), strides=(1, 1), padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
+    x = Flatten()(x)
+    x = Dense(1024, activation='relu', kernel_initializer='glorot_uniform')(x)
+    x = Dropout(0.7)(x)
+    output = Dense(n_classes, activation='softmax', kernel_initializer='glorot_uniform')(x)
+    return output
 
 def classifier(x, n_classes, dropout=0.4):
     """ Construct the Classifier Group 

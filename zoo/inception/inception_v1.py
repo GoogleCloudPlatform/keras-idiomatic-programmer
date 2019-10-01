@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Inception v1: v1.0
-# Paper: https://arxiv.org/pdf/1512.03385.pdf
+# Inception v1 (GoogLeNet)
+# Paper: https://arxiv.org/pdf/1409.4842.pdf
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input
@@ -173,3 +173,4 @@ outputs = classifier(x, 1000, dropout)
 
 # Instantiate the Model
 model = Model(inputs, [outputs] + aux)
+model.summary()

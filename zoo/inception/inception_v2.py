@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Inception v2
-# Paper: https://arxiv.org/pdf/1512.03385.pdf
+# Inception v2 (Inception-BN)
+# Paper: https://arxiv.org/pdf/1409.4842.pdf
 #
 # The Inception deep convolutional architecture was introduced as GoogLeNet in (Szegedy et al. 2015a), here named Inception-v1. 
 # Later the Inception architecture was refined in various ways, first by the introduction of batch normalization (Ioffe and Szegedy 2015) (Inception-v2). 

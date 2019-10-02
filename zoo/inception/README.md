@@ -3,7 +3,7 @@
 
 [Paper]()
 
-## Macro-Architecture
+## Macro-Architecture v1.0 and v2.0
 
 <img src="macro.jpg">
 
@@ -57,7 +57,7 @@ outputs = classifier(x, 1000, dropout)
 model = Model(inputs, [outputs] + aux)
 ```
 
-## Micro-Architecture
+## Micro-Architecture v1.0 and v2.0
 
 <img src="micro.jpg">
 
@@ -116,7 +116,39 @@ def stem(inputs):
 
 ### Stem v2.0
 
+Adds batch normalization to the convolutional layers and uses the common convention to drop biases in the convolutional layer when it is followed by batch normalization.
+
 ```python
+def stem(inputs):
+    """ Construct the Stem Convolutional Group
+        inputs : the input vector
+    """
+    # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
+    x = ZeroPadding2D(padding=(3, 3))(inputs)
+
+    # First Convolutional layer which uses a large (coarse) filter
+    x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Pooled feature maps will be reduced by 75%
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+
+    # Second Convolutional layer which uses a mid-size filter
+    x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Pooled feature maps will be reduced by 75%
+    x = ZeroPadding2D(padding=(1, 1))(x)
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+
+    return x
 ```
 
 ### Stem v3.0
@@ -132,6 +164,8 @@ def stem(inputs):
 ```
 
 ### Inception Block v1.0
+
+Adds batch normalization to the convolutional layers and uses the common convention to drop biases in the convolutional layer when it is followed by batch normalization.
 
 <img src="block-v1.jpg">
 
@@ -174,6 +208,51 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
 <img src="block-v2.jpg">
 
 ```python
+def inception_block(x, f1x1, f3x3, f5x5, fpool):
+    """ Construct an Inception block (module)
+        x    : input to the block
+        f1x1 : filters for 1x1 branch
+        f3x3 : filters for 3x3 branch
+        f5x5 : filters for 5x5 branch
+        fpool: filters for pooling branch
+    """
+    # 1x1 branch
+    b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # 3x3 branch
+    # 1x1 reduction
+    b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    b3x3 = ZeroPadding2D((1,1))(b3x3)
+    b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(b3x3)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # 5x5 branch
+    # 1x1 reduction
+    b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    b5x5 = ZeroPadding2D((1,1))(b5x5)
+    b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(b5x5)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Pooling branch
+    bpool = MaxPooling2D((3, 3), strides=1, padding='same')(x)
+    # 1x1 projection
+    bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(bpool)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Concatenate the outputs (filters) of the branches
+    x = Concatenate()([b1x1, b3x3, b5x5, bpool])
+    return x
 ```
 
 ### Classifier

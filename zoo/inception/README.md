@@ -1,7 +1,12 @@
 
 # Inception
 
-[Paper]()
+[Paper](https://arxiv.org/pdf/1409.4842.pdf) v1/v2
+
+    ```python
+    inception_(v1/v2).py - academic - procedural
+    inception_(v1.v2)_c.py - composable - OOP
+    ```
 
 ## Macro-Architecture v1.0 and v2.0
 
@@ -56,6 +61,10 @@ outputs = classifier(x, 1000, dropout)
 # Instantiate the Model
 model = Model(inputs, [outputs] + aux)
 ```
+
+## Macro-Architecture v3.0
+
+<img src=macro-v3.jpg">
 
 ## Micro-Architecture v1.0 and v2.0
 

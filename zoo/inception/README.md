@@ -64,7 +64,7 @@ model = Model(inputs, [outputs] + aux)
 
 ## Macro-Architecture v3.0
 
-<img src=macro-v3.jpg">
+<img src=macro-v3.jpg>
 
 ## Micro-Architecture v1.0 and v2.0
 
@@ -285,7 +285,7 @@ def classifier(x, n_classes, dropout=0.4):
     return outputs
 ```
 
-### Auxiliary Classifier
+### Auxiliary Classifier v1 & v2
 
 <img src='auxiliary.jpg'>
 
@@ -303,4 +303,21 @@ def auxiliary(x, n_classes):
     output = Dense(n_classes, activation='softmax', kernel_initializer='glorot_uniform')(x)
     return output
 ```
+
+## Composable
+
+Example Instantiate a Inception V1 model
+
+```python
+from inception_v1_c import InceptionV1
+
+# Inception V1 from research paper
+inception = InceptionV1()
+
+# InceptionV1 custom input shape/classes
+inception = InceptionV1(input_shape=(128, 128, 3), n_classes=50)
+```
+
+# getter for the tf.keras model
+model = densenet.model
 

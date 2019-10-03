@@ -7,7 +7,7 @@
 This repository contains the handbooks in softcopy (PDF) and code examples from the Idiomatic Programmer
 handbook series, as well as presentation packs and accompanying code labs. The Idiomatic Programmer materials are produced by Google AI Developer Relations. The audience for the materials are software engineers wanting to learn machine learning. Our first series focuses on the [tf.Keras](https://keras.io/) framework and computer vision, along with [OpenCV](https://opencv.org/).
 
-The material has been designed both for self-learning, and for being incorporating into instructional material for universities, private coding schools, and professional training. Licensed as Apache 2.0 and CC-BY, organizations are free to integrate and customize the material into their curriculum. 
+The material has been designed both for self-learning, and for being incorporating into instructional material for universities, private coding schools, and professional training. Licensed as Apache 2.0 and CC-BY, organizations are free to integrate and customize the material into their curriculum.
 
 The repository is organized by:
 
@@ -33,7 +33,7 @@ The repository is organized by:
 | `notebooks`   | notebooks for production-grade solutions |
 | `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
 
-## Reviewers and Contributers
+## Reviewers and Contributors
 
 We thank the following for their reviews and contributions to the Idiomatic Programmer:
 
@@ -46,7 +46,7 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 [Torry Yang](https://www.linkedin.com/in/torryyang)<br/>
 [Gonzalo Gasca Meza](https://www.linkedin.com/in/gogasca)<br/>
 [Amy Unruh](https://www.linkedin.com/in/amyunruh)<br/>
-Martin Groner<br/>
+[Martin Gorner](https://www.linkedin.com/in/martingorner)<br/>
 [Brad Miro](https://www.linkedin.com/in/brad-miro)<br/>
 [Tianzi Cai](https://www.linkedin.com/in/tianzi)<br/>
 [Sara Robinson](https://www.linkedin.com/in/sara-robinson-40377924)<br/>
@@ -69,13 +69,13 @@ William Barret<br/>
 
 ## Quotes
 
-*This is an absolutely exellent tutorial. I love the style and level of detail---not too much, not too little.* -- Andrew Moore, VP of Enginnering, Google Cloud
+*This is an absolutely excellent tutorial. I love the style and level of detail---not too much, not too little.* -- Andrew Moore, VP of Engineering, Google Cloud
 
-*The Keras Idiomatic Programmer repository is a neat collection of workshops and handbooks introducing key machine learning concepts to the developer audience. I think it's a great project with very useful content*. -- Francois Chollet (creater of Keras)
+*The Keras Idiomatic Programmer repository is a neat collection of workshops and handbooks introducing key machine learning concepts to the developer audience. I think it's a great project with very useful content*. -- Francois Chollet (creator of Keras)
 
 *This collection is literally my Keras bible. a great one.* - Roozebh Sanaei, Computer Vision Engineer at Rapsodo
 
-*This [composable design pattern] is so amazing of an effort.* -  Sayak Paul, GDE/ML and Deep Learning Associate at Pyimagesearch
+*This [composable design pattern] is so amazing of an effort.* -  Sayak Paul, GDE/ML and Deep Learning Associate at PyImageSearch
 
 ## Disclaimer
 

@@ -166,6 +166,38 @@ def stem(inputs):
 <img src="stem-v3.jpg">
 
 ```python
+def stem(inputs):
+    """ Construct the Stem Convolutional Group 
+        inputs : the input vector
+    """
+    # Coarse filter of V1 (7x7) factorized into 3 3x3.
+    # First 3x3 convolution is strided
+    x = Conv2D(32, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(inputs)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = Conv2D(32, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    # Third 3x3, filters are doubled and padding added
+    x = Conv2D(64, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    
+    # Pooled feature maps will be reduced by 75%
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+
+    # Dimensionality expansion - increase filters
+    x = Conv2D(80, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    # Dimensionality expansion
+    x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+
+    # Pooled feature maps will be reduced by 75%
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+    return x
 ```
 
 ### Stem v4.0

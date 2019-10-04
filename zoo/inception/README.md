@@ -1,11 +1,12 @@
 
 # Inception
 
-[Paper](https://arxiv.org/pdf/1409.4842.pdf) v1/v2
+[Paper V1/V2](https://arxiv.org/pdf/1409.4842.pdf)
+[Paper V3] (https://arxiv.org/pdf/1512.00567.pdf)
 
     ```python
-    inception_(v1/v2).py - academic - procedural
-    inception_(v1.v2)_c.py - composable - OOP
+    inception_(v1/v2/v3).py - academic - procedural
+    inception_(v1.v2/v3)_c.py - composable - OOP
     ```
 
 ## Macro-Architecture v1.0 and v2.0
@@ -161,6 +162,8 @@ def stem(inputs):
 ```
 
 ### Stem v3.0
+
+<img src="stem-v3.jpg">
 
 ```python
 ```

@@ -161,7 +161,7 @@ class InceptionV2(object):
         b1x1 = ReLU()(b1x1)
 
         # 3x3 branch
-        # 1x1 reduction
+        # 3x3 reduction
         b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3 = BatchNormalization()(b3x3)
         b3x3 = ReLU()(b3x3)
@@ -171,7 +171,7 @@ class InceptionV2(object):
         b3x3 = ReLU()(b3x3)
 
         # 5x5 branch
-        # 1x1 reduction
+        # 5x5 reduction
         b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b5x5 = BatchNormalization()(b5x5)
         b5x5 = ReLU()(b5x5)

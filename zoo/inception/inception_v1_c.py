@@ -153,13 +153,13 @@ class InceptionV1(object):
         b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(x)
 
         # 3x3 branch
-        # 1x1 reduction
+        # 3x3 reduction
         b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(x)
         b3x3 = ZeroPadding2D((1,1))(b3x3)
         b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer=init_weights)(b3x3)
 
         # 5x5 branch
-        # 1x1 reduction
+        # 5x5 reduction
         b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(x)
         b5x5 = ZeroPadding2D((1,1))(b5x5)
         b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer=init_weights)(b5x5)

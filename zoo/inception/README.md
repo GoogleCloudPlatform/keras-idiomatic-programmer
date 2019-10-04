@@ -3,6 +3,20 @@
 
 [Paper V1/V2](https://arxiv.org/pdf/1409.4842.pdf)<br/>
 [Paper V3](https://arxiv.org/pdf/1512.00567.pdf)
+[Corrected Paper V3](https://www.cv-foundation.org/openaccess/content_cvpr_2016/papers/Szegedy_Rethinking_the_Inception_CVPR_2016_paper.pdf)
+
+   The paper submitted to ARXIV, and last revised on Dec 11, 2015, has some typos in it that were addressed with a revision    that is stored on CV-Foundation. Mostly notably, correctly the reference to the model submitted to the ILSVRC 2015 image    classification (1st runner up), from V2 to V3.
+   
+   It is generally agreed that V2 is the same as V1 with the additional of batch normalization, but no additional   
+   factorization.
+   
+   The later paper continues to have the typos in Table 1. Per my discussion with two of the paper's authors:
+   
+   Sergey Ioffe: *The inception v3 model has been opensourced. Please see         
+   https://github.com/tensorflow/models/blob/master/research/inception/inception/slim/inception_model.py (which also cites 
+   the paper where this model was described).*
+   
+   Christian Szegedy: *I agree with Sergey that the implementation serves as the best reference.*
 
     ```python
     inception_(v1/v2/v3).py - academic - procedural
@@ -186,7 +200,7 @@ def stem(inputs):
     # Pooled feature maps will be reduced by 75%
     x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-    # Dimensionality expansion - increase filters
+    # 3x3 reduction
     x = Conv2D(80, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
@@ -226,13 +240,13 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
     b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
 
     # 3x3 branch
-    # 1x1 reduction
+    # 3x3 reduction
     b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
     b3x3 = ZeroPadding2D((1,1))(b3x3)
     b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer='glorot_uniform')(b3x3)
 
     # 5x5 branch
-    # 1x1 reduction
+    # 5x5 reduction
     b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer='glorot_uniform')(x)
     b5x5 = ZeroPadding2D((1,1))(b5x5)
     b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer='glorot_uniform')(b5x5)
@@ -266,7 +280,7 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
     x = ReLU()(x)
 
     # 3x3 branch
-    # 1x1 reduction
+    # 3x3 reduction
     b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
@@ -277,7 +291,7 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
     x = ReLU()(x)
 
     # 5x5 branch
-    # 1x1 reduction
+    # 5x5 reduction
     b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)

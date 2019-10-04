@@ -319,8 +319,8 @@ def inception_block_A(x, f1x1, f3x3, f5x5, fpool):
     """ Construct an Inception block (module)
         x    : input to the block
         f1x1 : filters for 1x1 branch
-        f3x3 : filters for 3x3 branch
-        f5x5 : filters for refactored 5x5 branch as two 3x3
+        f3x3 : filters for double 3x3 branch
+        f5x5 : filters for 5x5 branch 
         fpool: filters for pooling branch
     """
     # 1x1 branch

@@ -315,6 +315,50 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
 <img src='block-35.jpg'>
 
 ```python
+def inception_block_A(x, f1x1, f3x3, f5x5, fpool):
+    """ Construct an Inception block (module)
+        x    : input to the block
+        f1x1 : filters for 1x1 branch
+        f3x3 : filters for 3x3 branch
+        f5x5 : filters for refactored 5x5 branch as two 3x3
+        fpool: filters for pooling branch
+    """
+    # 1x1 branch
+    b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    b1x1 = BatchNormalization()(b1x1)
+    b1x1 = ReLU()(b1x1)
+
+    # 3x3 double branch
+    # 3x3 reduction
+    b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    b3x3 = BatchNormalization()(b3x3)
+    b3x3 = ReLU()(b3x3)
+    b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(b3x3)
+    b3x3 = BatchNormalization()(b3x3)
+    b3x3 = ReLU()(b3x3)
+    b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(b3x3)
+    b3x3 = BatchNormalization()(b3x3)
+    b3x3 = ReLU()(b3x3)
+
+    # 5x5 branch
+    # 5x5 reduction
+    b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
+    b5x5 = BatchNormalization()(b5x5)
+    b5x5 = ReLU()(b5x5)
+    b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(b5x5)
+    b5x5 = BatchNormalization()(b5x5)
+    b5x5 = ReLU()(b5x5)
+
+    # Pooling branch
+    bpool = AveragePooling2D((3, 3), strides=1, padding='same')(x)
+    # 1x1 projection
+    bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(bpool)
+    bpool = BatchNormalization()(bpool)
+    bpool = ReLU()(bpool)
+
+    # Concatenate the outputs (filters) of the branches
+    x = Concatenate()([b1x1, b3x3, b5x5, bpool])
+    return x
 ```
 
 <img src='block-17.jpg'>
@@ -376,5 +420,5 @@ inception = InceptionV1(input_shape=(128, 128, 3), n_classes=50)
 ```
 
 # getter for the tf.keras model
-model = densenet.model
+model = inception.model
 

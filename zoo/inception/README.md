@@ -328,7 +328,7 @@ def inception_block_A(x, f1x1, f3x3, f5x5, fpool):
     b1x1 = BatchNormalization()(b1x1)
     b1x1 = ReLU()(b1x1)
 
-    # 3x3 double branch
+    # double 3x3 branch
     # 3x3 reduction
     b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer='glorot_uniform')(x)
     b3x3 = BatchNormalization()(b3x3)

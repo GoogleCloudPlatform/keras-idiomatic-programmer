@@ -263,8 +263,6 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
 
 ### Inception Block v2.0
 
-<img src="block-v2.jpg">
-
 ```python
 def inception_block(x, f1x1, f3x3, f5x5, fpool):
     """ Construct an Inception block (module)
@@ -312,6 +310,16 @@ def inception_block(x, f1x1, f3x3, f5x5, fpool):
     x = Concatenate()([b1x1, b3x3, b5x5, bpool])
     return x
 ```
+### Inception Blocks v3.0
+
+<img src='block-35.jpg'>
+
+```python
+```
+
+<img src='block-17.jpg'>
+
+<img src='block-8.jpg'>
 
 ### Classifier
 

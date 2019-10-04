@@ -83,7 +83,7 @@ model = Model(inputs, [outputs] + aux)
 
 ## Micro-Architecture v1.0 and v2.0
 
-<img src="micro.jpg">
+<img src="micro-v1.jpg">
 
 ```python
 def group(x, blocks, pooling=True, n_classes=1000):

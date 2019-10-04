@@ -1,8 +1,8 @@
 
 # Inception
 
-[Paper V1/V2](https://arxiv.org/pdf/1409.4842.pdf)
-[Paper V3] (https://arxiv.org/pdf/1512.00567.pdf)
+[Paper V1/V2](https://arxiv.org/pdf/1409.4842.pdf)<br/>
+[Paper V3](https://arxiv.org/pdf/1512.00567.pdf)
 
     ```python
     inception_(v1/v2/v3).py - academic - procedural

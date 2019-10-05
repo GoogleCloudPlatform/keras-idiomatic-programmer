@@ -163,7 +163,7 @@ def group(x, blocks, pooling=True, n_classes=1000):
 <img src='micro-v3.jpg'>
 
 ```python
-def group(x, blocks, inception=None, reduction=None, n_classes=0):
+def group(x, blocks, inception=None, reduction=None, n_classes=1000):
     """ Construct an Inception group
         x         : input into the group
         blocks    : filters for each block in the group

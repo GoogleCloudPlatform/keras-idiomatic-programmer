@@ -124,7 +124,7 @@ x = stem(inputs)
 x, aux = learner(x, 1000)
 
 # The classifier for 1000 classes
-outputs = classifier(x, 1000)
+outputs = classifier(x, 1000, dropout)
 
 # Instantiate the Model
 model = Model(inputs, [outputs] + aux)

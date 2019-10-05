@@ -50,7 +50,7 @@ We thank the following for their reviews and contributions to the Idiomatic Prog
 [Brad Miro](https://www.linkedin.com/in/brad-miro)<br/>
 [Tianzi Cai](https://www.linkedin.com/in/tianzi)<br/>
 [Sara Robinson](https://www.linkedin.com/in/sara-robinson-40377924)<br/>
-[Puneith Kaul](https://www.linkedin.com/in/puneith)
+[Puneith Kaul](https://www.linkedin.com/in/puneith)<br/>
 [Crystal Gomes](https://www.linkedin.com/in/crystalgomes)
 
 *Other Current/Former Googlers*

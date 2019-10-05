@@ -725,8 +725,8 @@ inception = InceptionV1()
 
 # InceptionV1 custom input shape/classes
 inception = InceptionV1(input_shape=(128, 128, 3), n_classes=50)
-```
 
 # getter for the tf.keras model
 model = inception.model
+```
 

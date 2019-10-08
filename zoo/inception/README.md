@@ -18,10 +18,16 @@
    
    Christian Szegedy: *I agree with Sergey that the implementation serves as the best reference.*
 
-    ```python
     inception_(v1/v2/v3).py - academic - procedural
     inception_(v1.v2/v3)_c.py - composable - OOP
-    ```
+    
+Below is the corrected version of Table 1 in the paper for V3:
+   
+| type     | patch size/stride
+|          | or remarks             | input size |
+| ---------| ---------------------- |------------|
+| conv     | 3x3/2                  | 299x299x3  |
+| conv     | 3x3/1                  | 149x149x32 |
 
 ## Macro-Architecture v1.0 and v2.0
 

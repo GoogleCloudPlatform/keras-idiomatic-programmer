@@ -31,7 +31,9 @@ Below is the corrected version of Table 1 in the paper for V3:
 | pool        |         3x3/2          | 147x147x64 |
 | conv        |         3x3/1          | 73x73x64   |
 | conv        |         3x3/2          | 71x71x80   |
-| `pool`      |         3x3/2          | 35x35x192  |
+| *pool*      |         3x3/2          | 35x35x192  |
+| 3xinception | *fig. 4/with double 3x3* | 35x35x288  |
+| 2xinception |
 
 ## Macro-Architecture v1.0 and v2.0
 

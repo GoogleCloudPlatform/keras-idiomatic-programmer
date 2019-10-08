@@ -23,17 +23,17 @@
     
 Below is the corrected version of Table 1 in the paper for V3:
    
-| type        | patch size/stride .    | input size |
-| ------------| ---------------------- |------------|
-| conv        |         3x3/2          | 299x299x3  |
-| conv        |         3x3/1          | 149x149x32 |
-| conv padded |         3x3/1          | 147x147x32 |
-| pool        |         3x3/2          | 147x147x64 |
-| conv        |         3x3/1          | 73x73x64   |
-| conv        |         3x3/2          | 71x71x80   |
-| **pool**      |         3x3/2          | 35x35x192  |
-| 3xinception | **fig. 4/with double 3x3** | 35x35x288  |
-| 2xinception | fig. 6                 | 17x17x768 |
+| type        | patch size/stride .    | input size | note  
+| ------------| ---------------------- |------------|-----------|
+| conv        |         3x3/2          | 299x299x3  ||
+| conv        |         3x3/1          | 149x149x32 ||
+| conv padded |         3x3/1          | 147x147x32 ||
+| pool        |         3x3/2          | 147x147x64 ||
+| conv        |         3x3/1          | 73x73x64   ||
+| conv        |         3x3/2          | 71x71x80   ||
+| **pool**      |         3x3/2          | 35x35x192  | incorrectly listed as fig. 5|
+| 3xinception | **fig. 4/with double 3x3** | 35x35x288  | includes grid reduction fig. 10|
+| 5xinception | fig. 6                 | 17x17x768 ||
 
 ## Macro-Architecture v1.0 and v2.0
 

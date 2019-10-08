@@ -23,8 +23,7 @@
     
 Below is the corrected version of Table 1 in the paper for V3:
    
-| type     | patch size/stride
-|          | or remarks             | input size |
+| type     | patch size/stride .    | input size |
 | ---------| ---------------------- |------------|
 | conv     | 3x3/2                  | 299x299x3  |
 | conv     | 3x3/1                  | 149x149x32 |

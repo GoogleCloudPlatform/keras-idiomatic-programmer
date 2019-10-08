@@ -23,10 +23,12 @@
     
 Below is the corrected version of Table 1 in the paper for V3:
    
-| type     | patch size/stride .    | input size |
-| ---------| ---------------------- |------------|
-| conv     | 3x3/2                  | 299x299x3  |
-| conv     | 3x3/1                  | 149x149x32 |
+| type        | patch size/stride .    | input size |
+| ------------| ---------------------- |------------|
+| conv        |         3x3/2          | 299x299x3  |
+| conv        |         3x3/1          | 149x149x32 |
+| conv padded |         3x3/1          | 147x147x32 |
+| pool        |         3x3/2          | 147x147x64 |
 
 ## Macro-Architecture v1.0 and v2.0
 

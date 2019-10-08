@@ -33,9 +33,12 @@ Below is the corrected version of Table 1 in the paper for V3:
 | conv        |         3x3/2          | 71x71x80   ||
 | **pool**    |         3x3/2          | 35x35x192  | incorrectly listed as conv |
 | 3xinception | **fig. 4/with double 3x3** | 35x35x288  | incorrectly listed as fig. 5, includes grid reduction fig. 10|
-| 5xinception | fig. 6                 | 17x17x768 | includes grid reduction |
+| 5xinception | fig. 6                 | 17x17x768 | includes grid reduction, no fig. |
 | 2xinception | fig. 7                 | 8x8x1280  ||
 | **ave** pool | 8x8                   | 8x8x2048  ||
+| linear      | logits                 | 1x1x2048  ||
+| softmax     | classifier             | 1x1x1000 ||
+
 
 ## Macro-Architecture v1.0 and v2.0
 

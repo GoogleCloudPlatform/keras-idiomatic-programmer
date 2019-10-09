@@ -24,6 +24,7 @@ All the models here are coded using the idiomatic design pattern for models. The
 *Wide Convolutional Neural Networks*<br/>
 | `Inception_v1`   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |<br/>
 | `Inception_v2`   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |<br/>
+| `Inception_v3`   | [Rethinking the Inception Architecture for Computer Vision](https://arxiv.org/pdf/1512.00567.pdf)|<br/>
 | `ResNeXt50`  | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
 | `ResNeXt101` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
 | `ResNeXt152` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) | <br/>

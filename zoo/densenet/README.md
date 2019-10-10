@@ -110,34 +110,6 @@ def stem(inputs, n_filters):
 
 <img src="dense-block.jpg">
 
-```python
-def residual_block(x, n_filters):
-    """ Construct a Densely Connected Residual Block
-        x        : input to the block
-        n_filters: number of filters in convolution layer in residual block
-    """
-    # Remember input tensor into residual block
-    shortcut = x
-
-    # BN-RE-Conv pre-activation form of convolutions
-
-    # Dimensionality expansion, expand filters by 4 (DenseNet-B)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
-    x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
-
-    # Bottleneck convolution
-    # 3x3 convolution with padding=same to preserve same shape of feature maps
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
-    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-
-    # Concatenate the input (identity) with the output of the residual block
-    # Concatenation (vs. merging) provides Feature Reuse between layers
-    x = Concatenate()([shortcut, x])
-    return x
-```
-
 ### Transitional Block
 
 <img src="trans-block.jpg">
@@ -168,6 +140,33 @@ def trans_block(x, reduction):
 
 <img src="residual-block.jpg">
 
+```python
+def residual_block(x, n_filters):
+    """ Construct a Densely Connected Residual Block
+        x        : input to the block
+        n_filters: number of filters in convolution layer in residual block
+    """
+    # Remember input tensor into residual block
+    shortcut = x
+
+    # BN-RE-Conv pre-activation form of convolutions
+
+    # Dimensionality expansion, expand filters by 4 (DenseNet-B)
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Bottleneck convolution
+    # 3x3 convolution with padding=same to preserve same shape of feature maps
+    x = BatchNormalization()(x)
+    x = ReLU()(x)
+    x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+
+    # Concatenate the input (identity) with the output of the residual block
+    # Concatenation (vs. merging) provides Feature Reuse between layers
+    x = Concatenate()([shortcut, x])
+    return x
+```
 
 ### Classifier
 

@@ -339,7 +339,7 @@ x = ResNetV1.identity_block(x, 256)
 
 # Classifier
 x = Flatten()(x)
-ouputs = Dense(10, activation='softmax')(x)
+outputs = Dense(10, activation='softmax')(x)
 model = Model(inputs, outputs)
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
 model.summary()

@@ -120,7 +120,7 @@ model = vgg.model
 ```python
 # make mini-VGG for CIFAR-10
 from tensorflow.keras import Input, Model
-from tensorflow.keras import Conv2D, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
 inputs = Input((32, 32, 3))

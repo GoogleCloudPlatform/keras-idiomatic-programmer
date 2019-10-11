@@ -124,7 +124,7 @@ from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+x = Conv2D(32, (3, 3), strides=1, padding='valid', activation='relu')(inputs)
 
 # Learner
 # VGG group: 1 conv layer, 64 filters

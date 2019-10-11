@@ -1,10 +1,8 @@
 
 # SqueezeNet
 
-```python
-squeezenet(_bypass/_complex).py - academic - procedural
-squeezenet(_bypass/_complex)_c.py - composable - OOP
-```python
+    squeezenet(_bypass/_complex).py - academic - procedural
+    squeezenet(_bypass/_complex)_c.py - composable - OOP
 
 [Paper](https://arxiv.org/pdf/1602.07360.pdf)
 

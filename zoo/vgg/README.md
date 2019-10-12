@@ -120,17 +120,17 @@ model = vgg.model
 ```python
 # make mini-VGG for CIFAR-10
 from tensorflow.keras import Input, Model
-from tensorflow.keras import Conv2D, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, Flatten, Dense
 
 # Stem
 inputs = Input((32, 32, 3))
-x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
+x = Conv2D(32, (3, 3), strides=1, padding='valid', activation='relu')(inputs)
 
 # Learner
-# VGG group: 1 conv layer, 128 filters
-# VGG group: 2 conv layers, 256 filters
-x = VGG.group(x, 1, 128)
-x = VGG.group(x, 2, 256)
+# VGG group: 1 conv layer, 64 filters
+# VGG group: 2 conv layers, 128 filters
+x = VGG.group(x, 1, 64)
+x = VGG.group(x, 2, 128)
 
 # Classifier
 x = Flatten()(x)
@@ -172,7 +172,7 @@ from tensorflow.keras.datasets import cifar10
 import numpy as np
 (x_train, y_train), (x_test, y_test) = cifar10.load_data()
 x_train = (x_train / 255.0).astype(np.float32)
-y_train = (y_train / 255.0).astype(np.float32)
+x_test  = (x_tyest / 255.0).astype(np.float32)
 model.fit(x_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
 ```
 

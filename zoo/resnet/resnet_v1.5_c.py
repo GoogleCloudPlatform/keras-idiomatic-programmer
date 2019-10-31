@@ -38,8 +38,14 @@ class ResNetV1_5(object):
             input_shape: input shape
             n_classes  : number of output classes
         """
-        if n_layers not in [50, 101, 152]:
-            raise Exception("ResNet: Invalid value for n_layers")
+        # predefined
+        if isinstance(n_layers, int):
+            if n_layers not in [50, 101, 152]:
+                raise Exception("ResNet: Invalid value for n_layers")
+            groups = self.groups[n_layers]
+        # user defined
+        else:
+            groups = n_layers
 
         # The input tensor
         inputs = Input(input_shape)
@@ -48,9 +54,9 @@ class ResNetV1_5(object):
         x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, self.groups[n_layers])
+        x = self.learner(x, groups=groups)
 
-        # The classifier for 1000 classes
+        # The classifier 
         outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
@@ -81,42 +87,49 @@ class ResNetV1_5(object):
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
         return x
 
-    def learner(self, x, groups):
+    def learner(self, x, **metaparameters):
         """ Construct the Learner
             x     : input to the learner
             groups: list of groups: number of filters and blocks
         """
+        groups = metaparameters['groups']
+
         # First Residual Block Group (not strided)
         group = groups.pop(0)
-        x = ResNetV1_5.group(x, group[0], group[1], strides=(1, 1))
+        x = ResNetV1_5.group(x, strides=(1, 1), n_filters=group[0], n_blocks=group[1])
 
         # Remaining Residual Block Groups (strided)
         for n_filters, n_blocks in groups:
-            x = ResNetV1_5.group(x, n_filters, n_blocks)
+            x = ResNetV1_5.group(x, n_filters=n_filters, n_blocks=n_blocks)
         return x
 
     @staticmethod
-    def group(x, n_filters, n_blocks, strides=(2, 2), init_weights=None):
+    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
         """ Construct a Residual Group
             x         : input into the group
+            strides   : whether the projection block is a strided convolution
             n_filters : number of filters for the group
             n_blocks  : number of residual blocks with identity link
-            strides   : whether the projection block is a strided convolution
         """
+        n_filters = metaparameters['n_filters']
+        n_blocks  = metaparameters['n_blocks']
+
         # Double the size of filters to fit the first Residual Group
-        x = ResNetV1_5.projection_block(x, n_filters, strides=strides, init_weights=None)
+        x = ResNetV1_5.projection_block(x, strides=strides, init_weights=None, n_filters=n_filters)
 
         # Identity residual blocks
         for _ in range(n_blocks):
-            x = ResNetV1_5.identity_block(x, n_filters, init_weights=None)
+            x = ResNetV1_5.identity_block(x, init_weights=None, n_filters=n_filters)
         return x
 
     @staticmethod
-    def identity_block(x, n_filters, init_weights=None):
+    def identity_block(x, init_weights=None, **metaparameters):
         """ Construct a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
         """
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = ResNetV1_5.init_weights
     
@@ -145,13 +158,15 @@ class ResNetV1_5(object):
         return x
 
     @staticmethod
-    def projection_block(x, n_filters, strides=(2,2), init_weights=None):
+    def projection_block(x, strides=(2,2), init_weights=None, **metaparameters):
         """ Construct Bottleneck Residual Block of Convolutions with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
-            n_filters: number of filters
             strides  : whether the first convolution is strided
+            n_filters: number of filters
         """
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = ResNetV1_5.init_weights
     

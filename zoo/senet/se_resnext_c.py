@@ -23,10 +23,20 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Reshape, Mult
 class SEResNeXt(object):
     """ Construct a Squeeze & Excite Residual Next Convolution Neural Network """
     # Meta-parameter: number of filters in, out and number of blocks
-    groups = { 50 : [ (128, 256, 3), (256, 512, 4), (512, 1024, 6),  (1024, 2048, 3)], # SE-ResNeXt 50
-           101: [ (128, 256, 3), (256, 512, 4), (512, 1024, 23), (1024, 2048, 3)], # SE-ResNeXt 101
-           152: [ (128, 256, 3), (256, 512, 8), (512, 1024, 36), (1024, 2048, 3)]  # SE-ResNeXt 152
-         }
+    groups = { 50 : [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 },
+                      { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 4 },
+                      { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 6 },
+                      { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ],     # SE-ResNeXt50
+               101 :[ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 },
+                      { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 4 },
+                      { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 23 },
+                      { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ],     # SE-ResNeXt101
+               152 :[ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 },
+                      { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 8 },
+                      { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 36 },
+                      { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ]      # SE-ResNeXt152
+             }
+
     # Meta-parameter: width of group convolution
     cardinality = 32
     # Meta-parameter: Amount of filter reduction in squeeze operation
@@ -42,8 +52,14 @@ class SEResNeXt(object):
             input_shape: the input shape
             n_classes  : number of output classes
         """
-        if n_layers not in [50, 101, 152]:
-            raise Exception("SE-ResNeXt: Invalid value for n_layers")
+        # predefined
+        if isinstance(n_layers, int):
+            if n_layers not in [50, 101, 152]:
+                raise Exception("SE-ResNeXt: Invalid value for n_layers")
+            groups = self.groups[n_layers]
+        # user defined
+        else:
+            groups = n_layers
 
         # The input tensor
         inputs = Input(shape=input_shape)
@@ -52,9 +68,9 @@ class SEResNeXt(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, self.groups[n_layers], cardinality, ratio)
+        x = self.learner(x, groups=groups, cardinality=cardinality, ratio=ratio)
 
-        # The Classifier for 1000 classes
+        # The Classifier 
         outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
@@ -78,46 +94,49 @@ class SEResNeXt(object):
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
         return x
 
-    def learner(self, x, groups, cardinality, ratio, init_weights=None):
+    def learner(self, x, init_weights=None, **metaparameters):
         """ Construct the Learner
             x          : input to the learner
             groups     : list of groups: filters in, filters out, number of blocks
-            cardinality: width of group convolution
-            ratio      : amount of filter reduction during squeeze
         """
+        groups = metaparameters['groups']
+
         # First ResNeXt Group (not strided)
-        filters_in, filters_out, n_blocks = groups.pop(0)
-        x = SEResNeXt.group(x, n_blocks, filters_in, filters_out, cardinality, ratio, strides=(1, 1), init_weights=init_weights)
+        x = SEResNeXt.group(x, strides=(1, 1), init_weights=init_weights, **groups.pop(0), **metaparameters)
 
         # Remaining ResNeXt Groups
-        for filters_in, filters_out, n_blocks in groups:
-            x = SEResNeXt.group(x, n_blocks, filters_in, filters_out, cardinality, ratio, init_weights=init_weights)
+        for group in groups:
+            x = SEResNeXt.group(x, init_weights=init_weights, **group, **metaparameters)
         return x
 
     @staticmethod
-    def group(x, n_blocks, filters_in, filters_out, cardinality, ratio, strides=(2, 2), init_weights=None):
+    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
         """ Construct a Squeeze-Excite Group
             x          : input to the group
-            n_blocks   : number of blocks in the group
-            filters_in : number of filters  (channels) at the input convolution
-            filters_out: number of filters  (channels) at the output convolution
-            ratio      : amount of filter reduction during squeeze
             strides    : whether projection block is strided
+            n_blocks   : number of blocks in the group
         """
+        n_blocks = metaparameters['n_blocks']
+
         # First block is a linear projection block
-        x = SEResNeXt.projection_block(x, filters_in, filters_out, strides=strides, cardinality=cardinality, ratio=ratio, init_weights=init_weights)
+        x = SEResNeXt.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
 
         # Remaining blocks are identity links
         for _ in range(n_blocks-1):
-            x = SEResNeXt.identity_block(x, filters_in, filters_out, cardinality=cardinality, ratio=ratio, init_weights=init_weights) 
+            x = SEResNeXt.identity_block(x, init_weights=init_weights, **metaparameters) 
         return x
 
     @staticmethod
-    def squeeze_excite_block(x, ratio=16, init_weights=None):
+    def squeeze_excite_block(x, init_weights=None, **metaparameters):
         """ Construct a Squeeze and Excite block
             x    : input to the block
             ratio : amount of filter reduction during squeeze
         """  
+        if 'ratio' in metaparameters:
+            ratio = metaparameters['ratio']
+        else:
+            ratio = SENet.ratio
+
         if init_weights is None:
             init_weights = SEResNeXt.init_weights
             
@@ -146,14 +165,17 @@ class SEResNeXt(object):
         return x
 
     @staticmethod
-    def identity_block(x, filters_in, filters_out, cardinality=32, ratio=16, init_weights=None):
+    def identity_block(x, init_weights=None, **metaparameters):
         """ Construct a ResNeXT block with identity link
             x          : input to block
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of cardinality layer
-            ratio      : amount of filter reduction during squeeze
         """ 
+        filters_in  = metaparameters['filters_in']
+        filters_out = metaparameters['filters_out']
+        cardinality = metaparameters['cardinality']
+
         if init_weights is None:
             init_weights = SEResNeXt.init_weights
     
@@ -185,7 +207,7 @@ class SEResNeXt(object):
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNeXt.squeeze_excite_block(x, ratio, init_weights)
+        x = SEResNeXt.squeeze_excite_block(x, init_weights, **metaparameters)
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
@@ -193,15 +215,18 @@ class SEResNeXt(object):
         return x
 
     @staticmethod
-    def projection_block(x, filters_in, filters_out, cardinality=32, strides=1, ratio=16, init_weights=None):
+    def projection_block(x, strides=1, init_weights=None, **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of cardinality layer
             strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
-            ratio      : amount of filter reduction during squeeze
-        """
+        """ 
+        filters_in  = metaparameters['filters_in']
+        filters_out = metaparameters['filters_out']
+        cardinality = metaparameters['cardinality']
+
         if init_weights is None:
             init_weights = SEResNeXt.init_weights
     
@@ -236,7 +261,7 @@ class SEResNeXt(object):
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNeXt.squeeze_excite_block(x, ratio, init_weights)
+        x = SEResNeXt.squeeze_excite_block(x, init_weights, **metaparameters)
 
         # Add the projection shortcut (input) to the output of the block
         x = Add()([shortcut, x])
@@ -255,9 +280,3 @@ class SEResNeXt(object):
 
 # Example
 # senet = SEResNeXt(50)
-
-
-
-
-
-

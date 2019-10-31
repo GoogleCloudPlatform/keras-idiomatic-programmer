@@ -32,12 +32,16 @@ class VGG(object):
 
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
         """ Construct a VGG model
-            n_layers    : number of layers (16 or 19)
+            n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
             n_classes:  : number of output classes
         """
-        if n_layers not in [16, 19]:
-            raise Exception("VGG: Invalid value for n_layers")
+        if isinstance(n_layers, int):
+            if n_layers not in [16, 19]:
+                raise Exception("VGG: Invalid value for n_layers")
+            blocks = self.groups[n_layers]
+        else:
+            blocks = n_layers
             
         # The input vector 
         inputs = Input( input_shape )
@@ -46,7 +50,7 @@ class VGG(object):
         x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, self.groups[n_layers])
+        x = self.learner(x, blocks=blocks)
 
         # The classifier
         outputs = self.classifier(x, n_classes)
@@ -70,25 +74,31 @@ class VGG(object):
                    kernel_initializer=self.init_weights)(inputs)
         return x
     
-    def learner(self, x, blocks):
+    def learner(self, x, **metaparameters):
         """ Construct the (Feature) Learner
             x        : input to the learner
             blocks   : list of groups: filter size and number of conv layers
         """ 
+        blocks = metaparameters['blocks']
+
         # The convolutional groups
         for n_layers, n_filters in blocks:
-            x = self.group(x, n_layers, n_filters)
+            x = self.group(x, n_layers=n_layers, n_filters=n_filters)
         return x
 
     @staticmethod
-    def group(x, n_layers, n_filters, init_weights=None):
+    def group(x, init_weights=None, **metaparameters):
         """ Construct a Convolutional Group
             x        : input to the group
             n_layers : number of convolutional layers
             n_filters: number of filters
         """
+        n_filters = metaparameters['n_filters']
+        n_layers  = metaparameters['n_layers']
+
         if init_weights is None:
             init_weights = VGG.init_weights
+
         # Block of convolutional layers
         for n in range(n_layers):
             x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", activation="relu",
@@ -117,4 +127,3 @@ class VGG(object):
 # Example of constructing a VGG 16
 # vgg = VGG(16)
 # model = vgg.model
-

@@ -36,10 +36,12 @@ class VGG(object):
             input_shape : input shape to the model
             n_classes:  : number of output classes
         """
+        # predefined
         if isinstance(n_layers, int):
             if n_layers not in [16, 19]:
                 raise Exception("VGG: Invalid value for n_layers")
             blocks = self.groups[n_layers]
+        # user defined
         else:
             blocks = n_layers
             
@@ -126,4 +128,3 @@ class VGG(object):
 
 # Example of constructing a VGG 16
 # vgg = VGG(16)
-# model = vgg.model

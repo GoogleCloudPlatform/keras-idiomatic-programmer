@@ -23,9 +23,18 @@ from tensorflow.keras.layers import Concatenate, Dense, GlobalAveragePooling2D, 
 class ResNeXt(object):
     """ Construct a Residual Next Convolution Neural Network """
     # Meta-parameter: number of filters in, out and number of blocks
-    groups = { 50 : [ (128, 256, 3), (256, 512, 4), (512, 1024, 6),  (1024, 2048, 3)], # ResNeXt 50
-               101: [ (128, 256, 3), (256, 512, 4), (512, 1024, 23), (1024, 2048, 3)], # ResNeXt 101
-               152: [ (128, 256, 3), (256, 512, 8), (512, 1024, 36), (1024, 2048, 3)]  # ResNeXt 152
+    groups = { 50 : [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 }, 
+                      { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 4 }, 
+                      { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 6 }, 
+                      { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ],	 # ResNeXt50
+               101 :[ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 }, 
+                      { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 4 }, 
+                      { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 23 }, 
+                      { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ],	 # ResNeXt101
+               152 :[ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 }, 
+                      { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 8 }, 
+                      { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 36 }, 
+                      { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ] 	 # ResNeXt152
              }
     
     # Meta-parameter: width of group convolution
@@ -41,8 +50,14 @@ class ResNeXt(object):
             input_shape: the input shape
             n_classes  : number of output classes
         """
-        if n_layers not in [50, 101, 152]:
-            raise Exception("ResNeXt: Invalid value for n_layers")
+        # predefined
+        if isinstance(n_layers, int):
+            if n_layers not in [50, 101, 152]:
+                raise Exception("ResNeXt: Invalid value for n_layers")
+            groups = self.groups[n_layers]
+        # user defined
+        else:
+            groups = n_layers
         
         # The input tensor
         inputs = Input(shape=input_shape)
@@ -51,9 +66,9 @@ class ResNeXt(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, self.groups[n_layers], cardinality)
+        x = self.learner(x, cardinality=cardinality, groups=groups)
 
-        # The Classifier for 1000 classes
+        # The Classifier 
         outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
@@ -77,47 +92,59 @@ class ResNeXt(object):
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
         return x
     
-    def learner(self, x, groups, cardinality=32):
+    def learner(self, x, **metaparameters):
         """ Construct the Learner
             x          : input to the learner
             groups     : list of groups: filters in, filters out, number of blocks
             cardinality: width of group convolution
         """
+        groups = metaparameters['groups']
+        cardinality = metaparameters['cardinality']
+
         # First ResNeXt Group (not-strided)
-        filters_in, filters_out, n_blocks = groups.pop(0)
-        x = ResNeXt.group(x, filters_in, filters_out, n_blocks, strides=(1, 1), cardinality=cardinality)
+        x = ResNeXt.group(x, strides=(1, 1), cardinality=cardinality, **groups.pop(0))
 
         # Remaining ResNeXt groups
-        for filters_in, filters_out, n_blocks in groups:
-            x = ResNeXt.group(x, filters_in, filters_out, n_blocks, cardinality=cardinality)
+        for group in groups:
+            x = ResNeXt.group(x, cardinality=cardinality, **group)
         return x
 
     @staticmethod
-    def group(x, filters_in, filters_out, n_blocks, cardinality=32, strides=(2, 2), init_weights=None):
+    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
         """ Construct a Residual group
             x          : input to the group
+            strides    : whether its a strided convolution
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
+            n_blocks   : number of blocks in the group
             cardinality: width of group convolution
-            strides    : whether its a strided convolution
         """
+        n_blocks = metaparameters['n_blocks']
+
         # Double the size of filters to fit the first Residual Group
         # Reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-        x = ResNeXt.projection_block(x, filters_in, filters_out, strides=strides, cardinality=cardinality, init_weights=init_weights)
+        x = ResNeXt.projection_block(x, strides=strides, nit_weights=init_weights, **metaparameters)
 
         # Remaining blocks
         for _ in range(n_blocks):
-            x = ResNeXt.identity_block(x, filters_in, filters_out, cardinality=cardinality, init_weights=init_weights)	
+            x = ResNeXt.identity_block(x, init_weights=init_weights, **metaparameters)	
         return x
 
     @staticmethod
-    def identity_block(x, filters_in, filters_out, cardinality=32, init_weights=None):
+    def identity_block(x, init_weights=None, **metaparameters):
         """ Construct a ResNeXT block with identity link
             x          : input to block
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of group convolution
         """
+        filters_in  = metaparameters['filters_in']
+        filters_out = metaparameters['filters_out']
+        if 'cardinality' in metaparameters:
+            cardinality = metaparameters['cardinality']
+        else:
+            cardinality = ResNeXt.cardinality
+
         if init_weights is None:
             init_weights = ResNeXt.init_weights
             
@@ -154,14 +181,21 @@ class ResNeXt(object):
         return x
 
     @staticmethod
-    def projection_block(x, filters_in, filters_out, cardinality=32, strides=(2, 2), init_weights=None):
+    def projection_block(x, strides=(2, 2), init_weights=None, **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
+            strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of group convolution
-            strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
         """
+        filters_in = metaparameters['filters_in']
+        filters_out = metaparameters['filters_out']
+        if 'cardinality' in metaparameters:
+            cardinality = metaparameters['cardinality']
+        else:
+            cardinality = ResNeXt.cardinality
+
         if init_weights is None:
             init_weights = ResNeXt.init_weights
     

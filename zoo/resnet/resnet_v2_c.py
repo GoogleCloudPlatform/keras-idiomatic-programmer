@@ -27,9 +27,18 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Add
 class ResNetV2(object):
     """ Construct a Residual Convolution Network Network V2 """
     # Meta-parameter: list of groups: number of filters and number of blocks
-    groups = { 50 : [ (64, 3), (128, 4), (256, 6),  (512, 3) ],           # ResNet50
-               101: [ (64, 3), (128, 4), (256, 23), (512, 3) ],           # ResNet101
-               152: [ (64, 3), (128, 8), (256, 36), (512, 3) ]            # ResNet152
+    groups = { 50 : [ { 'n_filters' : 64, 'n_blocks': 3 },
+                      { 'n_filters': 128, 'n_blocks': 4 },
+                      { 'n_filters': 256, 'n_blocks': 6 },
+                      { 'n_filters': 512, 'n_blocks': 3 } ],            # ResNet50
+               101: [ { 'n_filters' : 64, 'n_blocks': 3 },
+                      { 'n_filters': 128, 'n_blocks': 4 },
+                      { 'n_filters': 256, 'n_blocks': 23 },
+                      { 'n_filters': 512, 'n_blocks': 3 } ],            # ResNet101
+               152: [ { 'n_filters' : 64, 'n_blocks': 3 },
+                      { 'n_filters': 128, 'n_blocks': 8 },
+                      { 'n_filters': 256, 'n_blocks': 36 },
+                      { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
     _model = None
     init_weights = 'he_normal'
@@ -97,12 +106,11 @@ class ResNetV2(object):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        n_filters, n_blocks = groups.pop(0)
-        x = ResNetV2.group(x, strides=(1, 1), n_filters=n_filters, n_blocks=n_blocks)
+        x = ResNetV2.group(x, strides=(1, 1), **groups.pop(0))
 
         # Remaining Residual Block Groups (strided)
-        for n_filters, n_blocks in groups:
-            x = ResNetV2.group(x, n_filters=n_filters, n_blocks=n_blocks)
+        for group in groups:
+            x = ResNetV2.group(x, **group)
         return x
     
     @staticmethod
@@ -113,15 +121,14 @@ class ResNetV2(object):
             n_filters : number of filters for the group
             n_blocks  : number of residual blocks with identity link
         """
-        n_filters = metaparameters['n_filters']
         n_blocks  = metaparameters['n_blocks']
 
         # Double the size of filters to fit the first Residual Group
-        x = ResNetV2.projection_block(x, strides=strides, init_weights=init_weights, n_filters=n_filters)
+        x = ResNetV2.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
 
         # Identity residual blocks
         for _ in range(n_blocks):
-            x = ResNetV2.identity_block(x, init_weights=init_weights, n_filters=n_filters)
+            x = ResNetV2.identity_block(x, init_weights=init_weights, **metaparameters)
         return x
 
     @staticmethod

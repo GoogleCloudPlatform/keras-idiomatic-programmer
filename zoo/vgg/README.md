@@ -129,8 +129,8 @@ x = Conv2D(32, (3, 3), strides=1, padding='valid', activation='relu')(inputs)
 # Learner
 # VGG group: 1 conv layer, 64 filters
 # VGG group: 2 conv layers, 128 filters
-x = VGG.group(x, 1, 64)
-x = VGG.group(x, 2, 128)
+x = VGG.group(x, n_layers=1, n_filters=64)
+x = VGG.group(x, n_layers=2, n_filters=128)
 
 # Classifier
 x = Flatten()(x)

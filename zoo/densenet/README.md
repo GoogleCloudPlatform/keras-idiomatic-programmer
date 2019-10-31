@@ -218,10 +218,10 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Residual block with 32 filters
 # Transitional block with 50% reduction
 # Residual block with 32 filters
-x = DenseNet.group(x, 6, 32, reduction=0.5)
-x = DensetNet.residual_block(x, 32)
+x = DenseNet.group(x, n_blocks=6, n_filters=32, reduction=0.5)
+x = DensetNet.residual_block(x, n_filters=32)
 x = DenseNet.trans_block(x, reduction=0.5)
-x = DensetNet.residual_block(x, 32)
+x = DensetNet.residual_block(x, n_filters=32)
 
 # Classifier
 x = Flatten()(x)

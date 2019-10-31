@@ -23,9 +23,11 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, AveragePoolin
 class DenseNet(object):
     """ Construct a Densely Connected Convolution Neural Network """
     # Meta-parameter: number of residual blocks in each dense group
-    groups = { 121 : [6, 12, 24, 16],	# DenseNet 121
-               169 : [6, 12, 32, 32],	# DenseNet 169
-               201 : [6, 12, 48, 32] }	# DenseNet 201
+    groups = { 121 : [ { 'n_blocks': 6 }, { 'n_blocks': 12 }, { 'n_blocks': 24 }, { 'n_blocks': 16 } ], # DenseNet 121
+               169 : [ { 'n_blocks': 6 }, { 'n_blocks': 12 }, { 'n_blocks': 32 }, { 'n_blocks': 32 } ], # DenseNet 169
+               201 : [ { 'n_blocks': 6 }, { 'n_blocks': 12 }, { 'n_blocks': 48 }, { 'n_blocks': 32 } ]  # DenseNet 201
+	     }
+
     # Meta-parameter: amount to reduce feature maps by (compression factor) during transition blocks
     reduction = 0.5
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
@@ -41,6 +43,15 @@ class DenseNet(object):
             input_shape: input shape
             n_classes  : number of output classes
         """
+        # predefined
+        if isinstance(n_layers, int):
+            if n_layers not in [121, 169, 201]:
+                raise Exception("DenseNet: Invalid value for n_layers")
+            groups = self.groups[n_layers]
+        # user defined
+        else:
+            groups = n_layers
+
         # The input vector
         inputs = Input(shape=input_shape)
 
@@ -48,9 +59,9 @@ class DenseNet(object):
         x = self.stem(inputs, n_filters)
 
         # The Learner
-        x = self.learner(x, self.groups[n_layers], n_filters, reduction)
+        x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups)
 
-        # Classifier for 1000 classes
+        # The Classifier 
         outputs = self.classifier(x, n_classes)
 
         # Instantiate the model
@@ -83,47 +94,55 @@ class DenseNet(object):
         x = MaxPooling2D((3, 3), strides=2)(x)
         return x
     
-    def learner(self, x, groups, n_filters, reduction):
+    def learner(self, x, **metaparameters):
         """ Construct the Learner
             x         : input to the learner
-            blocks    : set of number of blocks per group
-            n_filters : number of filters (growth rate)
-            reduction : amount to reduce (compress) feature maps by
+            groups    : set of number of blocks per group
         """
+        groups = metaparameters['groups']
+
         # pop off the list the last dense block
         last = groups.pop()
 
         # Create the dense groups and interceding transition blocks
-        for n_blocks in groups:
-            x = DenseNet.group(x, n_blocks, n_filters, reduction)
+        for group in groups:
+            x = DenseNet.group(x, **group, **metaparameters)
 
         # Add the last dense group w/o a following transition block
-        x = DenseNet.group(x, last, n_filters)
+        metaparameters['reduction'] = None
+        x = DenseNet.group(x, **last, **metaparameters)
         return x
 
     @staticmethod
-    def group(x, n_blocks, n_filters, reduction=None, init_weights=None):
+    def group(x, init_weights=None, **metaparameters):
         """ Construct a Dense Block
             x         : input to the block
             n_blocks  : number of residual blocks in dense block
-            n_filters : number of filters in convolution layer 
             reduction : amount to reduce (compress) feature maps by
         """
+        n_blocks  = metaparameters['n_blocks']
+        reduction = metaparameters['reduction']
+
         # Construct a group of residual blocks
         for _ in range(n_blocks):
-            x = DenseNet.residual_block(x, n_filters, init_weights=init_weights)
+            x = DenseNet.residual_block(x, init_weights=init_weights, **metaparameters)
 
         # Construct interceding transition block
         if reduction is not None:
-            x = DenseNet.trans_block(x, reduction)
+            x = DenseNet.trans_block(x, reduction=reduction)
         return x
 
     @staticmethod
-    def residual_block(x, n_filters, init_weights=None):
+    def residual_block(x, init_weights=None, **metaparameters):
         """ Construct a Residual Block
             x        : input to the block
             n_filters: number of filters in convolution layer in residual block
         """
+        if 'n_filters' in metaparameters:
+            n_filters = metaparameters['n_filters']
+        else:
+            n_filters = DenseNet.n_filters
+
         if init_weights is None:
             init_weights = DenseNet.init_weights
             
@@ -149,11 +168,16 @@ class DenseNet(object):
         return x
 
     @staticmethod
-    def trans_block(x, reduction, init_weights=None):
+    def trans_block(x, init_weights=None, **metaparameters):
         """ Construct a Transition Block
             x        : input layer
             reduction: percentage of reduction of feature maps
         """
+        if 'reduction' in metaparameters:
+            reduction = metaparameters['reduction']
+        else:
+            reduction = DenseNet.reduction
+
         if init_weights is None:
             init_weights = DenseNet.init_weights
 

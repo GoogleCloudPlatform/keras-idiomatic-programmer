@@ -1,16 +1,8 @@
 
-# Faster R-CNN
+# Fast R-CNN
 
-[Paper](https://arxiv.org/pdf/1506.01497.pdf)
+[Paper](https://arxiv.org/pdf/1504.08083.pdf)
 
 ## Macro-Architecture
 
 <img src='macro.jpg'>
-
-## Stem Group
-
-<img src="stem.jpg">
-
-## Region of Proposal Network
-
-<img src="rpn.jpg">

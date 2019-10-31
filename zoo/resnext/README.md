@@ -241,9 +241,9 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Residual Next group: 2 blocks, 64 to 128 filters
 # Residual Next block with projection, 128 to 256 filters
 # Residual Next block with identity, 256 filters
-x = ResNeXt.group(x, 64, 128, 2)
-x = ResNeXt.projection_block(x, 128, 256)
-x = ResNeXt.identity_block(x, 256, 256)
+x = ResNeXt.group(x, filters_in=64, filters_out=128, n_blocks=2)
+x = ResNeXt.projection_block(x, filters_in=128, filters_out=256)
+x = ResNeXt.identity_block(x, filters_in=256, filters_out=256)
 
 # Classifier
 x = Flatten()(x)

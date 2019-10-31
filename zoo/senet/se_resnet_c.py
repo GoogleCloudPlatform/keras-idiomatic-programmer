@@ -23,11 +23,21 @@ from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Reshape, Mult
 class SEResNet(object):
     """ Construct a Squeeze & Excite Residual Convolution Neural Network """
     # Meta-parameter: list of groups: filter size and number of blocks
-    groups = { 50 : [ (64, 3), (128, 4), (256, 6),  (512, 3) ],         # SE-ResNet50
-               101: [ (64, 3), (128, 4), (256, 23), (512, 3) ],         # SE-ResNet101
-               152: [ (64, 3), (128, 8), (256, 36), (512, 3) ]          # SE-ResNet152
-             }
+    groups = { 50 : [ { 'n_filters' : 64, 'n_blocks': 3 },
+                      { 'n_filters': 128, 'n_blocks': 4 },
+                      { 'n_filters': 256, 'n_blocks': 6 },
+                      { 'n_filters': 512, 'n_blocks': 3 } ],            # SE-ResNet50
+               101: [ { 'n_filters' : 64, 'n_blocks': 3 },
+                      { 'n_filters': 128, 'n_blocks': 4 },
+                      { 'n_filters': 256, 'n_blocks': 23 },
+                      { 'n_filters': 512, 'n_blocks': 3 } ],            # SE-ResNet101
+               152: [ { 'n_filters' : 64, 'n_blocks': 3 },
+                      { 'n_filters': 128, 'n_blocks': 8 },
+                      { 'n_filters': 256, 'n_blocks': 36 },
+                      { 'n_filters': 512, 'n_blocks': 3 } ]             # SE-ResNet152
+	      }
     # Meta-parameter: Amount of filter reduction in squeeze operation
+    ratio = 16
     init_weights = 'he_normal'
     _model = None
 
@@ -37,8 +47,14 @@ class SEResNet(object):
             input_shape: input shape
             n_classes  : number of output classes
         """
-        if n_layers not in [50, 101, 152]:
-            raise Exception("ResNet: Invalid value for n_layers")
+        # predefined
+        if isinstance(n_layers, int):
+            if n_layers not in [50, 101, 152]:
+                raise Exception("SE-ResNet: Invalid value for n_layers")
+            groups = self.groups[n_layers]
+        # user defined
+        else:
+            groups = n_layers
 
         # The input tensor
         inputs = Input(shape=input_shape)
@@ -47,10 +63,10 @@ class SEResNet(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, self.groups[n_layers], ratio)
+        x = self.learner(x, groups=groups, ratio=ratio)
 
-        # The Classifier for 1000 classes
-        outputs = self.classifier(x, 1000)
+        # The Classifier 
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -80,44 +96,49 @@ class SEResNet(object):
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
         return x
 
-    def learner(self, x, groups, ratio):
+    def learner(self, x, **metaparameters):
         """ Construct the Learner
             x     : input to the learner
             groups: list of groups: number of filters and blocks
-            ratio : amount of filter reduction in squeeze
         """
+        groups = metaparameters['groups']
+
         # First Residual Block Group (not strided)
-        n_filters, n_blocks = groups.pop(0)
-        x = SEResNet.group(x, n_filters, n_blocks, ratio, strides=(1, 1))
+        x = SEResNet.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining Residual Block Groups (strided)
-        for n_filters, n_blocks in groups:
-            x = SEResNet.group(x, n_filters, n_blocks, ratio)
+        for group in groups:
+            x = SEResNet.group(x, **group, **metaparameters)
         return x	
 
     @staticmethod
-    def group(x, n_filters, n_blocks, ratio, strides=(2, 2), init_weights=None):
+    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
         """ Construct the Squeeze-Excite Group
             x        : input to the group
-            n_blocks : number of blocks
-            n_filters: number of filters
-            ratio    : amount of filter reduction during squeeze
             strides  : whether projection block is strided
+            n_blocks : number of blocks
         """
+        n_blocks  = metaparameters['n_blocks']
+
         # first block uses linear projection to match the doubling of filters between groups
-        x = SEResNet.projection_block(x, n_filters, strides=strides, ratio=ratio, init_weights=init_weights)
+        x = SEResNet.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
 
         # remaining blocks use identity link
         for _ in range(n_blocks-1):
-            x = SEResNet.identity_block(x, n_filters, ratio=ratio, init_weights=init_weights)
+            x = SEResNet.identity_block(x, init_weights=init_weights, **metaparameters)
         return x
 
     @staticmethod
-    def squeeze_excite_block(x, ratio=16, init_weights=None):
+    def squeeze_excite_block(x, init_weights=None, **metaparameters):
         """ Create a Squeeze and Excite block
             x     : input to the block
             ratio : amount of filter reduction during squeeze
         """  
+        if 'ratio' in metaparameters:
+            ratio = metaparameters['ratio']
+        else:
+            ratio = SENet.ratio
+
         if init_weights is None:
             init_weights = SEResNet.init_weights
             
@@ -146,12 +167,13 @@ class SEResNet(object):
         return x
 
     @staticmethod
-    def identity_block(x, n_filters, ratio=16, init_weights=None):
+    def identity_block(x, init_weights=None, **metaparameters):
         """ Create a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
-            ratio    : amount of filter reduction during squeeze
         """
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = SEResNet.init_weights
 
@@ -175,7 +197,7 @@ class SEResNet(object):
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNet.squeeze_excite_block(x, ratio, init_weights)
+        x = SEResNet.squeeze_excite_block(x, init_weights=init_weights, **metaparameters)
     
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
@@ -183,14 +205,15 @@ class SEResNet(object):
         return x
 
     @staticmethod
-    def projection_block(x, n_filters, strides=(2,2), ratio=16, init_weights=None):
+    def projection_block(x, strides=(2,2), init_weights=None, **metaparameters):
         """ Create Bottleneck Residual Block with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
             n_filters: number of filters
             strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
-            ratio    : amount of filter reduction during squeeze
         """
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = SEResNet.init_weights
             
@@ -217,7 +240,7 @@ class SEResNet(object):
         x = BatchNormalization()(x)
 
         # Pass the output through the squeeze and excitation block
-        x = SEResNet.squeeze_excite_block(x, ratio, init_weights)
+        x = SEResNet.squeeze_excite_block(x, init_weights=init_weights, **metaparameters)
 
         # Add the projection shortcut link to the output of the residual block
         x = Add()([x, shortcut])
@@ -238,5 +261,3 @@ class SEResNet(object):
 
 # Example
 # senet = SEResNet(50)
-
-

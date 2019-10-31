@@ -399,9 +399,9 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # SE Residual group: 2 blocks, 128 filters
 # SE Residual block with projection, 256 filters
 # SE Residual block with identity, 256 filters
-x = SEResNet.group(x, 2, 128, ratio=16)
-x = SEResNet.projection_block(x, 256)
-x = SEResNet.identity_block(x, 256)
+x = SEResNet.group(x, n_blocks=2, n_filters=128, ratio=16)
+x = SEResNet.projection_block(x, n_filters=256)
+x = SEResNet.identity_block(x, n_filters=256)
 
 # Classifier
 x = Flatten()(x)

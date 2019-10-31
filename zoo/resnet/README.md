@@ -333,9 +333,9 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Residual group: 2 blocks, 128 filters
 # Residual block with projection, 256 filters
 # Residual block with identity, 256 filters
-x = ResNetV1.group(x, 2, 128)
-x = ResNetV1.projection_block(x, 256)
-x = ResNetV1.identity_block(x, 256)
+x = ResNetV1.group(x, n_groups=2, n_filters=128)
+x = ResNetV1.projection_block(x, n_filters=256)
+x = ResNetV1.identity_block(x, n_filters=256)
 
 # Classifier
 x = Flatten()(x)

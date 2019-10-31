@@ -84,8 +84,8 @@ class VGG(object):
         blocks = metaparameters['blocks']
 
         # The convolutional groups
-        for n_layers, n_filters in blocks:
-            x = self.group(x, n_layers=n_layers, n_filters=n_filters)
+        for block in blocks:
+            x = self.group(x, metaparameters=block)
         return x
 
     @staticmethod

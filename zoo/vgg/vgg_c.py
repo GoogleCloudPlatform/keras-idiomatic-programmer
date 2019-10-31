@@ -23,8 +23,16 @@ class VGG(object):
     """ VGG (composable)
     """
     # Meta-parameter: list of groups: number of layers and filter size
-    groups = { 16 : [ (1, 64), (2, 128), (3, 256), (3, 512), (3, 512) ],	# VGG16
-               19 : [ (1, 64), (2, 128), (4, 256), (4, 256), (4, 256) ] }	# VGG19
+    groups = { 16 : [ { 'n_layers': 1, 'n_filters': 64 }, 
+                      { 'n_layers': 2, 'n_filters': 128 },
+                      { 'n_layers': 3, 'n_filters': 256 },
+                      { 'n_layers': 3, 'n_filters': 512 },
+                      { 'n_layers': 3, 'n_filters': 512 } ],	# VGG16
+               19 : [ { 'n_layers': 1, 'n_filters': 64 }, 
+                      { 'n_layers': 2, 'n_filters': 128 },
+                      { 'n_layers': 4, 'n_filters': 256 },
+                      { 'n_layers': 4, 'n_filters': 512 },
+                      { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
     init_weights='glorot_uniform'
     _model = None
@@ -85,7 +93,7 @@ class VGG(object):
 
         # The convolutional groups
         for block in blocks:
-            x = self.group(x, metaparameters=block)
+            x = self.group(x, **block)
         return x
 
     @staticmethod
@@ -95,6 +103,7 @@ class VGG(object):
             n_layers : number of convolutional layers
             n_filters: number of filters
         """
+        print(metaparameters)
         n_filters = metaparameters['n_filters']
         n_layers  = metaparameters['n_layers']
 

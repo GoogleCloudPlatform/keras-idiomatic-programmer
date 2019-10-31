@@ -68,7 +68,7 @@ def classifier(x, n_classes):
 
 # Meta-parameter: list of groups: number of layers and filter size
 groups = { 16 : [ (1, 64), (2, 128), (3, 256), (3, 512), (3, 512) ],		# VGG16
-           19 : [ (1, 64), (2, 128), (4, 256), (4, 256), (4, 256) ] }		# VGG19
+           19 : [ (1, 64), (2, 128), (4, 256), (4, 512), (4, 512) ] }		# VGG19
  
 # The input vector 
 inputs = Input( (224, 224, 3) )

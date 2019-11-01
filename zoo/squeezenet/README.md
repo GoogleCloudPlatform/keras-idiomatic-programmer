@@ -263,9 +263,9 @@ x = Conv2D(16, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # SqueezeNet group: 2 blocks, 16 and 32 filters
 # SqueezeNet fire block with 64 filters
 # SqueezeNet fire block with 128 filters
-x = SqueezeNet.group(x, [16, 32])
-x = SqueezeNet.fire_block(x, 64)
-x = SqueezeNet.fire_block(x, 128)
+x = SqueezeNet.group(x, blocks=[{ 'n_filters' : 16 }, { 'n_filters' : 32 } ])
+x = SqueezeNet.fire_block(x, n_filters=64)
+x = SqueezeNet.fire_block(x, n_filters=128)
 
 # Classifier
 x = Flatten()(x)

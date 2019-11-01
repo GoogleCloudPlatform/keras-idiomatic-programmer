@@ -23,36 +23,43 @@ from tensorflow.keras import backend as K
 
 class ShuffleNet(object):
     ''' Construct a Shuffle Convolution Neural Network '''
+    # meta-parameter: number of shuffle blocks per shuffle group
+    groups  = [ { 'n_blocks' : 4 }, { 'n_blocks' : 8 }, { 'n_blocks' : 4 } ]
+
     # meta-parameter: The number of groups to partition the filters (channels)
     n_partitions=2
 
     # meta-parameter: number of groups to partition feature maps (key), and
     # corresponding number of output filters (value)
     filters = {
-            1: [24, 144, 288, 576],
-            2: [24, 200, 400, 800],
-            3: [24, 240, 480, 960],
-            4: [24, 272, 544, 1088],
-            8: [24, 384, 768, 1536]
+            1: [{ 'n_filters' : 144 }, { 'n_filters' : 288 }, { 'n_filters' : 576 }],
+            2: [{ 'n_filters' : 200 }, { 'n_filters' : 400 }, { 'n_filters' : 800 }],
+            3: [{ 'n_filters' : 240 }, { 'n_filters' : 480 }, { 'n_filters' : 960 }],
+            4: [{ 'n_filters' : 272 }, { 'n_filters' : 544 }, { 'n_filters' : 1088 }],
+            8: [{ 'n_filters' : 384 }, { 'n_filters' : 768 }, { 'n_filters' : 1536 }]
     }
 
     # meta-parameter: the dimensionality reduction on entry to a shuffle block
     reduction = 0.25
-
-    # meta-parameter: number of shuffle blocks per shuffle group
-    groups = [4, 8, 4 ]
     
     init_weights='glorot_uniform'
     _model = None
 
-    def __init__(self, groups=[4, 8, 4], n_partitions=2, reduction=0.25, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, input_shape=(224, 224, 3), n_classes=1000):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
+            filters     : filters per group based on partitions
             n_partitions: number of groups to partition the filters (channels)
             reduction   : dimensionality reduction on entry to a shuffle block
             input_shape : the input shape to the model
             n_classes   : number of output classes
         '''
+        if groups is None:
+            groups = ShuffleNet.groups
+
+        if filters is None:
+            filters = self.filters[n_partitions]
+
         # input tensor
         inputs = Input(shape=input_shape)
 
@@ -60,7 +67,7 @@ class ShuffleNet(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups, n_partitions, self.filters[n_partitions], reduction)
+        x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction)
 
         # The Classifier
         outputs = self.classifier(x, n_classes)
@@ -84,7 +91,7 @@ class ShuffleNet(object):
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
         return x
 
-    def learner(self, x, blocks, n_partitions, filters, reduction):
+    def learner(self, x, **metaparameters):
         ''' Construct the Learner
             x            : input to the learner
             groups       : number of shuffle blocks per shuffle group
@@ -92,13 +99,16 @@ class ShuffleNet(object):
             filters      : number of filters per shuffle group
             reduction    : dimensionality reduction on entry to a shuffle block
         '''
+        groups  = metaparameters['groups']
+        filters = metaparameters['filters']
+
         # Assemble the shuffle groups
-        for i in range(3):
-            x = ShuffleNet.group(x, n_partitions, blocks[i], filters[i+1], reduction)
+        for group in groups:
+            x = ShuffleNet.group(x, **group, **filters.pop(0), **metaparameters)
         return x
 
     @staticmethod
-    def group(x, n_partitions, n_blocks, n_filters, reduction, init_weights=None):
+    def group(x, init_weights=None, **metaparameters):
         ''' Construct a Shuffle Group 
             x           : input to the group
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -106,25 +116,31 @@ class ShuffleNet(object):
             n_filters   : number of output filters
             reduction   : dimensionality reduction
         '''
+        n_blocks     = metaparameters['n_blocks']
+
         if init_weights is None:
             init_weights = ShuffleNet.init_weights
             
         # first block is a strided shuffle block
-        x = ShuffleNet.strided_shuffle_block(x, n_partitions, n_filters, reduction, init_weights=init_weights)
+        x = ShuffleNet.strided_shuffle_block(x, init_weights=init_weights, **metaparameters)
     
         # remaining shuffle blocks in group
         for _ in range(n_blocks-1):
-            x = ShuffleNet.shuffle_block(x, n_partitions, n_filters, reduction, init_weights=init_weights)
+            x = ShuffleNet.shuffle_block(x, init_weights=init_weights, **metaparameters)
         return x
     
     @staticmethod
-    def strided_shuffle_block(x, n_partitions, n_filters, reduction, init_weights=None):
+    def strided_shuffle_block(x, init_weights=None, **metaparameters):
         ''' Construct a Strided Shuffle Block 
             x           : input to the block
             n_partitions: number of groups to partition feature maps (channels) into.
             n_filters   : number of filters
             reduction   : dimensionality reduction factor (e.g, 0.25)
         '''
+        n_partitions = metaparameters['n_partitions']
+        n_filters    = metaparameters['n_filters']
+        reduction    = metaparameters['reduction']
+
         if init_weights is None:
             init_weights = ShuffleNet.init_weights
             
@@ -157,13 +173,17 @@ class ShuffleNet(object):
         return x
 
     @staticmethod
-    def shuffle_block(x, n_partitions, n_filters, reduction, init_weights=None):
+    def shuffle_block(x, init_weights=None, **metaparameters):
         ''' Construct a shuffle Shuffle block  
             x           : input to the block
             n_partitions: number of groups to partition feature maps (channels) into.
             n_filters   : number of filters
             reduction   : dimensionality reduction factor (e.g, 0.25)
         '''
+        n_partitions = metaparameters['n_partitions']
+        n_filters    = metaparameters['n_filters']
+        reduction    = metaparameters['reduction']
+
         if init_weights is None:
             init_weights = ShuffleNet.init_weights
             

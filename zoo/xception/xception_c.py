@@ -22,22 +22,35 @@ from tensorflow.keras.layers import SeparableConv2D, MaxPooling2D, Add
 
 class Xception(object):
     """ Construct an Xception Convolution Neural Network """
+    # meta-parameter: number of filters per block
+    entry  = [{ 'n_filters' : 128 }, { 'n_filters' : 256 }, { 'n_filters' : 728 }]
+    middle = [{ 'n_filters' : 728 }, { 'n_filters' : 728 }, { 'n_filters' : 728 }, 
+              { 'n_filters' : 728 }, { 'n_filters' : 728 }, { 'n_filters' : 728 }, 
+              { 'n_filters' : 728 }, { 'n_filters' : 728 } ]
+
     init_weights = 'glorot_uniform'
     _model = None
 
-    def __init__(self, input_shape=(229, 229, 3), n_classes=1000):
+    def __init__(self, entry=None, middle=None, input_shape=(229, 229, 3), n_classes=1000):
         """ Construct an Xception Convolution Neural Network
+            entry      : number of blocks/filters for entry module
+            middle     : number of blocks/filters for middle module
             input_shape: the input shape
             n_classes  : number of output classes
         """
+        if entry is None:
+            entry = Xception.entry
+        if middle is None:
+            middle = Xception.middle
+
         # Create the input vector
         inputs = Input(shape=input_shape)
 
 	# Create entry section with three blocks
-        x = Xception.entryFlow(inputs, [128, 256, 728])
+        x = Xception.entryFlow(inputs, blocks=entry)
 
 	# Create the middle section with eight blocks
-        x = Xception.middleFlow(x, [728, 728, 728, 728, 728, 728, 728, 728 ])
+        x = Xception.middleFlow(x, blocks=middle)
 
 	# Create the exit section 
         outputs = Xception.exitFlow(x, n_classes)
@@ -54,7 +67,7 @@ class Xception(object):
         return self._model
 
     @staticmethod
-    def entryFlow(inputs, blocks, init_weights=None):
+    def entryFlow(inputs, init_weights=None, **metaparameters):
         """ Create the entry flow section
             inputs : input tensor to neural network
             blocks : number of filters per block
@@ -77,6 +90,8 @@ class Xception(object):
             x = ReLU()(x)
             return x
 
+        blocks = metaparameters['blocks']
+
         if init_weights is None:
             init_weights = Xception.init_weights
 
@@ -84,23 +99,25 @@ class Xception(object):
         x = stem(inputs, init_weights)
 
         # Create residual blocks using linear projection
-        for n_filters in blocks:
-            x = Xception.projection_block(x, n_filters, init_weights)
+        for block in blocks:
+            x = Xception.projection_block(x, init_weights, **block)
 
         return x
 
     @staticmethod
-    def middleFlow(x, blocks, init_weights=None):
+    def middleFlow(x, init_weights=None, **metaparameters):
         """ Create the middle flow section
             x     : input tensor into section
             blocks: number of filters per block
         """
+        blocks = metaparameters['blocks']
+
         if init_weights is None:
             init_weights = Xception.init_weights
 
         # Create residual blocks
-        for n_filters in blocks:
-            x = Xception.residual_block(x, n_filters, init_weights)
+        for block in blocks:
+            x = Xception.residual_block(x, init_weights, **block)
         return x
 
     @staticmethod
@@ -166,11 +183,13 @@ class Xception(object):
         return x
 
     @staticmethod
-    def projection_block(x, n_filters, init_weights=None):
+    def projection_block(x, init_weights=None, **metaparameters):
         """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
             x        : input into residual block
             n_filters: number of filters
         """
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = Xception.init_weights
 
@@ -201,11 +220,13 @@ class Xception(object):
         return x
 
     @staticmethod
-    def residual_block(x, n_filters, init_weights=None):
+    def residual_block(x, init_weights=None, **metaparameters):
         """ Create a residual block using Depthwise Separable Convolutions
             x        : input into residual block
             n_filters: number of filters
         """
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = Xception.init_weights
 
@@ -232,4 +253,4 @@ class Xception(object):
         return x
 
 # Example
-# xception = Xception()
+xception = Xception()

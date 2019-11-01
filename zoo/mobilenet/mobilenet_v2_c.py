@@ -24,6 +24,16 @@ from tensorflow.keras.layers import DepthwiseConv2D, Add, GlobalAveragePooling2D
 
 class MobileNetV2(object):
     """ Construct a Mobile Convolution Neural Network """
+    # Meta-parameter: number of filters and blocks per group
+    groups = [ { 'n_filters' : 16,   'n_blocks' : 1 }, 
+               { 'n_filters' : 24,   'n_blocks' : 2 },
+               { 'n_filters' : 32,   'n_blocks' : 3 }, 
+               { 'n_filters' : 64,   'n_blocks' : 4 },
+               { 'n_filters' : 96,   'n_blocks' : 3 },
+               { 'n_filters' : 160,  'n_blocks' : 3 }, 
+               { 'n_filters' : 320,  'n_blocks' : 1 },
+               { 'n_filters' : 1280, 'n_blocks' : 1 } ]
+
     # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
     alpha = 1
     # Meta-parameter: multiplier to expand the number of filters
@@ -31,22 +41,26 @@ class MobileNetV2(object):
     init_weights = 'glorot_uniform'
     _model = None
 
-    def __init__(self, alpha=1, expansion=6, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, alpha=1, expansion=6, input_shape=(224, 224, 3), n_classes=1000):
         """ Construct a Mobile Convolution Neural Network
+            groups     : number of filters and blocks per group
             alpha      : width multiplier
             expansion  : multiplier to expand the number of filters
             input_shape: the input shape
             n_classes  : number of output classes
         """
+        if groups is None:
+             groups = self.groups
+
         inputs = Input(shape=(224, 224, 3))
 
         # The Stem Group
-        x = self.stem(inputs, alpha)    
+        x = self.stem(inputs, alpha=alpha)    
 
         # The Learner
-        x = self.learner(x, alpha, expansion)
+        x = self.learner(x, groups=groups, alpha=alpha, expansion=expansion)
 
-        # The classifier 
+        # The Classifier 
         outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
@@ -60,11 +74,13 @@ class MobileNetV2(object):
     def model(self, _model):
         self._model = model
 
-    def stem(self, inputs, alpha):
+    def stem(self, inputs, **metaparameters):
         """ Construct the Stem Group
             inputs : input tensor
             alpha  : width multiplier
         """
+        alpha = metaparameters['alpha']
+
         # Calculate the number of filters for the stem convolution
         # Must be divisible by 8
         n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
@@ -76,33 +92,26 @@ class MobileNetV2(object):
         x = ReLU(6.)(x)
         return x
     
-    def learner(self, x, alpha, expansion=6):
+    def learner(self, x, **metaparameters):
         """ Construct the Learner
             x        : input to the learner
             alpha    : width multiplier
             expansion: multipler to expand number of filters
         """
-        # First Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 16, 1, alpha, expansion=1, strides=(1, 1))
-    
-        # Second Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 24, 2, alpha, expansion)
+        groups = metaparameters['groups']
+        alpha  = metaparameters['alpha']
+        expansion = metaparameters['expansion']
 
-        # Third Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 32, 3, alpha, expansion)
-    
-        # Fourth Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 64, 4, alpha, expansion)
-    
-        # Fifth Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 96, 3, alpha, expansion, strides=(1, 1))
-    
-        # Sixth Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 160, 3, alpha, expansion)
-    
-        # Seventh Inverted Residual Convolution Group
-        x = MobileNetV2.group(x, 320, 1, alpha, expansion, strides=(1, 1))
-    
+        last = groups.pop()
+
+        # First Inverted Residual Convolution Group
+        group = groups.pop(0)
+        x = MobileNetV2.group(x, **group, alpha=alpha, expansion=1, strides=(1, 1))
+
+        # Add Inverted Residual Convolution Group
+        for group in groups:
+            x = MobileNetV2.group(x, **group, alpha=alpha, expansion=expansion)
+
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
         x = Conv2D(1280, (1, 1), use_bias=False, kernel_initializer=self.init_weights)(x)
@@ -111,32 +120,42 @@ class MobileNetV2(object):
         return x
 
     @staticmethod
-    def group(x, n_filters, n_blocks, alpha, expansion=6, strides=(2, 2)):
+    def group(x, strides=(2, 2), **metaparameters):
         """ Construct an Inverted Residual Group
             x         : input to the group
-            n_filters : number of filters
-            n_blocks  : number of blocks in the group
-            alpha     : width multiplier
-            expansion : multiplier for expanding the number of filters
             strides   : whether first inverted residual block is strided.
+            n_blocks  : number of blocks in the group
         """   
+        n_blocks  = metaparameters['n_blocks']
+
         # In first block, the inverted residual block maybe strided - feature map size reduction
-        x = MobileNetV2.inverted_block(x, n_filters, alpha, expansion, strides=strides)
+        x = MobileNetV2.inverted_block(x, strides=strides, **metaparameters)
     
         # Remaining blocks
         for _ in range(n_blocks - 1):
-            x = MobileNetV2.inverted_block(x, n_filters, alpha, expansion, strides=(1, 1))
+            x = MobileNetV2.inverted_block(x, strides=(1, 1), **metaparameters)
         return x
 
     @staticmethod
-    def inverted_block(x, n_filters, alpha, expansion=6, strides=(1, 1), init_weights=None):
+    def inverted_block(x, strides=(1, 1), init_weights=None, **metaparameters):
         """ Construct an Inverted Residual Block
             x         : input to the block
+            strides   : strides
             n_filters : number of filters
             alpha     : width multiplier
-            strides   : strides
             expansion : multiplier for expanding number of filters
         """
+        n_filters = metaparameters['n_filters']
+        alpha     = metaparameters['alpha']
+        if 'alpha' in metaparameters:
+            alpha = metaparameters['alpha']
+        else:
+            alpha = MobileNetV2.alpha
+        if 'expansion' in metaparameters:
+            expansion = metaparameters['expansion']
+        else:
+            expansion = MobileNetV2.expansion
+
         if init_weights is None:
             init_weights = MobileNetV2.init_weights
             
@@ -190,5 +209,3 @@ class MobileNetV2(object):
 
 # Example
 # mobilenet = MobileNetV2()
-
-

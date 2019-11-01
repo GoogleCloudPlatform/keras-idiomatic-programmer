@@ -385,9 +385,9 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Inverted Residual group: 2 blocks, 16 filters
 # Inverted Residual block: 32 filters, strided
 # Inverted Residual block: 32 filters, non-strided
-x = MobileNetV2.group(x, 2, 16, alpha=1, expansion=1)
-x = MobileNetV2.inverted_block(x, 32, alpha=1, expansion=6, strides=(2, 2))
-x = MobileNetV2.inverted_block(x, 32, alpha=1, expansion=6, strides=(1, 1))
+x = MobileNetV2.group(x, n_blocks=2, n_filters=16, alpha=1, expansion=1)
+x = MobileNetV2.inverted_block(x, n_filters=32, alpha=1, expansion=6, strides=(2, 2))
+x = MobileNetV2.inverted_block(x, n_filters=32, alpha=1, expansion=6, strides=(1, 1))
 
 # Classifier
 x = Flatten()(x)

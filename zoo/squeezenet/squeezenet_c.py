@@ -22,15 +22,27 @@ from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 
 class SqueezeNet(object):
     ''' Construct a SqueezeNet Convolutional Neural Network '''
+    # Meta-parameter: number of blocks and filters per group
+    groups = [ [ { 'n_filters' : 16 }, { 'n_filters' : 16 }, { 'n_filters' : 32 } ], 
+               [ { 'n_filters' : 32 }, { 'n_filters' : 48 }, { 'n_filters' : 48 },  { 'n_filters': 64 } ], 
+               [ { 'n_filters' : 64 } ] ]
+
+    # Meta-parameter: dropout rate
+    dropout = 0.5
+
     init_weights = 'glorot_uniform'
     _model = None
 
-    def __init__(self, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000):
         ''' Construct a SqueezeNet Convolutional Neural Network
             dropout    : percent of dropout
+            groups     : number of filters per block in groups
             input_shape: input shape to the model
             n_classes  : number of output classes
         '''
+        if groups is None:
+            groups = SqueezeNet.groups
+
         # The input shape
         inputs = Input(shape=input_shape)
 
@@ -38,9 +50,9 @@ class SqueezeNet(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, dropout)
+        x = self.learner(x, groups=groups, dropout=dropout)
 
-        # The classifier
+        # The Classifier
         outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
@@ -63,47 +75,58 @@ class SqueezeNet(object):
         x = MaxPooling2D(3, strides=2)(x)
         return x
 
-    def learner(self, x, dropout=0.5):
+    def learner(self, x, **metaparameters):
         ''' Construct the Learner
             x      : input to the learner
+            groups : number of blocks/filters per group
             dropout: percent of dropout
         '''
-        # First fire group, progressively increase number of filters
-        x = SqueezeNet.group(x, [16, 16, 32])
+        groups  = metaparameters['groups']
+        if 'dropout' in metaparameters:
+            dropout = metaparameters['dropout']
+        else:
+            dropout = SqueezeNet.dropout
 
-        # Second fire group
-        x = SqueezeNet.group(x, [32, 48, 48, 64])
+        last = groups.pop()
+
+        # Add fire groups, progressively increase number of filters
+        for group in groups:
+        	x = SqueezeNet.group(x, blocks=group)
 
         # Last fire block (module)
-        x = SqueezeNet.fire_block(x, 64)
+        x = SqueezeNet.fire_block(x, **last[0])
 
         # Dropout is delayed to end of fire groups
         x = Dropout(dropout)(x)
         return x
 
     @staticmethod
-    def group(x, filters, init_weights=None):
+    def group(x, init_weights=None, **metaparameters):
         ''' Construct a Fire Group
             x     : input to the group
-            filters: list of number of filters per fire block (module)
+            blocks: list of number of filters per fire block (module)
         '''
+        blocks = metaparameters['blocks']
+
         if init_weights is None:
             init_weights = SqueezeNet.init_weights
             
         # Add the fire blocks (modules) for this group
-        for n_filters in filters:
-            x = SqueezeNet.fire_block(x, n_filters, init_weights=init_weights)
+        for block in blocks:
+            x = SqueezeNet.fire_block(x, init_weights=init_weights, **block)
 
         # Delayed downsampling
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
         return x
 
     @staticmethod
-    def fire_block(x, n_filters, init_weights=None):
+    def fire_block(x, init_weights=None, **metaparameters):
         ''' Construct a Fire Block
             x        : input to the block
             n_filters: number of filters
         '''
+        n_filters = metaparameters['n_filters']
+
         if init_weights is None:
             init_weights = SqueezeNet.init_weights
             
@@ -138,4 +161,3 @@ class SqueezeNet(object):
 
 # Example
 # squeezenet = SqueezeNet()
-

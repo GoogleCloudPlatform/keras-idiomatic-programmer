@@ -22,15 +22,28 @@ from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 
 class SqueezeNetBypass(object):
     ''' Construct a SqueezeNet Bypass Convolution Neural Network '''
+    # Meta-parameter: number of blocks and filters per group
+    # Fire blocks with simple bypass on blocks 2, 4, 6 and 8 
+    groups = [ [ { 'n_filters' : 16, 'bypass': False }, 
+                 { 'n_filters' : 16, 'bypass': True }, 
+                 { 'n_filters' : 32, 'bypass': False } ],
+               [ { 'n_filters' : 32, 'bypass': True }, 
+                 { 'n_filters' : 48, 'bypass': False }, 
+                 { 'n_filters' : 48, 'bypass': True },  
+                 { 'n_filters' : 64, 'bypass': False } ],
+               [ { 'n_filters' : 64, 'bypass': True } ] ]
     init_weights = 'glorot_uniform'
     _model = None
 
-    def __init__(self, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000):
         ''' Construct a SqueezeNet Bypass Convolution Neural Network
             dropout : percentage of dropout
             input_shape: input shape to model
             n_classes  : number of output classes
         '''
+        if groups is None:
+            groups = SqueezeNetBypass.groups
+
         # The input shape
         inputs = Input((224, 224, 3))
 
@@ -38,7 +51,7 @@ class SqueezeNetBypass(object):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, dropout)
+        x = self.learner(x, groups=groups, dropout=dropout)
 
         # The Classifier
         outputs = self.classifier(x, n_classes)
@@ -62,49 +75,59 @@ class SqueezeNetBypass(object):
         x = MaxPooling2D(3, strides=2)(x)
         return x
 
-    def learner(self, x, dropout=0.5):
+    def learner(self, x, **metaparameters):
         ''' Construct the Learner
-            x : input to the learner
+            x      : input to the learner
+            groups : blocks/filters/bypass per group
             dropout: percent of droput
         '''
-        # Fire blocks with simple bypass on blocks 2, 4, 6 and 8 
+        groups  = metaparameters['groups']
+        if 'dropout' in metaparameters:
+            dropout = metaparameters['dropout']
+        else:
+            dropout = SqueezeNetBypass.dropout
 
-        # First Fire group, progressively increase number of filters
-        x = SqueezeNetBypass.group(x, [(16, False), (16, True), (32, False)])
+        last = groups.pop()
 
-        # Second Fire group
-        x = SqueezeNetBypass.group(x, [(32, True), (48, False), (48, True), (64, False)])
+        # Add Fire groups, progressively increase number of filters
+        for group in groups:
+            x = SqueezeNetBypass.group(x, blocks=group)
 
         # Last fire block
-        x = SqueezeNetBypass.fire_block(x, 64, True)
+        x = SqueezeNetBypass.fire_block(x, **last[0])
 
         # Dropout is delayed to end of fire groups
-        x = Dropout(0.5)(x)
+        x = Dropout(dropout)(x)
         return x
 
     @staticmethod
-    def group(x, filters, init_weights=None):
+    def group(x, init_weights=None, **metaparameters):
         ''' Construct the Fire Group
             x       : input to the group
-            filters : list of number of filters per fire block in group
+            blocks  : nuumber of filters/bypass per block in group
         '''
+        blocks = metaparameters['blocks']
+
         if init_weights is None:
             init_weights = SqueezeNetBypass.init_weights
             
-        for n_filters, bypass in filters:
-            x = SqueezeNetBypass.fire_block(x, n_filters, init_weights=init_weights)
+        for block in blocks:
+            x = SqueezeNetBypass.fire_block(x, init_weights=init_weights, **block)
 
         # Delayed downsampling
         x = MaxPooling2D((3, 3), strides=2)(x)
         return x
 
     @staticmethod
-    def fire_block(x, n_filters, bypass=False, init_weights=None):
+    def fire_block(x, init_weights=None, **metaparameters):
         ''' Construct a Fire Block
             x        : input to the block
             n_filters: number of filters in the block
             bypass   : whether block has an identity shortcut
         '''
+        n_filters = metaparameters['n_filters']
+        bypass    = metaparameters['bypass']
+
         if init_weights is None:
             init_weights = SqueezeNetBypass.init_weights
             

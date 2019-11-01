@@ -260,12 +260,12 @@ x = Conv2D(32, (3, 3), strides=1, padding='same', activation='relu')(inputs)
 # Learner
 # Xception entry: 
 # Xception middle:
-# Xception exit:
-x = Xception.entry(x, [16, 32, 64])
-x = Xception.middle(x, [64, 64, 64])
+x = Xception.entry(x,  [{ 'n_filters' : 16 }, { 'n_filters' : 32 }, { 'n_filters' : 64 }])
+x = Xception.middle(x, [{ 'n_filters' : 64 }, { 'n_filters' : 64 }, { 'n_filters' : 64 }])
 
 
 # Classifier
+# Xception exit:
 outputs = Xception.exit(x, n_classes=10)
 model = Model(inputs, outputs)
 model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])

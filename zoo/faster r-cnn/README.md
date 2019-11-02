@@ -7,9 +7,9 @@
 
 <img src='macro.jpg'>
 
-## Stem Group
+## Stem Group + Conv Net
 
-<img src="stem.jpg">
+<img src="vgg16.jpg">
 
 ## Region of Proposal Network
 

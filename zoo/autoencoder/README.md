@@ -90,5 +90,15 @@ autoencoder = AutoEncoder()
 
 # Create a custom AutoEncoder
 autoencoder = AutoEncoder(input_shape=(128, 128, 3), layers=[128, 64, 32])
+```
 
+*Example: Composable Encoder/Decoder*
+
+# Make autoencoder for 128x128x3
+
+```
+inputs = Input((128, 128, 3))
+encoder = AutoEncoder.encoder(inputs, layers=[64, 32, 32])
+decoder = AutoEncoder.decoder(encoder, layers=[64, 32, 32])
+model = Model(inputs, decoder)
 ```

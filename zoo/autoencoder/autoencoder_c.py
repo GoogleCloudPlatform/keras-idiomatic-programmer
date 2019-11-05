@@ -36,15 +36,15 @@ class AutoEncoder(object):
         if layers is None:
            layers = AutoEncoder.layers
 
-        # remember the number of layers in the (de)encoder.
+        # remember the layers
         self.layers = layers
 
         # remember the input shape
         self.input_shape = input_shape
 
         inputs = Input(input_shape)
-        encoder = self.encoder(inputs, layers=layers)
-        outputs = self.decoder(encoder, layers=layers)
+        encoder = AutoEncoder.encoder(inputs, layers=layers)
+        outputs = AutoEncoder.decoder(encoder, layers=layers)
         self._model = Model(inputs, outputs)
 
     @property
@@ -55,7 +55,8 @@ class AutoEncoder(object):
     def model(self, _model):
         self._model = _model
 
-    def encoder(self, x, init_weights=None, **metaparameters):
+    @staticmethod
+    def encoder(x, init_weights=None, **metaparameters):
         ''' Construct the Encoder 
             x     : input to the encoder
             layers: number of filters per layer
@@ -75,7 +76,8 @@ class AutoEncoder(object):
         # The Encoding
         return x
 
-    def decoder(self, x, init_weights=None, **metaparameters):
+    @staticmethod
+    def decoder(x, init_weights=None, **metaparameters):
         ''' Construct the Decoder
             x     : input to the decoder
             layers: number of filters per layer
@@ -86,7 +88,7 @@ class AutoEncoder(object):
             init_weights = AutoEncoder.init_weights
 
         # Progressive Feature Unpooling
-        for _ in range(len(self.layers)-1, 0, -1):
+        for _ in range(len(layers)-1, 0, -1):
             n_filters = layers[_]['filters']
             x = Conv2DTranspose(n_filters, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
             x = BatchNormalization()(x)

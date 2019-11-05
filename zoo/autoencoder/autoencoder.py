@@ -18,56 +18,52 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, BatchNormalization
 
-def encoder(inputs):
+def encoder(inputs, layers):
     """ Construct the Encoder
         inputs : the input vector
+        layers : number of filters per layer
     """
-    # First Convolution - feature pooling to 1/2H x 1/2W
-    x = Conv2D(64, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(inputs)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
+    x = inputs
 
-    # Second Convolution - feature pooling to 1/4H x 1/4W
-    x = Conv2D(32, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
+    # Feature pooling by 1/2H x 1/2W
+    for n_filters in layers:
+        x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
 
-    # Third Convolution - feature pooling to 1/8H x 1/8W
-    x = Conv2D(32, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
-    
     return x
     
-def decoder(x):
+def decoder(x, layers):
     """ Construct the Decoder
-      x         : input to the classifier
+      x      : input to decoder
+      layers : the number of filters per layer (in encoder)
     """
-    # First Deonvolution - feature unpooling to 1/4H x 1/4W
-    x = Conv2DTranspose(32, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
 
-    # First Deonvolution - feature unpooling to 1/2H x 1/2W
-    x = Conv2DTranspose(32, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
-    x = BatchNormalization()(x)
-    x = ReLU()(x)
+    # Feature unpooling by 2H x 2W
+    for _ in range(len(layers)-1, 0, -1):
+        n_filters = layers[_]
+        x = Conv2DTranspose(n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
 
-    # Third Deonvolution - feature unpooling to H x W x 3
+    # Last unpooling, restore number of channels
     x = Conv2DTranspose(3, (3, 3), strides=(2, 2), padding='same', use_bias=False, kernel_initializer='he_normal')(x)
     x = BatchNormalization()(x)
     x = ReLU()(x)
 
     return x
 
+# metaparameter: number of filters per layer in encoder
+layers = [64, 32, 32]
+
 # The input tensor
 inputs = Input(shape=(32, 32, 3))
 
 # The encoder
-x = encoder(inputs)
+x = encoder(inputs, layers)
 
 # The decoder
-outputs = decoder(x)
+outputs = decoder(x, layers)
 
 # Instantiate the Model
 model = Model(inputs, outputs)

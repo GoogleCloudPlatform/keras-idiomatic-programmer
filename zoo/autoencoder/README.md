@@ -12,6 +12,17 @@
 Macro-architecture code for AutoEncoder
 
 ```python
+# The input tensor
+inputs = Input(shape=(32, 32, 3))
+
+# The encoder
+x = encoder(inputs)
+
+# The decoder
+outputs = decoder(x)
+
+# Instantiate the Model
+model = Model(inputs, outputs)
 ```
 
 ## Micro-Architecture 

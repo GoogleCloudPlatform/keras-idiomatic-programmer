@@ -21,7 +21,7 @@ from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, BatchNormaliz
 class AutoEncoder(object):
     ''' Construct an AutoEncoder '''
     # metaparameter: number of filters per layer
-    layers = [ {'filters': 64 }, { 'filters': 32 }, { 'filters': 16 } ]
+    layers = [ {'n_filters': 64 }, { 'n_filters': 32 }, { 'n_filters': 16 } ]
 
     input_shape=(32, 32, 3)
 
@@ -68,7 +68,7 @@ class AutoEncoder(object):
 
         # Progressive Feature Pooling
         for layer in layers:
-            n_filters = layer['filters']
+            n_filters = layer['n_filters']
             x = Conv2D(n_filters, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
             x = BatchNormalization()(x)
             x = ReLU()(x)
@@ -89,7 +89,7 @@ class AutoEncoder(object):
 
         # Progressive Feature Unpooling
         for _ in range(len(layers)-1, 0, -1):
-            n_filters = layers[_]['filters']
+            n_filters = layers[_]['n_filters']
             x = Conv2DTranspose(n_filters, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
             x = BatchNormalization()(x)
             x = ReLU()(x)

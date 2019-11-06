@@ -46,6 +46,8 @@ All the models here are coded using the idiomatic design pattern for models. The
 | `ShuffleNet` | [ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices, 2017](https://arxiv.org/pdf/1707.01083.pdf) |<br/>
 *One-Shot Classification Networks*</br>
 | `Siamese Twin` | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |<br/>
+*AutoEncoders*<br/>
+| `Auto Encoder` | |<br/>
 
 ## Architecture Representation
 

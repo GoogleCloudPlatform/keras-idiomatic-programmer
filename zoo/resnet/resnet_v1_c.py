@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, ReLU, BatchNormalization, ZeroPadding2D
 from tensorflow.keras.layers import MaxPooling2D, Dense, Add, GlobalAveragePooling2D
+from tensorflow.keras.regularizers import l2
 
 class ResNetV1(object):
     """ Residual Convolutional Neural Network V1
@@ -38,6 +39,7 @@ class ResNetV1(object):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
     init_weights='he_normal'
+    reg=l2(0.001)
     _model = None
     
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
@@ -86,7 +88,8 @@ class ResNetV1(object):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -103,11 +106,11 @@ class ResNetV1(object):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        x = self.group(x, strides=(1, 1), **groups.pop(0))
+        x = self.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = ResNetV1.group(x, **group)
+            x = ResNetV1.group(x, **group, **metaparameters)
         return x
 
     @staticmethod
@@ -133,8 +136,13 @@ class ResNetV1(object):
         """ Construct a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
+            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ResNetV1.reg
 
         if init_weights is None:
             init_weights = ResNetV1.init_weights
@@ -145,17 +153,20 @@ class ResNetV1(object):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights,
+                   kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights,
+                   kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Add the identity link (input) to the output of the residual block
@@ -170,32 +181,41 @@ class ResNetV1(object):
             x        : input into the block
             strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
             n_filters: number of filters
+            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ResNetV1.reg
 
         if init_weights is None:
             init_weights = ResNetV1.init_weights
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights)(x)
+        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, 
+                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         shortcut = BatchNormalization()(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights,
+                   kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights,
+                   kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Add the projection shortcut link to the output of the residual block
@@ -212,7 +232,8 @@ class ResNetV1(object):
       x = GlobalAveragePooling2D()(x)
 
       # Final Dense Outputting Layer for the outputs
-      outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+      outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights,
+                      kernel_regularizer=self.reg)(x)
       return outputs
 
 # Example of ResNet50

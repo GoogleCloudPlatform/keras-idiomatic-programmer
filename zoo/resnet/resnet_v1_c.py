@@ -106,11 +106,11 @@ class ResNetV1(object):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        x = self.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = self.group(x, strides=(1, 1), **groups.pop(0))
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = ResNetV1.group(x, **group, **metaparameters)
+            x = ResNetV1.group(x, **group)
         return x
 
     @staticmethod
@@ -153,8 +153,8 @@ class ResNetV1(object):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights,
-                   kernel_regularizer=reg)(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -165,8 +165,8 @@ class ResNetV1(object):
         x = ReLU()(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights,
-                   kernel_regularizer=reg)(x)
+        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Add the identity link (input) to the output of the residual block
@@ -202,8 +202,8 @@ class ResNetV1(object):
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights,
-                   kernel_regularizer=reg)(x)
+        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -214,8 +214,8 @@ class ResNetV1(object):
         x = ReLU()(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights,
-                   kernel_regularizer=reg)(x)
+        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Add the projection shortcut link to the output of the residual block
@@ -232,8 +232,8 @@ class ResNetV1(object):
       x = GlobalAveragePooling2D()(x)
 
       # Final Dense Outputting Layer for the outputs
-      outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights,
-                      kernel_regularizer=self.reg)(x)
+      outputs = Dense(n_classes, activation='softmax', 
+                      kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
       return outputs
 
 # Example of ResNet50

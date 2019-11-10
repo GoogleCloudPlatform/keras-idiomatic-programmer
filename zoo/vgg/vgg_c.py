@@ -18,6 +18,7 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.regularizers import l2
 
 class VGG(object):
     """ VGG (composable)
@@ -35,6 +36,7 @@ class VGG(object):
                       { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
     init_weights='glorot_uniform'
+    reg=None
     _model = None
  
 
@@ -93,7 +95,7 @@ class VGG(object):
 
         # The convolutional groups
         for block in blocks:
-            x = self.group(x, **block)
+            x = self.group(x, **block, **metaparameters)
         return x
 
     @staticmethod
@@ -103,9 +105,12 @@ class VGG(object):
             n_layers : number of convolutional layers
             n_filters: number of filters
         """
-        print(metaparameters)
         n_filters = metaparameters['n_filters']
         n_layers  = metaparameters['n_layers']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = VGG.reg
 
         if init_weights is None:
             init_weights = VGG.init_weights
@@ -113,7 +118,7 @@ class VGG(object):
         # Block of convolutional layers
         for n in range(n_layers):
             x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", activation="relu",
-                       kernel_initializer=init_weights)(x)
+                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         
         # Max pooling at the end of the block
         x = MaxPooling2D(2, strides=(2, 2))(x)

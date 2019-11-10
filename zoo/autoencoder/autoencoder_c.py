@@ -96,6 +96,8 @@ class AutoEncoder(object):
 
         # Last unpooling and match shape to input
         x = Conv2DTranspose(3, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
 
         # The decoded image
         return x

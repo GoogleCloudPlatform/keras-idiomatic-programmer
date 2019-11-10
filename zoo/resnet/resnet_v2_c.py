@@ -23,6 +23,7 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Add
+from tensorflow.keras.regularizers import l2
 
 class ResNetV2(object):
     """ Construct a Residual Convolution Network Network V2 """
@@ -40,8 +41,9 @@ class ResNetV2(object):
                       { 'n_filters': 256, 'n_blocks': 36 },
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
-    _model = None
     init_weights = 'he_normal'
+    reg=l2(0.001)
+    _model = None
 
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
         """ Construct a Residual Convolutional Neural Network V2
@@ -89,7 +91,8 @@ class ResNetV2(object):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer uses large (coarse) filter
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -136,8 +139,13 @@ class ResNetV2(object):
         """ Construct a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
+            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ResNetV2.reg
 
         if init_weights is None:
             init_weights = ResNetV2.init_weights
@@ -150,17 +158,20 @@ class ResNetV2(object):
         # Dimensionality reduction
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Bottleneck layer
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
@@ -173,31 +184,43 @@ class ResNetV2(object):
             x        : input into the block
             strides  : whether the first convolution is strided
             n_filters: number of filters
+            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ResNetV2.reg
+
+        if init_weights is None:
+            init_weights = ResNetV2.init_weights
 
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
         shortcut = BatchNormalization()(x)
-        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer='he_normal')(shortcut)
+        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, 
+                          kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 convolution block
     
         # Dimensionality reduction
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, kernel_initializer='he_normal')(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1,1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Bottleneck layer
         # Feature pooling when strides=(2, 2)
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, kernel_initializer='he_normal')(x)
+        x = Conv2D(n_filters, (3, 3), strides=strides, padding='same', use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer='he_normal')(x)
+        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Add the projection shortcut to the output of the residual block
         x = Add()([x, shortcut])
@@ -212,7 +235,8 @@ class ResNetV2(object):
         x = GlobalAveragePooling2D()(x)
 
         # Final Dense Outputting Layer for the outputs
-        outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        outputs = Dense(n_classes, activation='softmax', 
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         return outputs
 
 # Example

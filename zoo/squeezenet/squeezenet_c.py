@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
+from tensorflow.keras.regularizers import l2
 
 class SqueezeNet(object):
     ''' Construct a SqueezeNet Convolutional Neural Network '''
@@ -30,10 +31,13 @@ class SqueezeNet(object):
     # Meta-parameter: dropout rate
     dropout = 0.5
 
+    # Meta-parameter: kernel regularizer
+    reg = l2(0.001)
+
     init_weights = 'glorot_uniform'
     _model = None
 
-    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, dropout=0.5, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
         ''' Construct a SqueezeNet Convolutional Neural Network
             dropout    : percent of dropout
             groups     : number of filters per block in groups
@@ -47,13 +51,13 @@ class SqueezeNet(object):
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The Learner
-        x = self.learner(x, groups=groups, dropout=dropout)
+        x = self.learner(x, groups=groups, dropout=dropout, reg=reg)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -66,12 +70,15 @@ class SqueezeNet(object):
     def model(self, _model):
         self._model = _model
         
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         ''' Construct the Stem Group  
             inputs: the input tensor
+            reg   : kernel regularizer
         '''
+        reg = metaparameters['reg']
+
         x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
-               kernel_initializer=self.init_weights)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = MaxPooling2D(3, strides=2)(x)
         return x
 
@@ -91,10 +98,10 @@ class SqueezeNet(object):
 
         # Add fire groups, progressively increase number of filters
         for group in groups:
-        	x = SqueezeNet.group(x, blocks=group)
+        	x = SqueezeNet.group(x, blocks=group, **metaparameters)
 
         # Last fire block (module)
-        x = SqueezeNet.fire_block(x, **last[0])
+        x = SqueezeNet.fire_block(x, **last[0], **metaparameters)
 
         # Dropout is delayed to end of fire groups
         x = Dropout(dropout)(x)
@@ -113,7 +120,7 @@ class SqueezeNet(object):
             
         # Add the fire blocks (modules) for this group
         for block in blocks:
-            x = SqueezeNet.fire_block(x, init_weights=init_weights, **block)
+            x = SqueezeNet.fire_block(x, init_weights=init_weights, **block, **metaparameters)
 
         # Delayed downsampling
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
@@ -124,35 +131,43 @@ class SqueezeNet(object):
         ''' Construct a Fire Block
             x        : input to the block
             n_filters: number of filters
+            reg      : kernel regularizer
         '''
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SqueezeNet.reg
 
         if init_weights is None:
             init_weights = SqueezeNet.init_weights
             
         # squeeze layer
-        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
-                         padding='same', kernel_initializer=init_weights)(x)
+        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu', padding='same',
+                         kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
         # of filters
-        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu',
-                           padding='same', kernel_initializer=init_weights)(squeeze)
-        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu',
-                           padding='same', kernel_initializer=init_weights)(squeeze)
+        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu', padding='same',
+                           kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
+        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu', padding='same',
+                           kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
 
         # concatenate the feature maps from the 1x1 and 3x3 branches
         x = Concatenate()([expand1x1, expand3x3])
         return x
 
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
         ''' Construct the Classifier 
             x        : input to the classifier
             n_classes: number of output classes
+            reg      : kernel regularizer
         '''
+        reg = metaparameters['reg']
+
         # set the number of filters equal to number of classes
         x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
-                   kernel_initializer=self.init_weights)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
 
         # reduce each filter (class) to a single value
         x = GlobalAveragePooling2D()(x)

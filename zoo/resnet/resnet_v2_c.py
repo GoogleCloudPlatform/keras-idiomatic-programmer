@@ -41,11 +41,13 @@ class ResNetV2(object):
                       { 'n_filters': 256, 'n_blocks': 36 },
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
+    # Meta-parameter: kernel regularizar
+    reg = l2(0.001)
+
     init_weights = 'he_normal'
-    reg=l2(0.001)
     _model = None
 
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=None):
         """ Construct a Residual Convolutional Neural Network V2
             n_layers   : number of layers
             input_shape: input shape
@@ -64,13 +66,13 @@ class ResNetV2(object):
         inputs = Input(input_shape)
 
         # The stem convolutional group
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The learner
-        x = self.learner(x, groups=groups)
+        x = self.learner(x, groups=groups, reg=reg)
 
         # The classifier 
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -83,16 +85,19 @@ class ResNetV2(object):
     def model(self, _model):
         self._model = _model
 
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
+            reg    : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer uses large (coarse) filter
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -109,11 +114,11 @@ class ResNetV2(object):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        x = ResNetV2.group(x, strides=(1, 1), **groups.pop(0))
+        x = ResNetV2.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = ResNetV2.group(x, **group)
+            x = ResNetV2.group(x, **group, **metaparameters)
         return x
     
     @staticmethod
@@ -226,17 +231,18 @@ class ResNetV2(object):
         x = Add()([x, shortcut])
         return x
 
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
         """ Construct the Classifier Group 
             x         : input to the classifier
             n_classes : number of output classes
         """
+        reg = metaparameters['reg']
         # Pool at the end of all the convolutional residual blocks
         x = GlobalAveragePooling2D()(x)
 
         # Final Dense Outputting Layer for the outputs
         outputs = Dense(n_classes, activation='softmax', 
-                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                        kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         return outputs
 
 # Example

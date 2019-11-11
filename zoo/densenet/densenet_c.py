@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, MaxPooling2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, AveragePooling2D, Concatenate
+from tensorflow.keras.regularizers import l2
 
 class DenseNet(object):
     """ Construct a Densely Connected Convolution Neural Network """
@@ -33,6 +34,7 @@ class DenseNet(object):
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
     n_filters = 32
     init_weights = 'he_normal'
+    reg = l2(0.001)
     _model = None
 
     def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000):
@@ -85,7 +87,8 @@ class DenseNet(object):
     
         # First large convolution for abstract features for input 224 x 224 and output 112 x 112
         # Stem convolution uses 2 * k (growth rate) number of filters
-        x = Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -137,11 +140,16 @@ class DenseNet(object):
         """ Construct a Residual Block
             x        : input to the block
             n_filters: number of filters in convolution layer in residual block
+            reg      : kernel regularizer
         """
         if 'n_filters' in metaparameters:
             n_filters = metaparameters['n_filters']
         else:
             n_filters = DenseNet.n_filters
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = DenseNet.reg
 
         if init_weights is None:
             init_weights = DenseNet.init_weights
@@ -154,13 +162,15 @@ class DenseNet(object):
         # Dimensionality expansion, expand filters by 4 (DenseNet-B)
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
     
         # Bottleneck convolution
         # 3x3 convolution with padding=same to preserve same shape of feature maps
         x = BatchNormalization()(x)
         x = ReLU()(x)
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Concatenate the input (identity) with the output of the residual block
         # Concatenation (vs. merging) provides Feature Reuse between layers
@@ -172,11 +182,16 @@ class DenseNet(object):
         """ Construct a Transition Block
             x        : input layer
             reduction: percentage of reduction of feature maps
+            reg      : kernel regularizer
         """
         if 'reduction' in metaparameters:
             reduction = metaparameters['reduction']
         else:
             reduction = DenseNet.reduction
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = DenseNet.reg
 
         if init_weights is None:
             init_weights = DenseNet.init_weights
@@ -189,7 +204,8 @@ class DenseNet(object):
 
         # Use 1x1 linear projection convolution
         x = BatchNormalization()(x)
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Use mean value (average) instead of max value sampling when pooling reduce by 75%
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)
@@ -203,7 +219,8 @@ class DenseNet(object):
         # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
         x = GlobalAveragePooling2D()(x)
         # Fully connected output layer (classification)
-        x = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Dense(n_classes, activation='softmax', 
+                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         return x
     
 # Example

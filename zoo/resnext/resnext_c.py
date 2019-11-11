@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, ReLU, BatchNormalization, Add
 from tensorflow.keras.layers import Concatenate, Dense, GlobalAveragePooling2D, Lambda
+from tensorflow.keras.regularizers import l2
 
 class ResNeXt(object):
     """ Construct a Residual Next Convolution Neural Network """
@@ -40,8 +41,9 @@ class ResNeXt(object):
     # Meta-parameter: width of group convolution
     cardinality = 32
 
-    _model=None
     init_weights='he_normal'
+    reg=l2(0.001)
+    _model=None
 
     def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000):
         """ Construct a Residual Next Convolution Neural Network
@@ -86,7 +88,8 @@ class ResNeXt(object):
         """ Construct the Stem Convolution Group
             inputs : input vector
         """
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', kernel_initializer=self.init_weights, use_bias=False)(inputs)
+        x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False,
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = BatchNormalization()(x)
         x = ReLU()(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
@@ -137,6 +140,7 @@ class ResNeXt(object):
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of group convolution
+            reg        : kernel regularizer
         """
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
@@ -144,6 +148,10 @@ class ResNeXt(object):
             cardinality = metaparameters['cardinality']
         else:
             cardinality = ResNeXt.cardinality
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ResNeXt.reg
 
         if init_weights is None:
             init_weights = ResNeXt.init_weights
@@ -152,8 +160,8 @@ class ResNeXt(object):
         shortcut = x
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, (1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights, use_bias=False)(shortcut)
+        x = Conv2D(filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -162,8 +170,8 @@ class ResNeXt(object):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, (3, 3), strides=(1, 1),
-                                 padding='same', kernel_initializer=init_weights, use_bias=False)(group))
+            groups.append(Conv2D(filters_card, (3, 3), strides=(1, 1), padding='same', use_bias=False,
+                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -171,8 +179,8 @@ class ResNeXt(object):
         x = ReLU()(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, (1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Conv2D(filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
@@ -188,6 +196,7 @@ class ResNeXt(object):
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of group convolution
+            reg        : kernel regularizer
         """
         filters_in = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
@@ -195,19 +204,23 @@ class ResNeXt(object):
             cardinality = metaparameters['cardinality']
         else:
             cardinality = ResNeXt.cardinality
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ResNeXt.reg
 
         if init_weights is None:
             init_weights = ResNeXt.init_weights
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
-        shortcut = Conv2D(filters_out, (1, 1), strides=strides,
-                          padding='same', kernel_initializer=init_weights)(x)
+        shortcut = Conv2D(filters_out, (1, 1), strides=strides, padding='same',
+                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         shortcut = BatchNormalization()(shortcut)
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, (1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Conv2D(filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -216,8 +229,8 @@ class ResNeXt(object):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, (3, 3), strides=strides,
-                                 padding='same', kernel_initializer=init_weights, use_bias=False)(group))
+            groups.append(Conv2D(filters_card, (3, 3), strides=strides, padding='same', use_bias=False,
+                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -225,8 +238,8 @@ class ResNeXt(object):
         x = ReLU()(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, (1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Conv2D(filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
@@ -241,7 +254,8 @@ class ResNeXt(object):
         """
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
-        outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        outputs = Dense(n_classes, activation='softmax', 
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         return outputs
 
 

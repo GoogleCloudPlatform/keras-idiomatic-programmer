@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, MaxPooling2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Reshape, Multiply, Add
+from tensorflow.keras.regularizers import l2
 
 class SEResNet(object):
     """ Construct a Squeeze & Excite Residual Convolution Neural Network """
@@ -39,6 +40,7 @@ class SEResNet(object):
     # Meta-parameter: Amount of filter reduction in squeeze operation
     ratio = 16
     init_weights = 'he_normal'
+    reg = l2(0.001)
     _model = None
 
     def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000):
@@ -87,7 +89,8 @@ class SEResNet(object):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -133,11 +136,16 @@ class SEResNet(object):
         """ Create a Squeeze and Excite block
             x     : input to the block
             ratio : amount of filter reduction during squeeze
+            reg      : kernel regularizer
         """  
         if 'ratio' in metaparameters:
             ratio = metaparameters['ratio']
         else:
-            ratio = SENet.ratio
+            ratio = SEResNet.ratio
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SEResNet.reg
 
         if init_weights is None:
             init_weights = SEResNet.init_weights
@@ -156,11 +164,13 @@ class SEResNet(object):
         x = Reshape((1, 1, filters))(x)
     
         # Reduce the number of filters (1x1xC/r)
-        x = Dense(filters // ratio, activation='relu', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Dense(filters // ratio, activation='relu', use_bias=False,
+                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Excitation (dimensionality restoration)
         # Restore the number of filters (1x1xC)
-        x = Dense(filters, activation='sigmoid', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Dense(filters, activation='sigmoid', use_bias=False,
+                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Scale - multiply the squeeze/excitation output with the input (WxHxC)
         x = Multiply()([shortcut, x])
@@ -171,8 +181,13 @@ class SEResNet(object):
         """ Create a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
+            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SEResNet.reg
 
         if init_weights is None:
             init_weights = SEResNet.init_weights
@@ -183,17 +198,20 @@ class SEResNet(object):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
@@ -209,34 +227,43 @@ class SEResNet(object):
         """ Create Bottleneck Residual Block with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
-            n_filters: number of filters
             strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
+            n_filters: number of filters
+            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SEResNet.reg
 
         if init_weights is None:
             init_weights = SEResNet.init_weights
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights)(x)
+        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, 
+                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         shortcut = BatchNormalization()(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # Pass the output through the squeeze and excitation block
@@ -256,7 +283,8 @@ class SEResNet(object):
       x = GlobalAveragePooling2D()(x)
 
       # Final Dense Outputting Layer for the outputs
-      outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+      outputs = Dense(n_classes, activation='softmax', 
+                      kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
       return outputs
 
 # Example

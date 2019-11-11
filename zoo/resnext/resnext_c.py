@@ -40,12 +40,13 @@ class ResNeXt(object):
     
     # Meta-parameter: width of group convolution
     cardinality = 32
+    # Meta-parameter: kernel regularizer
+    reg = l2(0.001)
 
-    init_weights='he_normal'
-    reg=l2(0.001)
-    _model=None
+    init_weights = 'he_normal'
+    _model = None
 
-    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
         """ Construct a Residual Next Convolution Neural Network
             n_layers   : number of layers
             cardinality: width of group convolution
@@ -65,13 +66,13 @@ class ResNeXt(object):
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The Learner
-        x = self.learner(x, cardinality=cardinality, groups=groups)
+        x = self.learner(x, cardinality=cardinality, groups=groups, reg=reg)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -84,12 +85,15 @@ class ResNeXt(object):
     def model(self, _model):
         self._model = _model
 
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolution Group
             inputs : input vector
+            reg    : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
         x = ReLU()(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
@@ -99,17 +103,15 @@ class ResNeXt(object):
         """ Construct the Learner
             x          : input to the learner
             groups     : list of groups: filters in, filters out, number of blocks
-            cardinality: width of group convolution
         """
         groups = metaparameters['groups']
-        cardinality = metaparameters['cardinality']
 
         # First ResNeXt Group (not-strided)
-        x = ResNeXt.group(x, strides=(1, 1), cardinality=cardinality, **groups.pop(0))
+        x = ResNeXt.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining ResNeXt groups
         for group in groups:
-            x = ResNeXt.group(x, cardinality=cardinality, **group)
+            x = ResNeXt.group(x, **group, **metaparameters)
         return x
 
     @staticmethod
@@ -247,15 +249,18 @@ class ResNeXt(object):
         x = ReLU()(x)
         return x
     
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
         """ Construct the Classifier
             x         : input to the classifier
             n_classes : number of output classes
+            reg       : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
         outputs = Dense(n_classes, activation='softmax', 
-                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                        kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         return outputs
 
 

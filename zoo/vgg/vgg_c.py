@@ -35,12 +35,14 @@ class VGG(object):
                       { 'n_layers': 4, 'n_filters': 512 },
                       { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
-    init_weights='glorot_uniform'
-    reg=None
+    # Meta-parameter: kernel regularizer
+    reg = None
+
+    init_weights = 'glorot_uniform'
     _model = None
  
 
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=None):
         """ Construct a VGG model
             n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
@@ -59,13 +61,13 @@ class VGG(object):
         inputs = Input( input_shape )
 
         # The stem group
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The learner
-        x = self.learner(x, blocks=blocks)
+        x = self.learner(x, blocks=blocks, reg=reg)
 
         # The classifier
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -78,12 +80,15 @@ class VGG(object):
     def model(self, _model):
         self._model = _model
     
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group
             inputs : the input vector
+            reg    : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         x = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu",
-                   kernel_initializer=self.init_weights)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         return x
     
     def learner(self, x, **metaparameters):
@@ -124,20 +129,26 @@ class VGG(object):
         x = MaxPooling2D(2, strides=(2, 2))(x)
         return x
     
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
         """ Construct the Classifier
             x         : input to the classifier
             n_classes : number of output classes
+            reg       : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         # Flatten the feature maps
         x = Flatten()(x)
     
         # Two fully connected dense layers
-        x = Dense(4096, activation='relu', kernel_initializer=self.init_weights)(x)
-        x = Dense(4096, activation='relu', kernel_initializer=self.init_weights)(x)
+        x = Dense(4096, activation='relu', 
+                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        x = Dense(4096, activation='relu', 
+                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
 
         # Output layer for classification 
-        x = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Dense(n_classes, activation='softmax', 
+                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         return x
 
 # Example of constructing a VGG 16

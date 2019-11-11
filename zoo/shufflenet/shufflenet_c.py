@@ -20,6 +20,7 @@ from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, ReLU, MaxPooling2D, GlobalAveragePooling2D
 from tensorflow.keras.layers import Add, Concatenate, AveragePooling2D, DepthwiseConv2D, Lambda
 from tensorflow.keras import backend as K
+from tensorflow.keras.regularizers import l2
 
 class ShuffleNet(object):
     ''' Construct a Shuffle Convolution Neural Network '''
@@ -41,16 +42,19 @@ class ShuffleNet(object):
 
     # meta-parameter: the dimensionality reduction on entry to a shuffle block
     reduction = 0.25
+    # meta-parameter: kernel regularizer
+    reg = l2(0.001)
     
     init_weights='glorot_uniform'
     _model = None
 
-    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
             filters     : filters per group based on partitions
             n_partitions: number of groups to partition the filters (channels)
             reduction   : dimensionality reduction on entry to a shuffle block
+            reg         : kernel regularizer
             input_shape : the input shape to the model
             n_classes   : number of output classes
         '''
@@ -64,13 +68,13 @@ class ShuffleNet(object):
         inputs = Input(shape=input_shape)
 
         # The Stem convolution group (referred to as Stage 1)
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The Learner
-        x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction)
+        x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction, reg=reg)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
         self._model = Model(inputs, outputs)
 
     @property
@@ -81,11 +85,15 @@ class ShuffleNet(object):
     def model(self, _model):
         self._model = _model
 
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         ''' Construct the Stem Convolution Group 
             inputs : input image (tensor)
+            reg    : kernel regularizer
         '''
-        x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False, kernel_initializer=self.init_weights)(inputs)
+        reg = metaparameters['reg']
+
+        x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
         x = ReLU()(x)
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
@@ -113,8 +121,6 @@ class ShuffleNet(object):
             x           : input to the group
             n_partitions: number of groups to partition feature maps (channels) into.
             n_blocks    : number of shuffle blocks for this group
-            n_filters   : number of output filters
-            reduction   : dimensionality reduction
         '''
         n_blocks     = metaparameters['n_blocks']
 
@@ -136,10 +142,15 @@ class ShuffleNet(object):
             n_partitions: number of groups to partition feature maps (channels) into.
             n_filters   : number of filters
             reduction   : dimensionality reduction factor (e.g, 0.25)
+            reg         : kernel regularizer
         '''
         n_partitions = metaparameters['n_partitions']
         n_filters    = metaparameters['n_filters']
         reduction    = metaparameters['reduction']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ShuffleNet.reg
 
         if init_weights is None:
             init_weights = ShuffleNet.init_weights
@@ -154,18 +165,19 @@ class ShuffleNet(object):
         n_filters -= int(x.shape[3])
     
         # pointwise group convolution, with dimensionality reduction
-        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights, reg=reg)
         x = ReLU()(x)
     
         # channel shuffle layer
         x = ShuffleNet.channel_shuffle(x, n_partitions)
 
         # Depthwise 3x3 Strided Convolution
-        x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False, 
+                           kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
 
         # pointwise group convolution, with dimensionality restoration
-        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, reg=reg)
     
         # Concatenate the projection shortcut to the output
         x = Concatenate()([shortcut, x])
@@ -179,10 +191,15 @@ class ShuffleNet(object):
             n_partitions: number of groups to partition feature maps (channels) into.
             n_filters   : number of filters
             reduction   : dimensionality reduction factor (e.g, 0.25)
+            reg         : kernel regularizer
         '''
         n_partitions = metaparameters['n_partitions']
         n_filters    = metaparameters['n_filters']
         reduction    = metaparameters['reduction']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ShuffleNet.reg
 
         if init_weights is None:
             init_weights = ShuffleNet.init_weights
@@ -191,18 +208,19 @@ class ShuffleNet(object):
         shortcut = x
     
         # pointwise group convolution, with dimensionality reduction
-        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights, reg=reg)
         x = ReLU()(x)
     
         # channel shuffle layer
         x = ShuffleNet.channel_shuffle(x, n_partitions)
     
         # Depthwise 3x3 Convolution
-        x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False, 
+                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
     
         # pointwise group convolution, with dimensionality restoration
-        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, init_weights=init_weights)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, init_weights=init_weights, reg=reg)
     
         # Add the identity shortcut (input added to output)
         x = Add()([shortcut, x])
@@ -210,12 +228,18 @@ class ShuffleNet(object):
         return x
 
     @staticmethod
-    def pw_group_conv(x, n_partitions, n_filters, init_weights=None):
+    def pw_group_conv(x, n_partitions, n_filters, init_weights=None, **metaparameters):
         ''' A Pointwise Group Convolution  
             x           : input tensor
             n_partitions: number of groups to partition feature maps (channels) into.
-            n_filers    : number of filters
+            n_filters   : number of filters
+            reg         : kernel regularizer
         '''
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = ShuffleNet.reg
+
         if init_weights is None:
             init_weights = ShuffleNet.init_weights
             
@@ -234,7 +258,8 @@ class ShuffleNet(object):
             group = Lambda(lambda x: x[:, :, :, grp_in_filters * i: grp_in_filters * (i + 1)])(x)
 
             # Perform convolution on channel group
-            conv = Conv2D(grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, kernel_initializer=init_weights)(group)
+            conv = Conv2D(grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, 
+                          kernel_initializer=init_weights, kernel_regularizer=reg)(group)
             # Maintain the point-wise group convolutions in a list
             groups.append(conv)
 
@@ -250,6 +275,7 @@ class ShuffleNet(object):
             x            : input tensor
             n_partitions : number of groups to partition feature maps (channels) into.
         '''
+
         # Get dimensions of the input tensor
         batch, height, width, n_filters = x.shape
 
@@ -264,15 +290,19 @@ class ShuffleNet(object):
         x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_filters]))(x)
         return x
     
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
         ''' Construct the Classifier Group 
             x         : input to the classifier
             n_classes : number of output classes
+            reg       : kernel regularizer
         '''
+        reg = metaparameters['reg']
+
         # Use global average pooling to flatten feature maps to 1D vector, where
         # each feature map is a single averaged value (pixel) in flatten vector
         x = GlobalAveragePooling2D()(x)
-        x = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Dense(n_classes, activation='softmax', 
+                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         return x
     
 # Example

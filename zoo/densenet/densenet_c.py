@@ -33,17 +33,20 @@ class DenseNet(object):
     reduction = 0.5
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
     n_filters = 32
-    init_weights = 'he_normal'
+    # Meta-parameter: kernel regularizer
     reg = l2(0.001)
+
+    init_weights = 'he_normal'
     _model = None
 
-    def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
         """ Construct a Densely Connected Convolution Neural Network
             n_layers   : number of layers
             n_filters  : number of filters (growth rate)
             reduction  : anount to reduce feature maps by (compression factor)
             input_shape: input shape
             n_classes  : number of output classes
+            reg        : kernel regularizer
         """
         # predefined
         if isinstance(n_layers, int):
@@ -58,13 +61,13 @@ class DenseNet(object):
         inputs = Input(shape=input_shape)
 
         # The Stem Convolution Group
-        x = self.stem(inputs, n_filters)
+        x = self.stem(inputs, n_filters, reg=reg)
 
         # The Learner
-        x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups)
+        x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups, reg=reg)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         # Instantiate the model
         self._model = Model(inputs, outputs)
@@ -77,18 +80,21 @@ class DenseNet(object):
     def model(self, _model):
         self._model = _model
 
-    def stem(self, inputs, n_filters):
+    def stem(self, inputs, n_filters, **metaparameters):
         """ Construct the Stem Convolution Group
             inputs   : input tensor
             n_filters: number of filters for the dense blocks (k)
+            reg      : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         # Pads input from 224x224 to 230x230
         x = ZeroPadding2D(padding=((3, 3), (3, 3)))(inputs)
     
         # First large convolution for abstract features for input 224 x 224 and output 112 x 112
         # Stem convolution uses 2 * k (growth rate) number of filters
         x = Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -211,16 +217,19 @@ class DenseNet(object):
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)
         return x
     
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
         """ Construct the Classifier Group
             x         : input to the classifier
             n_classes : number of output classes
+            reg       : kernel regularizer
         """
+        reg = metaparameters['reg']
+
         # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
         x = GlobalAveragePooling2D()(x)
         # Fully connected output layer (classification)
         x = Dense(n_classes, activation='softmax', 
-                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         return x
     
 # Example

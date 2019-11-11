@@ -21,6 +21,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import DepthwiseConv2D, Add, GlobalAveragePooling2D, Dense
+from tensorflow.keras.regularizers import l2
 
 class MobileNetV2(object):
     """ Construct a Mobile Convolution Neural Network """
@@ -38,6 +39,8 @@ class MobileNetV2(object):
     alpha = 1
     # Meta-parameter: multiplier to expand the number of filters
     expansion = 6
+    # Meta-parameter: kernel regularization
+    reg = l2(0.001)
     init_weights = 'glorot_uniform'
     _model = None
 
@@ -87,7 +90,8 @@ class MobileNetV2(object):
     
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-        x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = ReLU(6.)(x)
         return x
@@ -144,6 +148,7 @@ class MobileNetV2(object):
             n_filters : number of filters
             alpha     : width multiplier
             expansion : multiplier for expanding number of filters
+            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         alpha     = metaparameters['alpha']
@@ -155,6 +160,10 @@ class MobileNetV2(object):
             expansion = metaparameters['expansion']
         else:
             expansion = MobileNetV2.expansion
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = MobileNetV2.reg
 
         if init_weights is None:
             init_weights = MobileNetV2.init_weights
@@ -170,7 +179,8 @@ class MobileNetV2(object):
         # Dimensionality Expansion (non-first block)
         if expansion > 1:
             # 1x1 linear convolution
-            x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+            x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, 
+                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
             x = ReLU(6.)(x)
 
@@ -182,12 +192,14 @@ class MobileNetV2(object):
             padding = 'same'
 
         # Depthwise Convolution
-        x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer=init_weights)(x)
+        x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer=init_weights, 
+                            kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU(6.)(x)
 
         # Linear Pointwise Convolution
-        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
     
         # Number of input filters matches the number of output filters
@@ -204,7 +216,7 @@ class MobileNetV2(object):
         x = GlobalAveragePooling2D()(x)
 
         # Dense layer for final classification
-        x = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         return x
 
 # Example

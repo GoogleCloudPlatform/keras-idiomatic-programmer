@@ -21,6 +21,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import DepthwiseConv2D, GlobalAveragePooling2D, Reshape, Dropout
+from tensorflow.keras.regularizers import l2
 
 class MobileNetV1(object):
     """ Construct a Mobile Convolution Neural Network """
@@ -36,6 +37,8 @@ class MobileNetV1(object):
     pho        = 1
     # Meta-parameter: dropout rate
     dropout    = 0.5 
+    # Meta-parameter: kernel regularizer
+    reg        = l2(0.001)
     init_weights='glorot_uniform'
     _model = None
 
@@ -87,7 +90,8 @@ class MobileNetV1(object):
 
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-        x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = ReLU(6.0)(x)
 
@@ -130,12 +134,17 @@ class MobileNetV1(object):
     def depthwise_block(x, strides, init_weights=None, **metaparameters):
         """ Construct a Depthwise Separable Convolution block
             x         : input to the block
+            strides   : strides
             n_filters : number of filters
             alpha     : width multiplier
-            strides   : strides
+            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         alpha     = metaparameters['alpha']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = MobileNetV1.reg
 
         if init_weights is None:
             init_weights = MobileNetV1.init_weights
@@ -151,12 +160,14 @@ class MobileNetV1(object):
             padding = 'same'
 
         # Depthwise Convolution
-        x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer=init_weights)(x)
+        x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, 
+                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU(6.0)(x)
 
         # Pointwise Convolution
-        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU(6.0)(x)
         return x
@@ -181,10 +192,11 @@ class MobileNetV1(object):
         x = Dropout(dropout)(x)
 
         # Use convolution for classifying (emulates a fully connected layer)
-        x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax', 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Reshape the resulting output to 1D vector of number of classes
         x = Reshape((n_classes, ))(x)
         return x
 
 # Example
-# mobilenet = MobileNetV1()
+mobilenet = MobileNetV1()

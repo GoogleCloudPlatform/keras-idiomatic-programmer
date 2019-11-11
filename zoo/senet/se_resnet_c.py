@@ -39,15 +39,18 @@ class SEResNet(object):
 	      }
     # Meta-parameter: Amount of filter reduction in squeeze operation
     ratio = 16
-    init_weights = 'he_normal'
+    # Meta-parameter: Kernel regularizer
     reg = l2(0.001)
+
+    init_weights = 'he_normal'
     _model = None
 
-    def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
         """ Construct a Residual Convolutional Neural Network V1
             n_layers   : number of layers
             input_shape: input shape
             n_classes  : number of output classes
+            reg        : kernel regularizer
         """
         # predefined
         if isinstance(n_layers, int):
@@ -62,13 +65,13 @@ class SEResNet(object):
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The Learner
-        x = self.learner(x, groups=groups, ratio=ratio)
+        x = self.learner(x, groups=groups, ratio=ratio, reg=reg)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -81,16 +84,18 @@ class SEResNet(object):
     def model(self, _model):
         self._model = _model
     
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
         """
+        reg = metaparameters['reg']
+
         # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
     
@@ -274,17 +279,20 @@ class SEResNet(object):
         x = ReLU()(x)
         return x
 
-    def classifier(self, x, n_classes):
+    def classifier(self, x, n_classes, **metaparameters):
       """ Create the Classifier Group 
           x         : input to the classifier
           n_classes : number of output classes
+          reg       : kernel regularizer
       """
+      reg = metaparameters['reg']
+
       # Pool at the end of all the convolutional residual blocks
       x = GlobalAveragePooling2D()(x)
 
       # Final Dense Outputting Layer for the outputs
       outputs = Dense(n_classes, activation='softmax', 
-                      kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+                      kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
       return outputs
 
 # Example

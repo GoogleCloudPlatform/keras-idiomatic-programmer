@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, BatchNormalization, ReLU, Dense, Add
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Reshape, Multiply, Lambda, Concatenate
+from tensorflow.keras.regularizers import l2
 
 class SEResNeXt(object):
     """ Construct a Squeeze & Excite Residual Next Convolution Neural Network """
@@ -42,6 +43,7 @@ class SEResNeXt(object):
     # Meta-parameter: Amount of filter reduction in squeeze operation
     ratio = 16
     init_weights = 'he_normal'
+    reg = l2(0.001)
     _model = None
 
     def __init__(self, n_layers, cardinality=32, ratio=16, input_shape=(224, 224, 3), n_classes=1000):
@@ -88,7 +90,8 @@ class SEResNeXt(object):
         """ Construct the Stem Convolution Group
             inputs : input vector
         """
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False, kernel_initializer=self.init_weights)(inputs)
+        x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False, 
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = BatchNormalization()(x)
         x = ReLU()(x)
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
@@ -131,11 +134,16 @@ class SEResNeXt(object):
         """ Construct a Squeeze and Excite block
             x    : input to the block
             ratio : amount of filter reduction during squeeze
+            reg   : kernel regularizer
         """  
         if 'ratio' in metaparameters:
             ratio = metaparameters['ratio']
         else:
-            ratio = SENet.ratio
+            ratio = SEResNeXt.ratio
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SEResNeXt.reg
 
         if init_weights is None:
             init_weights = SEResNeXt.init_weights
@@ -154,11 +162,13 @@ class SEResNeXt(object):
         x = Reshape((1, 1, filters))(x)
     
         # Reduce the number of filters (1x1xC/r)
-        x = Dense(filters // ratio, activation='relu', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Dense(filters // ratio, activation='relu', use_bias=False, 
+                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Excitation (dimensionality restoration)
         # Restore the number of filters (1x1xC)
-        x = Dense(filters, activation='sigmoid', kernel_initializer=init_weights, use_bias=False)(x)
+        x = Dense(filters, activation='sigmoid', use_bias=False,
+                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # Scale - multiply the squeeze/excitation output with the input (WxHxC)
         x = Multiply()([shortcut, x])
@@ -171,10 +181,15 @@ class SEResNeXt(object):
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of cardinality layer
+            reg        : kernel regularizer
         """ 
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
         cardinality = metaparameters['cardinality']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SEResNeXt.reg
 
         if init_weights is None:
             init_weights = SEResNeXt.init_weights
@@ -183,8 +198,8 @@ class SEResNeXt(object):
         shortcut = x
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights)(shortcut)
+        x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -193,8 +208,8 @@ class SEResNeXt(object):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, kernel_size=(3, 3),
-                                 strides=(1, 1), padding='same', kernel_initializer=init_weights)(group))
+            groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False,
+                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -202,8 +217,8 @@ class SEResNeXt(object):
         x = ReLU()(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights)(x)
+        x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
@@ -218,27 +233,32 @@ class SEResNeXt(object):
     def projection_block(x, strides=1, init_weights=None, **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
+            strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of cardinality layer
-            strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
+            reg        : kernel regularizer
         """ 
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
         cardinality = metaparameters['cardinality']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SEResNeXt.reg
 
         if init_weights is None:
             init_weights = SEResNeXt.init_weights
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
-        shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=strides,
-                          padding='same', kernel_initializer=init_weights)(x)
+        shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=strides, padding='same', 
+                          kernel_initializer=init_weights)(x)
         shortcut = BatchNormalization()(shortcut)
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1),
-                   padding='same', kernel_initializer=init_weights)(x)
+        x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 
@@ -247,8 +267,8 @@ class SEResNeXt(object):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, kernel_size=(3, 3),
-                                 strides=strides, padding='same', kernel_initializer=init_weights)(group))
+            groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=strides, padding='same', use_bias=False,
+                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -256,8 +276,8 @@ class SEResNeXt(object):
         x = ReLU()(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1),
-                      padding='same', kernel_initializer=init_weights)(x)
+        x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
@@ -275,7 +295,8 @@ class SEResNeXt(object):
         """
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
-        outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        outputs = Dense(n_classes, activation='softmax', 
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         return outputs
 
 # Example

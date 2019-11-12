@@ -32,6 +32,8 @@ The repository is organized by:
 |               | Production |
 | `notebooks`   | notebooks for production-grade solutions |
 | `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
+| `community
+   labs`        | Labs for community driven research |
 
 ## Reviewers and Contributors
 

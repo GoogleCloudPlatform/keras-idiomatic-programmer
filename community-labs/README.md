@@ -4,6 +4,6 @@ This section contains labs that consist of a notebook and corresponding presenta
 
 | Lab | Description |
 |-----|-------------|
-| `AutoEncoder` | *TODO* |
-| `Regularization` | *TODO* |
-| `Ensemble` | *TODO* |
+| `AutoEncoder for CNN` | Research using lower dimensional encoded inputs to CNN (vs original image) |
+| `Regularization` | Research using regularization to counter overfitting |
+| `Ensemble` | Research using intra-model ensemnble methods |

@@ -47,7 +47,7 @@ All the models here are coded using the idiomatic design pattern for models. The
 *One-Shot Classification Networks*</br>
 | `Siamese Twin` | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |<br/>
 *AutoEncoders*<br/>
-| `Auto Encoder` | |<br/>
+| `Auto Encoder` | no paper - general principles |<br/>
 
 ## Architecture Representation
 

@@ -1,6 +1,6 @@
 # Labs for Community Participation in Research
 
-This section contains labs that consist of a notebook and corresponding presentation for community participation in machine learning research.
+This section contains labs that consist of a notebook and corresponding presentation for community participation in machine learning research. The audience for these notebooks are junior to mid-level data scientists.
 
 | Lab | Description |
 |-----|-------------|

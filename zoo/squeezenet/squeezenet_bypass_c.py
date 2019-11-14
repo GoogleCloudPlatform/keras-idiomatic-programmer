@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Add, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
+from tensorflow.keras.regularizers import l2
 
 class SqueezeNetBypass(object):
     ''' Construct a SqueezeNet Bypass Convolution Neural Network '''
@@ -32,12 +33,16 @@ class SqueezeNetBypass(object):
                  { 'n_filters' : 48, 'bypass': True },  
                  { 'n_filters' : 64, 'bypass': False } ],
                [ { 'n_filters' : 64, 'bypass': True } ] ]
+    # Meta-parameter: kernel regularization
+    reg = l2(0.001)
+
     init_weights = 'glorot_uniform'
     _model = None
 
-    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, dropout=0.5, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
         ''' Construct a SqueezeNet Bypass Convolution Neural Network
-            dropout : percentage of dropout
+            dropout    : percentage of dropout
+            reg        : kernel regularization
             input_shape: input shape to model
             n_classes  : number of output classes
         '''
@@ -48,13 +53,13 @@ class SqueezeNetBypass(object):
         inputs = Input((224, 224, 3))
 
         # The Stem Group
-        x = self.stem(inputs)
+        x = self.stem(inputs, reg=reg)
 
         # The Learner
-        x = self.learner(x, groups=groups, dropout=dropout)
+        x = self.learner(x, groups=groups, dropout=dropout, reg=reg)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, reg=reg)
 
         self._model = Model(inputs, outputs)
 
@@ -66,12 +71,15 @@ class SqueezeNetBypass(object):
     def model(self, _model):
         self._model = _model
 
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         ''' Construct the Stem Group
             inputs : input to the stem
+            reg    : kernel regularizer
         '''
+        reg = metaparameters['reg']
+
         x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
-               kernel_initializer=self.init_weights)(inputs)
+               kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = MaxPooling2D(3, strides=2)(x)
         return x
 
@@ -91,10 +99,10 @@ class SqueezeNetBypass(object):
 
         # Add Fire groups, progressively increase number of filters
         for group in groups:
-            x = SqueezeNetBypass.group(x, blocks=group)
+            x = SqueezeNetBypass.group(x, blocks=group, **metaparameters)
 
         # Last fire block
-        x = SqueezeNetBypass.fire_block(x, **last[0])
+        x = SqueezeNetBypass.fire_block(x, **last[0], **metaparameters)
 
         # Dropout is delayed to end of fire groups
         x = Dropout(dropout)(x)
@@ -112,7 +120,7 @@ class SqueezeNetBypass(object):
             init_weights = SqueezeNetBypass.init_weights
             
         for block in blocks:
-            x = SqueezeNetBypass.fire_block(x, init_weights=init_weights, **block)
+            x = SqueezeNetBypass.fire_block(x, init_weights=init_weights, **block, **metaparameters)
 
         # Delayed downsampling
         x = MaxPooling2D((3, 3), strides=2)(x)
@@ -124,9 +132,14 @@ class SqueezeNetBypass(object):
             x        : input to the block
             n_filters: number of filters in the block
             bypass   : whether block has an identity shortcut
+            reg      : kernel regularizer
         '''
         n_filters = metaparameters['n_filters']
         bypass    = metaparameters['bypass']
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = SqueezeNetBypass.reg
 
         if init_weights is None:
             init_weights = SqueezeNetBypass.init_weights
@@ -135,15 +148,15 @@ class SqueezeNetBypass(object):
         shortcut = x
 
         # squeeze layer
-        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu',
-                         padding='same', kernel_initializer=init_weights)(x)
+        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu', padding='same',
+                         kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
         # of filters
-        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu',
-                           padding='same', kernel_initializer=init_weights)(squeeze)
-        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu',
-                           padding='same', kernel_initializer=init_weights)(squeeze)
+        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu', padding='same',
+                           kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
+        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu', padding='same',
+                           kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
 
         # concatenate the feature maps from the 1x1 and 3x3 branches
         x = Concatenate()([expand1x1, expand3x3])
@@ -154,11 +167,17 @@ class SqueezeNetBypass(object):
         
         return x
 
-    def classifier(self, x, n_classes):
-        ''' Construct the Classifier '''
+    def classifier(self, x, n_classes, **metaparameters):
+        ''' Construct the Classifier 
+            x        : input tensor
+            n_classes: number of output classes
+            reg      : kernel regularizer
+        '''
+        reg = metaparameters['reg']
+
         # set the number of filters equal to number of classes
         x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
-                   kernel_initializer=self.init_weights)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         # reduce each filter (class) to a single value
         x = GlobalAveragePooling2D()(x)
         x = Activation('softmax')(x)

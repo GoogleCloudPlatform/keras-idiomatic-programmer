@@ -36,21 +36,21 @@ class MobileNetV3Large(object):
     """ Construct a Mobile Convolution Neural Network """
     # Meta-parameter: number of filters/filter size, blocks per group, strides of projection block, activation, and
     #                 expansion per block
-    groups = [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'n_blocks' : 1, 'strides': (1, 1), 
-                 'activation': ReLU6, 'expansion': [16], 'squeeze': False }, 
-               { 'n_filters' : 24,    'kernel_size': (3, 3), 'n_blocks' : 2, 'strides': (2, 2), 
-                 'activation': ReLU6, 'expansion': [64, 72], 'squeeze': False},
-               { 'n_filters' : 40,    'kernel_size': (5, 5), 'n_blocks' : 3, 'strides': (2, 2), 
-                 'activation': ReLU6, 'expansion': [72, 120, 120], 'squeeze': True}, 
-               { 'n_filters' : 80,    'kernel_size': (5, 5), 'n_blocks' : 4, 'strides': (2, 2), 
-                 'activation': HS ,   'expansion': [240, 200, 184, 184], 'squeeze': False},
-               { 'n_filters' : 112,   'kernel_size': (5, 5), 'n_blocks' : 2, 'strides': (1, 1),
-                 'activation': HS ,   'expansion': [480, 672], 'squeeze': True},
-               { 'n_filters' : 160,   'kernel_size': (5, 5), 'n_blocks' : 3, 'strides': (2, 2),
-                 'activation': HS ,   'expansion': [672, 960, 960], 'squeeze': True},
+    groups = [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'strides': (1, 1), 
+                 'activation': ReLU6, 'blocks': [16], 'squeeze': False }, 
+               { 'n_filters' : 24,    'kernel_size': (3, 3), 'strides': (2, 2), 
+                 'activation': ReLU6, 'blocks': [64, 72], 'squeeze': False},
+               { 'n_filters' : 40,    'kernel_size': (5, 5), 'strides': (2, 2), 
+                 'activation': ReLU6, 'blocks': [72, 120, 120], 'squeeze': True}, 
+               { 'n_filters' : 80,    'kernel_size': (5, 5), 'strides': (2, 2), 
+                 'activation': HS ,   'blocks': [240, 200, 184, 184], 'squeeze': False},
+               { 'n_filters' : 112,   'kernel_size': (5, 5), 'strides': (1, 1),
+                 'activation': HS ,   'blocks': [480, 672], 'squeeze': True},
+               { 'n_filters' : 160,   'kernel_size': (5, 5), 'strides': (2, 2),
+                 'activation': HS ,   'blocks': [672, 960, 960], 'squeeze': True},
                # Last block
-               { 'n_filters' : 960,   'kernel_size': (1, 1), 'n_blocks' : 1, 'strides': (1, 1), 
-                 'activation': HS ,   'expansion': None, 'squeeze': False}
+               { 'n_filters' : 960,   'kernel_size': (1, 1), 'strides': (1, 1), 
+                 'activation': HS ,   'blocks': None, 'squeeze': False}
              ]
 
     # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
@@ -141,22 +141,19 @@ class MobileNetV3Large(object):
     def group(x, **metaparameters):
         """ Construct an Inverted Residual Group
             x         : input to the group
-            n_blocks  : number of blocks in the group
+            blocks    : expansion per block
             strides   : whether first block uses strided convolution in project shortcut
-            expansion : expansion factor
         """   
-        n_blocks  = metaparameters['n_blocks']
+        blocks  = metaparameters['blocks']
         strides   = metaparameters['strides']
         del metaparameters['strides']
-        expansion = metaparameters['expansion']
-        del metaparameters['expansion']
 
         # In first block, the inverted residual block maybe strided - feature map size reduction
-        x = MobileNetV3Large.inverted_block(x, strides=strides, expansion=expansion[0], **metaparameters)
+        x = MobileNetV3Large.inverted_block(x, strides=strides, expansion=blocks.pop(0), **metaparameters)
     
         # Remaining blocks
-        for _ in range(n_blocks - 1):
-            x = MobileNetV3Large.inverted_block(x, strides=(1, 1), expansion=expansion[_+1], **metaparameters)
+        for block in blocks:
+            x = MobileNetV3Large.inverted_block(x, strides=(1, 1), expansion=block, **metaparameters)
         return x
 
     @staticmethod

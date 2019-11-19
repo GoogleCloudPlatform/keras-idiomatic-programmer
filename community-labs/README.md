@@ -31,3 +31,11 @@ To explore methods of regularization and learning rates to prevent the training 
 *Question:* How small can a compact model be made and maintain accuracy on the validation/test data?
 
 ### Ensemble
+
+**Objective**
+
+To replace a traditional "inter-model" ensemble of models of high complexity with an "intra-model" ensemble of lower complexity, while retaining the performance benefits.
+
+*Question:* Can one achieve the same performance with intra-model bagging vs. traditional inter-model ensemble?
+
+*Question:* Can one achieve the same performance with intra-model stacking vs. traditional inter-model ensemble?

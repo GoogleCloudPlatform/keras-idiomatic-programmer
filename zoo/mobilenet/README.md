@@ -446,6 +446,25 @@ Macro-architecture code for MobileNet v3 (224x224 input):
 <img src="stem-v3.jpg">
 
 ```python
+ def stem(self, inputs, **metaparameters):
+        """ Construct the Stem Group
+            inputs : input tensor
+            alpha  : width multiplier
+            reg    : kernel regularizer
+        """
+        alpha = metaparameters['alpha']
+        reg   = metaparameters['reg']
+
+        # Calculate the number of filters for the stem convolution
+        # Must be divisible by 8
+        n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
+
+        # Convolutional block
+        x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False,
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+        x = BatchNormalization()(x)
+        x = HS(x)
+        return x
 ```
 
 ## Composable

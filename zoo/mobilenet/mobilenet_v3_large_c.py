@@ -125,7 +125,7 @@ class MobileNetV3Large(object):
 
         last = groups.pop()
 
-        # Add Inverted Residual Convolution Groups
+        # Add Attention Residual Convolution Groups
         for group in groups:
             x = MobileNetV3Large.group(x, **group, **metaparameters)
 
@@ -139,7 +139,7 @@ class MobileNetV3Large(object):
 
     @staticmethod
     def group(x, **metaparameters):
-        """ Construct an Inverted Residual Group
+        """ Construct an Attention Residual Group
             x         : input to the group
             blocks    : expansion per block
             strides   : whether first block uses strided convolution in project shortcut
@@ -148,17 +148,17 @@ class MobileNetV3Large(object):
         strides   = metaparameters['strides']
         del metaparameters['strides']
 
-        # In first block, the inverted residual block maybe strided - feature map size reduction
-        x = MobileNetV3Large.inverted_block(x, strides=strides, expansion=blocks.pop(0), **metaparameters)
+        # In first block, the attention residual block maybe strided - feature map size reduction
+        x = MobileNetV3Large.attention_block(x, strides=strides, expansion=blocks.pop(0), **metaparameters)
     
         # Remaining blocks
         for block in blocks:
-            x = MobileNetV3Large.inverted_block(x, strides=(1, 1), expansion=block, **metaparameters)
+            x = MobileNetV3Large.attention_block(x, strides=(1, 1), expansion=block, **metaparameters)
         return x
 
     @staticmethod
-    def inverted_block(x, strides=(1, 1), init_weights=None, **metaparameters):
-        """ Construct an Inverted Residual Block
+    def attention_block(x, strides=(1, 1), init_weights=None, **metaparameters):
+        """ Construct an Attention Residual Block
             x         : input to the block
             strides   : strides
             n_filters : number of filters

@@ -389,7 +389,63 @@ Macro-architecture code for MobileNet v3 (224x224 input):
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
+        
+    def learner(self, x, **metaparameters):
+        """ Construct the Learner
+            x        : input to the learner
+            alpha    : width multiplier
+            reg      : kernel regularizer
+        """
+        groups = metaparameters['groups']
+        alpha  = metaparameters['alpha']
+        reg    = metaparameters['reg']
 
+        last = groups.pop()
+
+        # Add Attention Residual Convolution Groups
+        for group in groups:
+            x = MobileNetV3.group(x, **group, **metaparameters)
+
+        # Last block is a 1x1 linear convolutional layer,
+        # expanding the number of filters to 1280.
+        x = Conv2D(last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        x = BatchNormalization()(x)
+        x = last['activation'](x)
+        return x
+
+```
+## Micro-Architecture
+
+<img src="micro-v3.jpg">
+
+```python
+    @staticmethod
+    def group(x, **metaparameters):
+        """ Construct an Attention Residual Group
+            x         : input to the group
+            blocks    : expansion factor per block
+            strides   : whether first block uses strided convolution in project shortcut
+        """
+        blocks  = metaparameters['blocks']
+        strides   = metaparameters['strides']
+        del metaparameters['strides']
+
+        # In first block, the attention residual block maybe strided - feature map size reduction
+        x = MobileNetV3.attention_block(x, strides=strides, expansion=blocks.pop(0), **metaparameters)
+
+        # Remaining blocks
+        for block in blocks:
+            x = MobileNetV3.attention_block(x, strides=(1, 1), expansion=block, **metaparameters)
+        return x
+
+```
+
+### Stem Group
+
+<img src="stem-v3.jpg">
+
+```python
 ```
 
 ## Composable

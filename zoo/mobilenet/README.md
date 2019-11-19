@@ -353,6 +353,45 @@ def classifier(x, n_classes):
     return x
 ```
 
+# MobileNet v3.0
+
+[Paper](https://arxiv.org/pdf/1905.02244.pdf)
+
+## Macro-Architecture
+
+<img src='macro-v3.jpg'>
+
+Macro-architecture code for MobileNet v3 (224x224 input):
+
+```python
+    def __init__(self, groups=None, alpha=1, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
+        """ Construct a Mobile Convolution Neural Network
+            groups     : number of filters and blocks per group
+            alpha      : width multiplier
+            reg        : kernel regularizer
+            input_shape: the input shape
+            n_classes  : number of output classes
+        """
+
+        if groups is None:
+             groups = self.groups
+
+        inputs = Input(shape=(224, 224, 3))
+
+        # The Stem Group
+        x = self.stem(inputs, alpha=alpha, reg=reg)
+
+        # The Learner
+        x = self.learner(x, groups=groups, alpha=alpha, reg=reg)
+
+        # The Classifier
+        outputs = self.classifier(x, n_classes, reg=reg)
+
+        # Instantiate the Model
+        self._model = Model(inputs, outputs)
+
+```
+
 ## Composable
 
 *Example Instantiate a MobileNet V2 model*

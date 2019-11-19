@@ -20,4 +20,12 @@ To replace a traditional "stem convolution group" of higher input dimensionality
 
 ### Regularization
 
+To explore methods of regularization and learning rates to prevent the training data from "fitting" to the weights in a compact model -- without use of historical methods such as dropout or data augmentation.
+
+*Question:* Can we generalize a compact model without image augmentation?
+
+*Question:* How is training time effected?
+
+*Question:* How small can a compact model be made and maintain accuracy on the validation/test data?
+
 ### Ensemble

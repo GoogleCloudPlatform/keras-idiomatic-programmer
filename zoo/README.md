@@ -29,6 +29,7 @@ All the models here are coded using the idiomatic design pattern for models. The
 | `ResNeXt101` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
 | `ResNeXt152` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) | <br/>
 | `ResNeXt_cifar10` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
+| `WRN`        | [Wide Residual Networks, 2016](https://arxiv.org/pdf/1605.07146.pdf) | <br/>
 | `Xception`   | [Xception: Deep Learning with Depthwise Separable Convolutions, 2016](https://arxiv.org/pdf/1610.02357.pdf) |<br/>
 | `SE-ResNeXt50`    | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
 | `SE-ResNeXt101`   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>

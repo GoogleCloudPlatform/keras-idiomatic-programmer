@@ -124,7 +124,6 @@ class ResNetV1_5(object):
         """ Construct a Residual Group
             x         : input into the group
             strides   : whether the projection block is a strided convolution
-            n_filters : number of filters for the group
             n_blocks  : number of residual blocks with identity link
         """
         n_blocks  = metaparameters['n_blocks']

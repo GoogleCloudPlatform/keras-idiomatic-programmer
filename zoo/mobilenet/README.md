@@ -467,6 +467,133 @@ Macro-architecture code for MobileNet v3 (224x224 input):
         return x
 ```
 
+### Attention Block
+
+<img src='attention.jpg'>
+
+```python
+    @staticmethod
+    def attention_block(x, strides=(1, 1), init_weights=None, **metaparameters):
+        """ Construct an Attenntion Residual Block
+            x         : input to the block
+            strides   : strides
+            n_filters : number of filters
+            alpha     : width multiplier
+            expansion : multiplier for expanding number of filters
+            squeeze   : whether to include squeeze
+            activation: type of activation function
+            reg       : kernel regularizer
+        """
+        n_filters = metaparameters['n_filters']
+        expansion = metaparameters['expansion']
+        alpha     = metaparameters['alpha']
+        if 'alpha' in metaparameters:
+            alpha = metaparameters['alpha']
+        else:
+            alpha = MobileNetV3.alpha
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = MobileNetV3.reg
+        if 'squeeze' in metaparameters:
+            squeeze = metaparameters['squeeze']
+        else:
+            squeeze = False
+        if 'activation' in metaparameters:
+            activation = metaparameters['activation']
+        else:
+            activation = ReLU6
+
+        if init_weights is None:
+            init_weights = MobileNetV3.init_weights
+
+        # Remember input
+        shortcut = x
+
+        # Apply the width filter to the number of feature maps for the pointwise convolution
+        filters = int(n_filters * alpha)
+
+        n_channels = int(x.shape[3])
+
+        # Dimensionality Expansion
+        # 1x1 linear convolution
+        x = Conv2D(expansion, (1, 1), padding='same', use_bias=False,
+                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = BatchNormalization()(x)
+        x = activation(x)
+
+        # Depthwise Convolution
+        x = DepthwiseConv2D((3, 3), strides, padding='same', use_bias=False,
+                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = BatchNormalization()(x)
+        x = activation(x)
+
+        # Add squeeze (dimensionality reduction)
+        if squeeze:
+            x = MobileNetV3.squeeze(x)
+
+        # Linear Pointwise Convolution
+        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = BatchNormalization()(x)
+
+        # Number of input filters matches the number of output filters
+        if n_channels == filters and strides == (1, 1):
+            x = Add()([shortcut, x])
+        return x
+```
+
+### Squeeze Block
+
+<img src='squeeze.jpg'>
+
+```python
+ @staticmethod
+    def squeeze(x):
+        """ Construct a squeeze block
+            x   : input to the squeeze
+        """
+        shortcut = x
+        n_channels = x.shape[-1]
+
+        x = GlobalAveragePooling2D()(x)
+        x = Dense(n_channels, activation=ReLU6)(x)
+        x = Dense(n_channels, activation=HS)(x)
+        x = Reshape((1, 1, n_channels))(x)
+        x = Multiply()([shortcut, x])
+        return x
+```
+
+### Classifier Group
+
+<img src='classifier-v3.jpg'>
+
+```python
+ def classifier(self, x, n_classes, **metaparameters):
+        """ Construct the classifier group
+            x         : input to the classifier
+            n_classes : number of output classes
+            reg       : kernel regularizer
+        """
+        reg = metaparameters['reg']
+
+        # 7x7 Pooling
+        n_channels = x.shape[-1]
+        x = GlobalAveragePooling2D()(x)
+        x = Reshape((1, 1, n_channels))(x)
+
+        x = Conv2D(1280, (1, 1), padding='same', activation=HS,
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+
+        # final classification
+        x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax',
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Flatten the feature maps into 1D feature maps (?, N)
+        x = Reshape((n_classes,))(x)
+
+        return x
+```
+
 ## Composable
 
 *Example Instantiate a MobileNet V2 model*

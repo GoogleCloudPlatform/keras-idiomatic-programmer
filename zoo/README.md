@@ -40,8 +40,8 @@ All the models here are coded using the idiomatic design pattern for models. The
 *Mobile Networks*<br/>
 | `MobileNet v1` | [MobileNets: Efficient Convolutional Neural Networks for Mobile VisionApplications, 2017](https://arxiv.org/pdf/1704.04861.pdf) |<br/>
 | `MobileNet v2` | [MobileNetV2: Inverted Residuals and Linear Bottlenecks, 2019](https://arxiv.org/pdf/1801.04381.pdf) |<br/>
-| `MobileNet v2 small`| [Searching for MobileNetV3, 2019](https://arxiv.org/pdf/1905.02244.pdf) |<br/>
-| `MobileNet v2 large`| [Searching for MobileNetV3, 2019](https://arxiv.org/pdf/1905.02244.pdf) |<br/>
+| `MobileNet v3 small`| [Searching for MobileNetV3, 2019](https://arxiv.org/pdf/1905.02244.pdf) |<br/>
+| `MobileNet v3 large`| [Searching for MobileNetV3, 2019](https://arxiv.org/pdf/1905.02244.pdf) |<br/>
 | `SqueezeNet` |  [SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size, 2016](https://arxiv.org/pdf/1602.07360.pdf) |<br/>
 | `SqueezeNet_bypass` |  [SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size, 2016](https://arxiv.org/pdf/1602.07360.pdf) |<br/>
 | `SqueezeNet_complex` |  [SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size, 2016](https://arxiv.org/pdf/1602.07360.pdf) |<br/>

@@ -57,3 +57,25 @@
             x = WRN.group(x, n_blocks=n_blocks, strides=(2, 2), **group, **metaparameters)
         return x
 ```
+
+## Micro-Architecture
+
+<img src='micro.jpg'>
+
+```python
+@staticmethod
+    def group(x, init_weights=None, **metaparameters):
+        """ Construct a Wide Residual Group
+            x         : input into the group
+            n_blocks  : number of residual blocks with identity link
+        """
+        n_blocks  = metaparameters['n_blocks']
+
+        # first block is projection to match the number of input filters to output fitlers for the add operation
+        x = WRN.projection_block(x, init_weights=init_weights, **metaparameters)
+
+        # wide residual blocks
+        for _ in range(n_blocks-1):
+            x = WRN.identity_block(x, init_weights=init_weights, **metaparameters)
+        return x
+```

@@ -30,6 +30,7 @@ The repository is organized by:
 |               | Training |
 |               | Transfer Learning |
 |               | Production |
+|               | Modern CNN Architectures |
 | `notebooks`   | notebooks for production-grade solutions |
 | `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
 | `community labs`| Labs for community participation in research |

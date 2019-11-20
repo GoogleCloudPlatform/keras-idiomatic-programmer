@@ -79,3 +79,24 @@
             x = WRN.identity_block(x, init_weights=init_weights, **metaparameters)
         return x
 ```
+
+### Stem Group
+
+<img src="stem.jpg">
+
+```python
+def stem(self, inputs, **metaparameters):
+        """ Construct the Stem Convolutional Group
+            inputs : the input vector
+            reg    : kernel regularizer
+        """
+        reg = metaparameters['reg']
+
+        # Convolutional layer
+        x = Conv2D(16, (3, 3), strides=(1, 1), padding='same', use_bias=False,
+                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+        x = BatchNormalization()(x)
+        x = ReLU()(x)
+
+        return x
+```

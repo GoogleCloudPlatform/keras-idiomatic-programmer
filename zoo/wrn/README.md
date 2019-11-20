@@ -63,7 +63,7 @@
 <img src='micro.jpg'>
 
 ```python
-@staticmethod
+    @staticmethod
     def group(x, init_weights=None, **metaparameters):
         """ Construct a Wide Residual Group
             x         : input into the group
@@ -106,7 +106,7 @@ def stem(self, inputs, **metaparameters):
 <img src='identity-block.jpg'>
 
 ```python
-@staticmethod
+    @staticmethod
     def identity_block(x, init_weights=None, **metaparameters):
         """ Construct a B(3,3) style block
             x        : input into the block
@@ -155,7 +155,7 @@ def stem(self, inputs, **metaparameters):
 <img src='projection-block.jpg'>
 
 ```python
-@staticmethod
+    @staticmethod
     def projection_block(x, init_weights=None, **metaparameters):
         """ Construct a B(3,3) style block
             x        : input into the block

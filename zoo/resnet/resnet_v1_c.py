@@ -127,7 +127,7 @@ class ResNetV1(object):
         """
         n_blocks  = metaparameters['n_blocks']
 
-        # Double the size of filters to fit the first Residual Group
+        # Double the size of filters to fit the first Residual Block
         x = ResNetV1.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
 
         # Identity residual blocks

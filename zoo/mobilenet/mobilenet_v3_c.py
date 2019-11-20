@@ -33,7 +33,7 @@ def HS(x):
     return (x * K.relu(x + 3, max_value=6.0)) / 6.0
 
 class MobileNetV3(object):
-    """ Construct a Mobile Convolution Neural Network """
+    """ Construct a Mobile Convolution Neural Network V3 """
     # Meta-parameter: number of filters/filter size, blocks per group, strides of projection block, activation, and
     #                 expansion per block
     groups = { 'large' : [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'strides': (1, 1), 
@@ -77,7 +77,7 @@ class MobileNetV3(object):
     _model = None
 
     def __init__(self, groups, alpha=1, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
-        """ Construct a Mobile Convolution Neural Network
+        """ Construct a Mobile Convolution Neural Network V3
             groups     : number of filters and blocks per group
             alpha      : width multiplier
             reg        : kernel regularizer

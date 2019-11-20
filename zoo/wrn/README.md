@@ -121,7 +121,7 @@ def stem(self, inputs, **metaparameters):
         if 'reg' in metaparameters:
             reg = metaparameters['reg']
         else:
-            reg = ResNetV2.reg
+            reg = WRN.reg
 
         if init_weights is None:
             init_weights = WRN.init_weights

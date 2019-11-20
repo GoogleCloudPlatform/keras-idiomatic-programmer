@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Wide Residual Networks
-# Paper: 
+# Wide Residual Networks (2016)
+# Paper: https://arxiv.org/pdf/1605.07146.pdf 
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input

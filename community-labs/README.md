@@ -2,7 +2,7 @@
 
 This section contains labs that consist of a notebook and corresponding presentation ("content bundle") for community participation in machine learning research. The audience for these notebooks are junior to mid-level data scientists. 
 
-The *XX.ppt* presentation is common across all the content bundles.
+The *Community Lab - Intro to Composable (Common).pptx* presentation is common across all the content bundles.
 
 | Lab | Description |
 |-----|-------------|

@@ -25,5 +25,5 @@ Each workshop packet is designed for a 2 hour workshop or study jam. The code la
 | `Transfer Learning` | Intermediate |
 | *Production*  |               |
 | `Production`  | Intermediate-Advanced` |
-| `Modern CNN`  | Intermediate-Advancdc` |
+| `Modern CNN`  | Intermediate-Advanced` |
 

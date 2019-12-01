@@ -1,6 +1,6 @@
 # Labs for Community Participation in Research
 
-This section contains labs that consist of a notebook and corresponding presentation ("content bundle") for community participation in machine learning research. The audience for these notebooks are junior to mid-level data scientists. 
+This section contains labs that consist of a notebook and corresponding presentation ("content bundle") for community participation in machine learning research. The target audience for these hands-on labs are ML researchers, ML engineers, data scientists and those who are already familiar with deep learning.
 
 The *Community Lab - Intro to Composable (Common).pptx* presentation is common across all the content bundles.
 

@@ -4,7 +4,9 @@ This section contains labs that consist of a notebook and corresponding presenta
 
 The *Community Lab - Intro to Composable (Common).pptx* presentation is common across all the content bundles.
 
-  A deep understanding of AutoML, a new approach based on new design patterns, latest research -- turning  AutoML from a blackbox to one where the data scientist can bring their own custom macro/micro architectures and self-guide the search space
+  A deep understanding of AutoML, a new approach based on new design patterns, latest research -- turning  AutoML from 
+  a blackbox to one where the data scientist can bring their own custom macro/micro architectures and self-guide the 
+  search space
 
 | Lab | Description |
 |-----|-------------|

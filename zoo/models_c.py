@@ -46,6 +46,14 @@ class Composable(object):
         self._model = None
 
     @property
+    def model(self):
+        return self._model
+
+    @model.setter
+    def model(self, _model):
+        self._model = _model
+
+    @property
     def encoding(self):
         return self._encoding
 

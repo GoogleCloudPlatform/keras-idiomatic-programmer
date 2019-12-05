@@ -27,16 +27,16 @@ class AutoEncoder(Composable):
     # metaparameter: number of filters per layer
     layers = [ {'n_filters': 64 }, { 'n_filters': 32 }, { 'n_filters': 16 } ]
 
-    _model = None
-
-    def __init__(self, layers=None, input_shape=(32, 32, 3), init_weights='he_normal'):
+    def __init__(self, layers=None, input_shape=(32, 32, 3),
+                 init_weights='he_normal', reg=None):
         ''' Construct an AutoEncoder
             input_shape : input shape to the autoencoder
             layers      : the number of filters per layer
             init_weights: kernel initializer
+            reg         : kernel regularizer
         '''
         # Configure base (super) class
-        super().__init__(init_weights=init_weights)
+        super().__init__(init_weights=init_weights, reg=reg)
 
         if layers is None:
            layers = AutoEncoder.layers
@@ -48,25 +48,19 @@ class AutoEncoder(Composable):
         self.input_shape = input_shape
 
         inputs = Input(input_shape)
-        encoder = AutoEncoder.encoder(inputs, layers=layers)
-        outputs = AutoEncoder.decoder(encoder, layers=layers)
+        encoder = AutoEncoder.encoder(inputs, layers=layers, reg=reg)
+        outputs = AutoEncoder.decoder(encoder, layers=layers, reg=reg)
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
 
     @staticmethod
     def encoder(x, init_weights=None, **metaparameters):
         ''' Construct the Encoder 
             x     : input to the encoder
             layers: number of filters per layer
+            reg   : kernel regularizer
         '''
         layers = metaparameters['layers']
+        reg    = metaparameters['reg']
 
         if init_weights is None:
             init_weights = AutoEncoder.init_weights
@@ -74,7 +68,8 @@ class AutoEncoder(Composable):
         # Progressive Feature Pooling
         for layer in layers:
             n_filters = layer['n_filters']
-            x = Conv2D(n_filters, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
+            x = Conv2D(n_filters, (3, 3), strides=2, padding='same',
+                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
             x = ReLU()(x)
 
@@ -86,8 +81,10 @@ class AutoEncoder(Composable):
         ''' Construct the Decoder
             x     : input to the decoder
             layers: number of filters per layer
+            reg   : kernel regularizer
         '''
         layers = metaparameters['layers']
+        reg    = metaparameters['reg']
 
         if init_weights is None:
             init_weights = AutoEncoder.init_weights
@@ -95,12 +92,14 @@ class AutoEncoder(Composable):
         # Progressive Feature Unpooling
         for _ in range(len(layers)-1, 0, -1):
             n_filters = layers[_]['n_filters']
-            x = Conv2DTranspose(n_filters, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
+            x = Conv2DTranspose(n_filters, (3, 3), strides=2, padding='same',
+                                kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
             x = ReLU()(x)
 
         # Last unpooling and match shape to input
-        x = Conv2DTranspose(3, (3, 3), strides=2, padding='same', kernel_initializer=init_weights)(x)
+        x = Conv2DTranspose(3, (3, 3), strides=2, padding='same',
+                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
         x = ReLU()(x)
 

@@ -19,9 +19,14 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, ReLU, BatchNormalization, Add
 from tensorflow.keras.layers import Concatenate, Dense, GlobalAveragePooling2D, Lambda
+from tensorflow.keras.layers import Activation
 from tensorflow.keras.regularizers import l2
 
-class ResNeXt(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class ResNeXt(Composable):
     """ Construct a Residual Next Convolution Neural Network """
     # Meta-parameter: number of filters in, out and number of blocks
     groups = { 50 : [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 }, 
@@ -40,19 +45,23 @@ class ResNeXt(object):
     
     # Meta-parameter: width of group convolution
     cardinality = 32
-    # Meta-parameter: kernel regularizer
-    reg = l2(0.001)
 
-    init_weights = 'he_normal'
     _model = None
 
-    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
+    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001),
+                 init_weights='he_normal', relu=None):
         """ Construct a Residual Next Convolution Neural Network
-            n_layers   : number of layers
-            cardinality: width of group convolution
-            input_shape: the input shape
-            n_classes  : number of output classes
+            n_layers    : number of layers.
+            cardinality : width of group convolution
+            input_shape : the input shape
+            n_classes   : number of output classes
+            reg         : kernel regularizer
+            init_weights: kernel initializer
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+        
         # predefined
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
@@ -95,7 +104,7 @@ class ResNeXt(object):
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False,
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
         return x
     
@@ -165,7 +174,7 @@ class ResNeXt(object):
         x = Conv2D(filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
@@ -178,7 +187,7 @@ class ResNeXt(object):
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration
         x = Conv2D(filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False,
@@ -187,7 +196,7 @@ class ResNeXt(object):
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -224,7 +233,7 @@ class ResNeXt(object):
         x = Conv2D(filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
@@ -237,7 +246,7 @@ class ResNeXt(object):
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration
         x = Conv2D(filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False,
@@ -246,7 +255,7 @@ class ResNeXt(object):
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
     
     def classifier(self, x, n_classes, **metaparameters):
@@ -257,12 +266,25 @@ class ResNeXt(object):
         """
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
-        outputs = Dense(n_classes, activation='softmax', 
+
+        # Save the bottleneck layer
+        self.bottleneck = x
+        
+        x = Dense(n_classes, 
                         kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Save the pre-activation probabilities layer
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post-activation probabilities layer
+        self.softmax = outputs
         return outputs
 
 
 # Example
 # resnext = ResNeXt(50)
+

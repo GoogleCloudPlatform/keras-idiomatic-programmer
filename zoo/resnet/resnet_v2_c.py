@@ -82,14 +82,6 @@ class ResNetV2(Composable):
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
-
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector

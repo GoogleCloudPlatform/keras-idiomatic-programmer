@@ -22,7 +22,7 @@ from tensorflow.keras.regularizers import l2
 
 import sys
 sys.path.append('../')
-from models import Composable
+from models_c import Composable
 
 class VGG(Composable):
     """ VGG (composable)
@@ -46,13 +46,17 @@ class VGG(Composable):
     _model = None
  
 
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=None):
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=None, relu=None):
         """ Construct a VGG model
             n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
             n_classes:  : number of output classes
+            reg         : kernel regularizer
+            relu        : max value for ReLU
         """
-        super().__init__()
+        # configure the base (super) class
+        super().__init__(reg=reg, relu=relu)
+
         # predefined
         if isinstance(n_layers, int):
             if n_layers not in [16, 19]:
@@ -159,9 +163,4 @@ class VGG(Composable):
         return x
 
 # Example of constructing a VGG 16
-#vgg = VGG(16)
-
-inputs = Input((224, 224, 3))
-x = VGG.group(inputs, n_layers=2, n_filters=3)
-m = Model(inputs, x)
-m.summary()
+# vgg = VGG(16)

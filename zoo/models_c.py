@@ -64,7 +64,7 @@ class Composable(object):
         return self._probabilities
 
     @probabilities.setter
-    def probbabilities(self, layer):
+    def probabilities(self, layer):
         self._probabilities = layer
 
     @staticmethod

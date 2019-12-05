@@ -167,11 +167,12 @@ class VGG(Composable):
                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         # Save the probability distribution before softmax
         self.probabilities = x
-        x = Activation('softmax')(x)
+        outputs = Activation('softmax')(x)
         # Save the probability distribution after softmax
-        self.softmax = x
-        return x
+        self.softmax = outputs
+        return outputs
 
 # Example of constructing a VGG 16
 # vgg = VGG(16)
+
 

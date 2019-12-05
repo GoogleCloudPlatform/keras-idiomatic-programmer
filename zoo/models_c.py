@@ -35,13 +35,37 @@ class Composable(object):
             self.relu = relu
 
         # Feature maps encoding at the bottleneck layer in classifier
-        self.encoding = None
+        self._encoding = None
         # Pooled and flattened encodings at the bottleneck layer
-        self.bottleneck = None
+        self._bottleneck = None
         # Pre-activation conditional probabilities for classifier
-        self.probabilities = None
+        self._probabilities = None
         # Post-activation conditional probabilities for classifier
-        self.softmax = None
+        self._softmax = None
+
+    @property
+    def encoding(self):
+        return self._encoding
+
+    @encoding.setter
+    def encoding(self, layer):
+        self._encoding = layer
+
+    @property
+    def bottleneck(self):
+        return self._bottleneck
+
+    @bottleneck.setter
+    def bottleneck(self, layer):
+        self._bottleneck = layer
+
+    @property
+    def probabilities(self):
+        return self._probabilities
+
+    @probabilities.setter
+    def probbabilities(self, layer):
+        self._probabilities = layer
 
     @staticmethod
     def ReLU(x):

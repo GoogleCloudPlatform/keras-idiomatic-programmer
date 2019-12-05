@@ -34,14 +34,16 @@ class Composable(object):
         if relu is not None:
             self.relu = relu
 
-        # Feature maps encoding at the bottleneck layer in classifier
+        # Feature maps encoding at the bottleneck layer in classifier (high dimensionality)
         self._encoding = None
-        # Pooled and flattened encodings at the bottleneck layer
-        self._bottleneck = None
+        # Pooled and flattened encodings at the bottleneck layer (low dimensionality)
+        self._embedding = None
         # Pre-activation conditional probabilities for classifier
         self._probabilities = None
         # Post-activation conditional probabilities for classifier
         self._softmax = None
+
+        self._model = None
 
     @property
     def encoding(self):
@@ -52,12 +54,12 @@ class Composable(object):
         self._encoding = layer
 
     @property
-    def bottleneck(self):
-        return self._bottleneck
+    def embedding(self):
+        return self._embedding
 
-    @bottleneck.setter
-    def bottleneck(self, layer):
-        self._bottleneck = layer
+    @embedding.setter
+    def embedding(self, layer):
+        self._embedding = layer
 
     @property
     def probabilities(self):

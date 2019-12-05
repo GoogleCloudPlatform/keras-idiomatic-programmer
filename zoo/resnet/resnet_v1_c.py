@@ -21,7 +21,11 @@ from tensorflow.keras.layers import Conv2D, ReLU, BatchNormalization, ZeroPaddin
 from tensorflow.keras.layers import MaxPooling2D, Dense, Add, GlobalAveragePooling2D
 from tensorflow.keras.regularizers import l2
 
-class ResNetV1(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class ResNetV1(Composable):
     """ Residual Convolutional Neural Network V1
     """
     # Meta-parameter: list of groups: number of filters and number of blocks
@@ -38,18 +42,21 @@ class ResNetV1(object):
                       { 'n_filters': 256, 'n_blocks': 36 }, 
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
-    # Meta-parameter: kernel regularizer
-    reg = l2(0.001)
 
-    init_weights = 'he_normal'
     _model = None
     
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001), relu=None, init_weights='he_normal'):
         """ Construct a Residual Convolutional Neural Network V1
-	    n_layers   : number of layers
-	    input_shape: input shape
-    	    n_classes  : number of output classes
+	    n_layers    : number of layers
+	    input_shape : input shape
+    	    n_classes   : number of output classes
+            reg         : kernel regularizer
+            relu        : max value for ReLU
+            init_weights: kernel initializer
         """
+        # Configure the base (super) class
+        super().__init__(reg=reg, relu=relu, init_weights=init_weights)
+
         # predefined
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
@@ -96,7 +103,7 @@ class ResNetV1(object):
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
@@ -160,13 +167,13 @@ class ResNetV1(object):
         x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Bottleneck layer
         x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
         x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
@@ -175,7 +182,7 @@ class ResNetV1(object):
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -209,13 +216,13 @@ class ResNetV1(object):
         x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Bottleneck layer
         x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
         x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
@@ -224,7 +231,7 @@ class ResNetV1(object):
 
         # Add the projection shortcut link to the output of the residual block
         x = Add()([x, shortcut])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     def classifier(self, x, n_classes, **metaparameters):

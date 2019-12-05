@@ -17,7 +17,7 @@
 
 import tensorflow as tf
 from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Activation
 from tensorflow.keras.regularizers import l2
 
 import sys
@@ -39,22 +39,21 @@ class VGG(Composable):
                       { 'n_layers': 4, 'n_filters': 512 },
                       { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
-    # Meta-parameter: kernel regularizer
-    reg = None
-
     init_weights = 'glorot_uniform'
     _model = None
- 
 
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=None, relu=None):
+
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000,
+                 reg=None, init_weights='glorot_uniform', relu=None):
         """ Construct a VGG model
             n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
             n_classes:  : number of output classes
             reg         : kernel regularizer
+            init_weights: kernel initializer
             relu        : max value for ReLU
         """
-        # configure the base (super) class
+        # Configure the base (super) class
         super().__init__(reg=reg, relu=relu)
 
         # predefined
@@ -148,8 +147,14 @@ class VGG(Composable):
         """
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # Flatten the feature maps
         x = Flatten()(x)
+
+        # Save the bottleneck layer
+        self.bottleneck = x
     
         # Two fully connected dense layers
         x = Dense(4096, activation='relu', 
@@ -158,9 +163,15 @@ class VGG(Composable):
                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
 
         # Output layer for classification 
-        x = Dense(n_classes, activation='softmax', 
+        x = Dense(n_classes, 
                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Save the probability distribution before softmax
+        self.probabilities = x
+        x = Activation('softmax')(x)
+        # Save the probability distribution after softmax
+        self.softmax = x
         return x
 
 # Example of constructing a VGG 16
 # vgg = VGG(16)
+

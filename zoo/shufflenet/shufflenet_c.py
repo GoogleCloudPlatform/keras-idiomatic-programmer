@@ -18,11 +18,15 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense, Conv2D, BatchNormalization, ReLU, MaxPooling2D, GlobalAveragePooling2D
-from tensorflow.keras.layers import Add, Concatenate, AveragePooling2D, DepthwiseConv2D, Lambda
+from tensorflow.keras.layers import Add, Concatenate, AveragePooling2D, DepthwiseConv2D, Lambda, Activation
 from tensorflow.keras import backend as K
 from tensorflow.keras.regularizers import l2
 
-class ShuffleNet(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class ShuffleNet(Composable):
     ''' Construct a Shuffle Convolution Neural Network '''
     # meta-parameter: number of shuffle blocks per shuffle group
     groups  = [ { 'n_blocks' : 4 }, { 'n_blocks' : 8 }, { 'n_blocks' : 4 } ]
@@ -42,22 +46,24 @@ class ShuffleNet(object):
 
     # meta-parameter: the dimensionality reduction on entry to a shuffle block
     reduction = 0.25
-    # meta-parameter: kernel regularizer
-    reg = l2(0.001)
     
     init_weights='glorot_uniform'
-    _model = None
 
-    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, input_shape=(224, 224, 3), n_classes=1000,
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=None):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
             filters     : filters per group based on partitions
             n_partitions: number of groups to partition the filters (channels)
             reduction   : dimensionality reduction on entry to a shuffle block
-            reg         : kernel regularizer
             input_shape : the input shape to the model
             n_classes   : number of output classes
+            init_weights: kernel initializer
+            reg         : kernel regularizer
+            relu        : max value for ReLU
         '''
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        
         if groups is None:
             groups = ShuffleNet.groups
 
@@ -77,14 +83,6 @@ class ShuffleNet(object):
         outputs = self.classifier(x, n_classes, reg=reg)
         self._model = Model(inputs, outputs)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
-
     def stem(self, inputs, **metaparameters):
         ''' Construct the Stem Convolution Group 
             inputs : input image (tensor)
@@ -95,7 +93,7 @@ class ShuffleNet(object):
         x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
         return x
 
@@ -166,7 +164,7 @@ class ShuffleNet(object):
     
         # pointwise group convolution, with dimensionality reduction
         x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights, reg=reg)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         # channel shuffle layer
         x = ShuffleNet.channel_shuffle(x, n_partitions)
@@ -181,7 +179,7 @@ class ShuffleNet(object):
     
         # Concatenate the projection shortcut to the output
         x = Concatenate()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -209,7 +207,7 @@ class ShuffleNet(object):
     
         # pointwise group convolution, with dimensionality reduction
         x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights, reg=reg)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         # channel shuffle layer
         x = ShuffleNet.channel_shuffle(x, n_partitions)
@@ -224,7 +222,7 @@ class ShuffleNet(object):
     
         # Add the identity shortcut (input added to output)
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -298,12 +296,24 @@ class ShuffleNet(object):
         '''
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # Use global average pooling to flatten feature maps to 1D vector, where
         # each feature map is a single averaged value (pixel) in flatten vector
         x = GlobalAveragePooling2D()(x)
-        x = Dense(n_classes, activation='softmax', 
+
+        # Save the embedding layer
+        self.embedding = x
+        
+        x = Dense(n_classes, 
                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
-        return x
+        # Save the pre-activation probabilities
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post-activation probabilities
+        self.softmax = outputs
+        return outputs
     
 # Example
 # shufflenet = ShuffleNet()

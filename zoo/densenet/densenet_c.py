@@ -39,10 +39,8 @@ class DenseNet(Composable):
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
     n_filters = 32
 
-    _model = None
-
-    def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001),
-                 init_weights='he_normal', relu=None):
+    def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000,
+                 reg=l2(0.001), init_weights='he_normal', relu=None):
         """ Construct a Densely Connected Convolution Neural Network
             n_layers    : number of layers
             n_filters   : number of filters (growth rate)
@@ -79,14 +77,6 @@ class DenseNet(Composable):
 
         # Instantiate the model
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
 
     def stem(self, inputs, n_filters, **metaparameters):
         """ Construct the Stem Convolution Group
@@ -239,8 +229,8 @@ class DenseNet(Composable):
         # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
         x = GlobalAveragePooling2D()(x)
 
-        # Save the bottleneck layer
-        self.bottleneck = x
+        # Save the embeddinglayer
+        self.embedding = x
         
         # Fully connected output layer (classification)
         x = Dense(n_classes,

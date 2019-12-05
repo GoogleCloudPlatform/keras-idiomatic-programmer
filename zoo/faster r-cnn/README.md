@@ -7,10 +7,16 @@
 
 <img src='macro.jpg'>
 
-## Stem Group + Conv Net
+## Micro-Architecture
+
+### Stem Group + Conv Net
 
 <img src="vgg16.jpg">
 
-## Region of Proposal Network
+### RPN + RoI Pooling
+
+<img src="rpnroi.jpg">
+
+### Region of Proposal Network
 
 <img src="rpn.jpg">

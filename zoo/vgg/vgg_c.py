@@ -40,8 +40,6 @@ class VGG(Composable):
                       { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
     init_weights = 'glorot_uniform'
-    _model = None
-
 
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000,
                  reg=None, init_weights='glorot_uniform', relu=None):
@@ -153,8 +151,8 @@ class VGG(Composable):
         # Flatten the feature maps
         x = Flatten()(x)
 
-        # Save the bottleneck layer
-        self.bottleneck = x
+        # Save the embedding layer
+        self.embedding = x
     
         # Two fully connected dense layers
         x = Dense(4096, activation='relu', 
@@ -174,5 +172,3 @@ class VGG(Composable):
 
 # Example of constructing a VGG 16
 # vgg = VGG(16)
-
-

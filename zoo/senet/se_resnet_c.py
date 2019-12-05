@@ -18,10 +18,14 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, MaxPooling2D, BatchNormalization, ReLU
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Reshape, Multiply, Add
+from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Reshape, Multiply, Add, Activation
 from tensorflow.keras.regularizers import l2
 
-class SEResNet(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class SEResNet(Composable):
     """ Construct a Squeeze & Excite Residual Convolution Neural Network """
     # Meta-parameter: list of groups: filter size and number of blocks
     groups = { 50 : [ { 'n_filters' : 64, 'n_blocks': 3 },
@@ -39,19 +43,21 @@ class SEResNet(object):
 	      }
     # Meta-parameter: Amount of filter reduction in squeeze operation
     ratio = 16
-    # Meta-parameter: Kernel regularizer
-    reg = l2(0.001)
-
-    init_weights = 'he_normal'
+    
     _model = None
 
-    def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
+    def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000,
+                 reg=l2(0.001), init_weights='he_normal', relu=None):
         """ Construct a Residual Convolutional Neural Network V1
-            n_layers   : number of layers
-            input_shape: input shape
-            n_classes  : number of output classes
-            reg        : kernel regularizer
+            n_layers    : number of layers
+            input_shape : input shape
+            n_classes   : number of output classes
+            reg         : kernel regularizer
+            init_weights: kernel initializer
+            relu        : max value for ReLU
         """
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+        
         # predefined
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
@@ -97,7 +103,7 @@ class SEResNet(object):
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
@@ -206,13 +212,13 @@ class SEResNet(object):
         x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Bottleneck layer
         x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
         x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
@@ -224,7 +230,7 @@ class SEResNet(object):
     
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -258,13 +264,13 @@ class SEResNet(object):
         x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Bottleneck layer
         x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
         x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
@@ -276,7 +282,7 @@ class SEResNet(object):
 
         # Add the projection shortcut link to the output of the residual block
         x = Add()([x, shortcut])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     def classifier(self, x, n_classes, **metaparameters):
@@ -287,12 +293,23 @@ class SEResNet(object):
       """
       reg = metaparameters['reg']
 
+      # Save the encoding layer
+      self.encoding = x
+      
       # Pool at the end of all the convolutional residual blocks
       x = GlobalAveragePooling2D()(x)
 
+      # Save the bottleneck layer
+      self.bottleneck = x
+
       # Final Dense Outputting Layer for the outputs
-      outputs = Dense(n_classes, activation='softmax', 
+      x = Dense(n_classes, 
                       kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+      # Save the pre-activation probabilities layer
+      self.probabilities = x
+      outputs = Activation('softmax')(x)
+      # Save the post-activation probabilities layer
+      self.softmax = outputs
       return outputs
 
 # Example

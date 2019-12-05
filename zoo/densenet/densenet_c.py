@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, MaxPooling2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, AveragePooling2D, Concatenate
+from tensorflow.keras.layers import Activation
 from tensorflow.keras.regularizers import l2
 
 import sys
@@ -232,12 +233,24 @@ class DenseNet(Composable):
         """
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
         x = GlobalAveragePooling2D()(x)
+
+        # Save the bottleneck layer
+        self.bottleneck = x
+        
         # Fully connected output layer (classification)
-        x = Dense(n_classes, activation='softmax', 
+        x = Dense(n_classes,
                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
-        return x
+        # Save the pre-activation probabilities layer
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post-activation probabilities layer
+        self.softmax = outputs
+        return outputs
     
 # Example
 # densenet = DenseNet(121)

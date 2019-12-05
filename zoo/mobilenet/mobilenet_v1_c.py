@@ -19,11 +19,15 @@
 
 import tensorflow as tf
 from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import ZeroPadding2D, Conv2D, BatchNormalization, ReLU
+from tensorflow.keras.layers import ZeroPadding2D, Conv2D, BatchNormalization, ReLU, Activation
 from tensorflow.keras.layers import DepthwiseConv2D, GlobalAveragePooling2D, Reshape, Dropout
 from tensorflow.keras.regularizers import l2
 
-class MobileNetV1(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class MobileNetV1(Composable):
     """ Construct a Mobile Convolution Neural Network """
     # Meta-parameter: number of filters and number of blocks per group
     groups = [ { 'n_filters': 128,  'n_blocks': 2 },
@@ -37,18 +41,21 @@ class MobileNetV1(object):
     pho        = 1
     # Meta-parameter: dropout rate
     dropout    = 0.5 
-    # Meta-parameter: kernel regularizer
-    reg        = l2(0.001)
-    init_weights='glorot_uniform'
-    _model = None
 
-    def __init__(self, alpha=1, pho=1, dropout=0.5, groups=None, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, alpha=1, pho=1, dropout=0.5, groups=None, input_shape=(224, 224, 3), n_classes=1000,
+                 init_weights='he_normal', reg=l2(0.001), relu=6.0):
         """ Construct a Mobile Convolution Neural Network
-            alpha      : width multipler
-            pho        :
-            input_shape: the input shape
-            n_classes  : number of output classes
+            alpha       : width multipler
+            pho         : resolution multiplier
+            input_shape : the input shape
+            n_classes   : number of output classes
+            init_weights: kernel initializer
+            reg         : kernel regularizer
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=6.0)
+        
         if groups is None:
              groups = self.groups
 
@@ -72,14 +79,6 @@ class MobileNetV1(object):
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
     
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Group
@@ -93,7 +92,7 @@ class MobileNetV1(object):
         x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU(6.0)(x)
+        x = Composable.ReLU(x)
 
         # Depthwise Separable Convolution Block
         x = MobileNetV1.depthwise_block(x, (1, 1), n_filters=64, alpha=alpha)
@@ -163,13 +162,13 @@ class MobileNetV1(object):
         x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, 
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU(6.0)(x)
+        x = Composable.ReLU(x)
 
         # Pointwise Convolution
         x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU(6.0)(x)
+        x = Composable.ReLU(x)
         return x
 
     def classifier(self, x, n_classes, **metaparameters):
@@ -182,12 +181,19 @@ class MobileNetV1(object):
         alpha   = metaparameters['alpha']
         dropout = metaparameters['dropout']
 
+        # Save encoding layer
+        self.encoding = x
+
         # Flatten the feature maps into 1D feature maps (?, N)
         x = GlobalAveragePooling2D()(x)
 
         # Reshape the feature maps to (?, 1, 1, 1024)
         shape = (1, 1, int(1024 * alpha))
         x = Reshape(shape)(x)
+
+        # Save embedding layer
+        self.embedding = x
+        
         # Perform dropout for preventing overfitting
         x = Dropout(dropout)(x)
 
@@ -195,8 +201,11 @@ class MobileNetV1(object):
         x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax', 
                    kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Reshape the resulting output to 1D vector of number of classes
-        x = Reshape((n_classes, ))(x)
-        return x
+        outputs = Reshape((n_classes, ))(x)
+
+        # Save the post-activation probabilities layer
+        self.softmax = outputs
+        return outputs
 
 # Example
-mobilenet = MobileNetV1()
+# mobilenet = MobileNetV1()

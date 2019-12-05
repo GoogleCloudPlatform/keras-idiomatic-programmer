@@ -34,6 +34,15 @@ class Composable(object):
         if relu is not None:
             self.relu = relu
 
+        # Feature maps encoding at the bottleneck layer in classifier
+        self.encoding = None
+        # Pooled and flattened encodings at the bottleneck layer
+        self.bottleneck = None
+        # Pre-activation conditional probabilities for classifier
+        self.probabilities = None
+        # Post-activation conditional probabilities for classifier
+        self.softmax = None
+
     @staticmethod
     def ReLU(x):
         """ Construct ReLU activation function

@@ -20,7 +20,11 @@ from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from tensorflow.keras.regularizers import l2
 
-class VGG(object):
+import sys
+sys.path.append('../')
+from models import Composable
+
+class VGG(Composable):
     """ VGG (composable)
     """
     # Meta-parameter: list of groups: number of layers and filter size
@@ -48,6 +52,7 @@ class VGG(object):
             input_shape : input shape to the model
             n_classes:  : number of output classes
         """
+        super().__init__()
         # predefined
         if isinstance(n_layers, int):
             if n_layers not in [16, 19]:
@@ -87,8 +92,9 @@ class VGG(object):
         """
         reg = metaparameters['reg']
 
-        x = Conv2D(64, (3, 3), strides=(1, 1), padding="same", activation="relu",
+        x = Conv2D(64, (3, 3), strides=(1, 1), padding="same",
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+        x = Composable.ReLU(x)
         return x
     
     def learner(self, x, **metaparameters):
@@ -122,8 +128,9 @@ class VGG(object):
 
         # Block of convolutional layers
         for n in range(n_layers):
-            x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", activation="relu",
+            x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
                        kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+            x = Composable.ReLU(x)
         
         # Max pooling at the end of the block
         x = MaxPooling2D(2, strides=(2, 2))(x)
@@ -152,4 +159,9 @@ class VGG(object):
         return x
 
 # Example of constructing a VGG 16
-# vgg = VGG(16)
+#vgg = VGG(16)
+
+inputs = Input((224, 224, 3))
+x = VGG.group(inputs, n_layers=2, n_filters=3)
+m = Model(inputs, x)
+m.summary()

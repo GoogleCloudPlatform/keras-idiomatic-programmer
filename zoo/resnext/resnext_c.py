@@ -46,8 +46,6 @@ class ResNeXt(Composable):
     # Meta-parameter: width of group convolution
     cardinality = 32
 
-    _model = None
-
     def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001),
                  init_weights='he_normal', relu=None):
         """ Construct a Residual Next Convolution Neural Network
@@ -85,14 +83,6 @@ class ResNeXt(Composable):
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
 
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolution Group
@@ -272,8 +262,8 @@ class ResNeXt(Composable):
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
 
-        # Save the bottleneck layer
-        self.bottleneck = x
+        # Save the embedding layer
+        self.embedding = x
         
         x = Dense(n_classes, 
                         kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)

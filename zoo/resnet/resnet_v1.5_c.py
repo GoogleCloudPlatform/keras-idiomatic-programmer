@@ -20,7 +20,7 @@
 import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D, BatchNormalization
-from tensorflow.keras.layers import ReLU, Dense, GlobalAveragePooling2D, Add
+from tensorflow.keras.layers import ReLU, Dense, GlobalAveragePooling2D, Add, Activation
 from tensorflow.keras.regularizers import l2
 
 import sys
@@ -43,7 +43,6 @@ class ResNetV1_5(Composable):
                       { 'n_filters': 256, 'n_blocks': 36 },
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
-    _model = None
     
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001), relu=None, init_weights='he_normal'):
         """ Construct a Residual Convolutional Neural Network V1.5
@@ -242,12 +241,23 @@ class ResNetV1_5(Composable):
         """
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # Pool at the end of all the convolutional residual blocks
         x = GlobalAveragePooling2D()(x)
 
+        # Save the embedding layer
+        self.embedding = x
+
         # Final Dense Outputting Layer for the outputs
-        outputs = Dense(n_classes, activation='softmax', 
+        x = Dense(n_classes, 
                         kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Save the pre-activation probabilities layer
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post-activation probabilities layer
+        self.softmax = outputs
         return outputs
 
 

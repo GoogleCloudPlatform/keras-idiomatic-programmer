@@ -45,7 +45,6 @@ class ResNetV2(Composable):
                       { 'n_filters': 256, 'n_blocks': 36 },
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
-    _model = None
 
     def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001), relu=None, init_weights='he_normal'):
         """ Construct a Residual Convolutional Neural Network V2
@@ -249,8 +248,8 @@ class ResNetV2(Composable):
         # Pool at the end of all the convolutional residual blocks
         x = GlobalAveragePooling2D()(x)
 
-        # Save the bottleneck layer
-        self.bottleneck = x
+        # Save the embedding layer
+        self.embedding = x
 
         # Final Dense Outputting Layer for the outputs
         x = Dense(n_classes, 

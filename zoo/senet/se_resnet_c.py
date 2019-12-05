@@ -44,8 +44,6 @@ class SEResNet(Composable):
     # Meta-parameter: Amount of filter reduction in squeeze operation
     ratio = 16
     
-    _model = None
-
     def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000,
                  reg=l2(0.001), init_weights='he_normal', relu=None):
         """ Construct a Residual Convolutional Neural Network V1
@@ -81,14 +79,6 @@ class SEResNet(Composable):
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
-        
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
     
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group 
@@ -299,8 +289,8 @@ class SEResNet(Composable):
       # Pool at the end of all the convolutional residual blocks
       x = GlobalAveragePooling2D()(x)
 
-      # Save the bottleneck layer
-      self.bottleneck = x
+      # Save the embedding layer
+      self.embedding = x
 
       # Final Dense Outputting Layer for the outputs
       x = Dense(n_classes, 

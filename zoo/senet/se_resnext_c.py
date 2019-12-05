@@ -17,11 +17,15 @@
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, BatchNormalization, ReLU, Dense, Add
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, BatchNormalization, ReLU, Dense, Add, Activation
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Reshape, Multiply, Lambda, Concatenate
 from tensorflow.keras.regularizers import l2
 
-class SEResNeXt(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class SEResNeXt(Composable):
     """ Construct a Squeeze & Excite Residual Next Convolution Neural Network """
     # Meta-parameter: number of filters in, out and number of blocks
     groups = { 50 : [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 3 },
@@ -42,20 +46,22 @@ class SEResNeXt(object):
     cardinality = 32
     # Meta-parameter: Amount of filter reduction in squeeze operation
     ratio = 16
-    # Meta-parameter: Kernel regularizer
-    reg = l2(0.001)
 
-    init_weights = 'he_normal'
-    _model = None
-
-    def __init__(self, n_layers, cardinality=32, ratio=16, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001)):
+    def __init__(self, n_layers, cardinality=32, ratio=16, input_shape=(224, 224, 3), n_classes=1000,
+                 reg=l2(0.001), init_weights='he_normal', relu=None):
         """ Construct a Residual Next Convolution Neural Network
-            n_layers   : number of layers
-            cardinality: width of group convolution
-            ratio      : amount of filter reduction in squeeze operation
-            input_shape: the input shape
-            n_classes  : number of output classes
+            n_layers    : number of layers
+            cardinality : width of group convolution
+            ratio       : amount of filter reduction in squeeze operation
+            input_shape : the input shape
+            n_classes   : number of output classes
+            init_weights: kernel initializer
+            reg         : kernel regularization
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        
         # predefined
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
@@ -80,14 +86,6 @@ class SEResNeXt(object):
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
-
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolution Group
             inputs : input vector
@@ -98,7 +96,7 @@ class SEResNeXt(object):
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
         return x
 
@@ -206,7 +204,7 @@ class SEResNeXt(object):
         x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
@@ -219,7 +217,7 @@ class SEResNeXt(object):
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration
         x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
@@ -231,7 +229,7 @@ class SEResNeXt(object):
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -265,7 +263,7 @@ class SEResNeXt(object):
         x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
@@ -278,7 +276,7 @@ class SEResNeXt(object):
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Dimensionality restoration
         x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
@@ -290,7 +288,7 @@ class SEResNeXt(object):
 
         # Add the projection shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         return x
     
     def classifier(self, x, n_classes, **metaparameters):
@@ -301,10 +299,21 @@ class SEResNeXt(object):
         """
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # Final Dense Outputting Layer 
         x = GlobalAveragePooling2D()(x)
-        outputs = Dense(n_classes, activation='softmax', 
+
+        # Save the embedding layer
+        self.embedding = x
+        
+        x = Dense(n_classes,
                         kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Save the pre-activation probabilities
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Sace the post-activation probabilities
         return outputs
 
 # Example

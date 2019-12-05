@@ -14,11 +14,12 @@
 
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU
+from tensorflow.keras.regularizers import l2
 
 class Composable(object):
     ''' Composable base (super) class for Models '''
     init_weights = 'he_normal'	# weight initialization
-    reg          = None         # kernel regularizer
+    reg          = l2(0.001)    # kernel regularizer
     relu         = None         # ReLU max value
 
     def __init__(self, init_weights=None, reg=None, relu=None):

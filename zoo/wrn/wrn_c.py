@@ -19,9 +19,14 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, Flatten, BatchNormalization, ReLU, Dropout
 from tensorflow.keras.layers import Dense, AveragePooling2D, Add, MaxPooling2D
+from tensorflow.keras.layers import Activation
 from tensorflow.keras.regularizers import l2
 
-class WRN(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class WRN(Composable):
     """ Construct a Wide Residual Convolution Network """
     # Meta-parameter: number of filters per group
     groups = [ { 'n_filters': 16 }, { 'n_filters' : 32 }, { 'n_filters' : 64 } ]
@@ -31,20 +36,19 @@ class WRN(object):
     k = 8
     # Meta-parameter: dropout
     dropout = 0
-    # Meta-parameter: kernel regularizar
-    reg = l2(0.001)
 
-    init_weights = 'he_normal'
-    _model = None
 
-    def __init__(self, groups=None, depth=16, k=8, dropout=0, input_shape=(32, 32, 3), n_classes=10, reg=None):
+    def __init__(self, groups=None, depth=16, k=8, dropout=0, input_shape=(32, 32, 3), n_classes=10,
+                 init_weights='he_normal', reg=None, relu=None):
         """ Construct a Wids Residual (Convolutional Neural) Network 
-            depth      : number of layers
-            k          : width factor
-            groups     : number of filters per group
-            input_shape: input shape
-            n_classes  : number of output classes
-            reg        : kernel regularization
+            depth       : number of layers
+            k           : width factor
+            groups      : number of filters per group
+            input_shape : input shape
+            n_classes   : number of output classes
+            init_weights: kernel initialization
+            reg         : kernel regularization
+            relu        : max value for ReLU
         """
         if groups is None:
             groups = self.groups
@@ -64,14 +68,6 @@ class WRN(object):
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
-
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
@@ -83,7 +79,7 @@ class WRN(object):
         x = Conv2D(16, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         return x
 
@@ -149,7 +145,7 @@ class WRN(object):
         ## Construct the 3x3, 3x3 convolution block
     
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = Conv2D(n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
@@ -158,7 +154,7 @@ class WRN(object):
             x = Dropout(dropout)
 
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = Conv2D(n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
@@ -194,12 +190,12 @@ class WRN(object):
         ## Construct the 3x3, 3x3 convolution block
    
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = Conv2D(n_filters * k, (3, 3), strides=strides, padding='same', use_bias=False,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = Conv2D(n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
@@ -214,13 +210,24 @@ class WRN(object):
         """
         reg = metaparameters['reg']
 
+        # Save encoding layer
+        self.encoding = x
+
         # Pool at the end of all the convolutional residual blocks (8, 8)
         x = AveragePooling2D((x.shape[1], x.shape[2]))(x)
         x = Flatten()(x)
 
+        # Save embedding layer
+        self.embedding = x
+
         # Final Dense Outputting Layer for the outputs
-        outputs = Dense(n_classes, activation='softmax', 
+        x = Dense(n_classes,
                         kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Save pre-activation probabilities layer
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save post-activation probabilities layer
+        self.softmax = outputs
         return outputs
 
 # Example

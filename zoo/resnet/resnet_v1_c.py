@@ -19,6 +19,7 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, ReLU, BatchNormalization, ZeroPadding2D
 from tensorflow.keras.layers import MaxPooling2D, Dense, Add, GlobalAveragePooling2D
+from tensorflow.keras.layers import Activation
 from tensorflow.keras.regularizers import l2
 
 import sys
@@ -242,13 +243,25 @@ class ResNetV1(Composable):
       """
       reg = metaparameters['reg']
 
+      # Save the encoding layer
+      self.encoding = x
+
       # Pool at the end of all the convolutional residual blocks
       x = GlobalAveragePooling2D()(x)
 
+      # Save the bottleneck layer
+      self.bottleneck = x
+
       # Final Dense Outputting Layer for the outputs
-      outputs = Dense(n_classes, activation='softmax', 
+      x = Dense(n_classes, 
                       kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+      # Save the pre-activation probabilities layer
+      self.probabilities = x
+      outputs = Activation('softmax')(x)
+      # Save the post-activation probabilities layer
+      self.softmax = outputs
       return outputs
 
 # Example of ResNet50
 # resnet = ResNetV1(50)
+

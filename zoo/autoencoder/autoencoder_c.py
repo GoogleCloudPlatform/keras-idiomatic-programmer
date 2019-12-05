@@ -18,21 +18,26 @@ import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, BatchNormalization
 
-class AutoEncoder(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class AutoEncoder(Composable):
     ''' Construct an AutoEncoder '''
     # metaparameter: number of filters per layer
     layers = [ {'n_filters': 64 }, { 'n_filters': 32 }, { 'n_filters': 16 } ]
 
-    input_shape=(32, 32, 3)
-
     _model = None
-    init_weights = 'he_normal'
 
-    def __init__(self, layers=None, input_shape=(32, 32, 3)):
+    def __init__(self, layers=None, input_shape=(32, 32, 3), init_weights='he_normal'):
         ''' Construct an AutoEncoder
             input_shape : input shape to the autoencoder
             layers      : the number of filters per layer
+            init_weights: kernel initializer
         '''
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights)
+
         if layers is None:
            layers = AutoEncoder.layers
 

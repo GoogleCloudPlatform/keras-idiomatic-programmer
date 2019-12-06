@@ -22,21 +22,15 @@ from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, GlobalAveragePooling2D
 from tensorflow.keras.layers import DepthwiseConv2D, Add, Reshape, Dense, Multiply, Activation
 from tensorflow.keras.regularizers import l2
-import tensorflow.keras.backend as K
 
 import sys
 sys.path.append('../')
 from models_c import Composable
 
-def ReLU6(x):
-    """ ReLU activation clipped at 6 """
-    return ReLU(6.0)(x)
-
-def HS(x):
-    """ Hard Swish activation """
-    return (x * K.relu(x + 3, max_value=6.0)) / 6.0
-
 class MobileNetV3(Composable):
+    ReLU6 = Composable.ReLU
+    HS    = Composable.HS
+    
     """ Construct a Mobile Convolution Neural Network V3 """
     # Meta-parameter: number of filters/filter size, blocks per group, strides of projection block, activation, and
     #                 expansion per block
@@ -80,7 +74,7 @@ class MobileNetV3(Composable):
     init_weights = 'glorot_uniform'
     relu = 6.0
 
-    def __init__(self, groups, alpha=1, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups, alpha=1, input_shape=(224, 224, 3), n_classes=1000,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
         """ Construct a Mobile Convolution Neural Network V3
             groups      : number of filters and blocks per group
@@ -131,7 +125,7 @@ class MobileNetV3(Composable):
         x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False,
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
         x = BatchNormalization()(x)
-        x = HS(x)
+        x = Composable.HS(x)
         return x
     
     def learner(self, x, **metaparameters):
@@ -256,8 +250,8 @@ class MobileNetV3(Composable):
         n_channels = x.shape[-1]
 
         x = GlobalAveragePooling2D()(x)
-        x = Dense(n_channels, activation=ReLU6)(x)
-        x = Dense(n_channels, activation=HS)(x)
+        x = Dense(n_channels, activation=Composable.ReLU)(x)
+        x = Dense(n_channels, activation=Composable.HS)(x)
         x = Reshape((1, 1, n_channels))(x)
         x = Multiply()([shortcut, x])
         return x
@@ -270,21 +264,31 @@ class MobileNetV3(Composable):
         """
         reg = metaparameters['reg']
 
+        # Save encoding layer
+        self.encoding = x
+
         # 7x7 Pooling
         n_channels = x.shape[-1]
         x = GlobalAveragePooling2D()(x)
+
+        # Save embedding layer
+        self.embedding = x
+        
         x = Reshape((1, 1, n_channels))(x)
 
-        x = Conv2D(1280, (1, 1), padding='same', activation=HS,
+        x = Conv2D(1280, (1, 1), padding='same', activation=Composable.HS,
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
 
         # final classification
         x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax',
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         # Flatten the feature maps into 1D feature maps (?, N)
-        x = Reshape((n_classes,))(x)
+        outputs = Reshape((n_classes,))(x)
 
-        return x
+        # Save post-activation layer
+        self.softmax = outputs
+
+        return outputs
 
 # Example
 # mobilenet = MobileNetV3('large')

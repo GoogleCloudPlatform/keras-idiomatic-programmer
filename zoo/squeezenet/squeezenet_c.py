@@ -143,8 +143,9 @@ class SqueezeNet(Composable):
             init_weights = SqueezeNet.init_weights
             
         # squeeze layer
-        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu', padding='same',
+        squeeze = Conv2D(n_filters, (1, 1), strides=1, padding='same',
                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        squeeze = Composable.ReLU(x)
 
         # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
         # of filters

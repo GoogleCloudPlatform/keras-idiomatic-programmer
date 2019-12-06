@@ -21,7 +21,11 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Concatenate, Add, Drop
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 from tensorflow.keras.regularizers import l2
 
-class SqueezeNetBypass(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class SqueezeNetBypass(Composable):
     ''' Construct a SqueezeNet Bypass Convolution Neural Network '''
     # Meta-parameter: number of blocks and filters per group
     # Fire blocks with simple bypass on blocks 2, 4, 6 and 8 
@@ -33,18 +37,18 @@ class SqueezeNetBypass(object):
                  { 'n_filters' : 48, 'bypass': True },  
                  { 'n_filters' : 64, 'bypass': False } ],
                [ { 'n_filters' : 64, 'bypass': True } ] ]
-    # Meta-parameter: kernel regularization
-    reg = l2(0.001)
 
     init_weights = 'glorot_uniform'
-    _model = None
 
-    def __init__(self, groups=None, dropout=0.5, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=None):
         ''' Construct a SqueezeNet Bypass Convolution Neural Network
-            dropout    : percentage of dropout
-            reg        : kernel regularization
-            input_shape: input shape to model
-            n_classes  : number of output classes
+            dropout     : percentage of dropout
+            input_shape : input shape to model
+            n_classes   : number of output classes
+            init_weights: kernel initialization
+            reg         : kernel regularization
+            relu        : max value to relu
         '''
         if groups is None:
             groups = SqueezeNetBypass.groups
@@ -63,14 +67,6 @@ class SqueezeNetBypass(object):
 
         self._model = Model(inputs, outputs)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = _model
-
     def stem(self, inputs, **metaparameters):
         ''' Construct the Stem Group
             inputs : input to the stem
@@ -78,8 +74,9 @@ class SqueezeNetBypass(object):
         '''
         reg = metaparameters['reg']
 
-        x = Conv2D(96, (7, 7), strides=2, padding='same', activation='relu',
+        x = Conv2D(96, (7, 7), strides=2, padding='same',
                kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+        x = Composable.ReLU(x)
         x = MaxPooling2D(3, strides=2)(x)
         return x
 
@@ -148,15 +145,18 @@ class SqueezeNetBypass(object):
         shortcut = x
 
         # squeeze layer
-        squeeze = Conv2D(n_filters, (1, 1), strides=1, activation='relu', padding='same',
+        squeeze = Conv2D(n_filters, (1, 1), strides=1, padding='same',
                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        squeeze = Composable.ReLU(squeeze)
 
         # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
         # of filters
-        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, activation='relu', padding='same',
+        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, padding='same',
                            kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
-        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, activation='relu', padding='same',
+        expand1x1 = Composable.ReLU(expand1x1)
+        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, padding='same',
                            kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
+        expand3x3 = Composable.ReLU(expand3x3)
 
         # concatenate the feature maps from the 1x1 and 3x3 branches
         x = Concatenate()([expand1x1, expand3x3])
@@ -175,13 +175,23 @@ class SqueezeNetBypass(object):
         '''
         reg = metaparameters['reg']
 
+        # Save the encoding layer
+        self.encoding = x
+
         # set the number of filters equal to number of classes
-        x = Conv2D(n_classes, (1, 1), strides=1, activation='relu', padding='same',
+        x = Conv2D(n_classes, (1, 1), strides=1, padding='same',
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        x = Composable.ReLU(x)
+        
         # reduce each filter (class) to a single value
         x = GlobalAveragePooling2D()(x)
-        x = Activation('softmax')(x)
-        return x
+
+        # Save the pre-activation probabilities
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post-activation probabilities
+        self.softmax = outputs
+        return outputs
 
 # Example
 # squeezenet = SqueezeNetBypass()

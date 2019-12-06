@@ -40,10 +40,13 @@ class MobileNetV1(Composable):
     # Meta-parameter: resolution multiplier (0 .. 1) for reducing input size
     pho        = 1
     # Meta-parameter: dropout rate
-    dropout    = 0.5 
+    dropout    = 0.5
+
+    init_weights = 'glorot_uniform'
+    relu = 6.0
 
     def __init__(self, alpha=1, pho=1, dropout=0.5, groups=None, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='he_normal', reg=l2(0.001), relu=6.0):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
         """ Construct a Mobile Convolution Neural Network
             alpha       : width multipler
             pho         : resolution multiplier

@@ -21,9 +21,14 @@ import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import ZeroPadding2D, Conv2D, BatchNormalization, ReLU
 from tensorflow.keras.layers import DepthwiseConv2D, Add, GlobalAveragePooling2D, Dense
+from tensorflow.keras.layers import Activation
 from tensorflow.keras.regularizers import l2
 
-class MobileNetV2(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class MobileNetV2(Composable):
     """ Construct a Mobile Convolution Neural Network V2 """
     # Meta-parameter: number of filters and blocks per group
     groups = [ { 'n_filters' : 16,   'n_blocks' : 1 }, 
@@ -39,21 +44,25 @@ class MobileNetV2(object):
     alpha = 1
     # Meta-parameter: multiplier to expand the number of filters
     expansion = 6
-    # Meta-parameter: kernel regularization
-    reg = l2(0.001)
 
     init_weights = 'glorot_uniform'
-    _model = None
+    relu = 6.0
 
-    def __init__(self, groups=None, alpha=1, expansion=6, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, groups=None, alpha=1, expansion=6, input_shape=(224, 224, 3), n_classes=1000,
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
         """ Construct a Mobile Convolution Neural Network V2
-            groups     : number of filters and blocks per group
-            alpha      : width multiplier
-            expansion  : multiplier to expand the number of filters
-            reg        : kernel regularizer
-            input_shape: the input shape
-            n_classes  : number of output classes
+            groups      : number of filters and blocks per group
+            alpha       : width multiplier
+            expansion   : multiplier to expand the number of filters
+            input_shape : the input shape
+            n_classes   : number of output classes
+            reg         : kernel regularizer
+            init_weights: kernel initializer
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        
         if groups is None:
              groups = self.groups
 
@@ -70,14 +79,6 @@ class MobileNetV2(object):
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = model
 
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Group
@@ -97,7 +98,7 @@ class MobileNetV2(object):
         x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU(6.)(x)
+        x = Composable.ReLU(x)
         return x
     
     def learner(self, x, **metaparameters):
@@ -127,7 +128,7 @@ class MobileNetV2(object):
         x = Conv2D(1280, (1, 1), use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU(6.)(x)
+        x = Composable.ReLU(x)
         return x
 
     @staticmethod
@@ -189,7 +190,7 @@ class MobileNetV2(object):
             x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, 
                        kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
-            x = ReLU(6.)(x)
+            x = Composable.ReLU(x)
 
         # Strided convolution to match number of filters
         if strides == (2, 2):
@@ -202,7 +203,7 @@ class MobileNetV2(object):
         x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer=init_weights, 
                             kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU(6.)(x)
+        x = Composable.ReLU(x)
 
         # Linear Pointwise Convolution
         x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
@@ -222,12 +223,23 @@ class MobileNetV2(object):
         """
         reg = metaparameters['reg']
 
+        # Save encoding layer
+        self.encoding = x
+
         # Flatten the feature maps into 1D feature maps (?, N)
         x = GlobalAveragePooling2D()(x)
 
+        # Save embedding layer
+        self.embedding = x
+
         # Dense layer for final classification
-        x = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
-        return x
+        x = Dense(n_classes, kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        # Save pre-activation probabilities layer
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save post-activation probabilities layer
+        self.softmax = outputs
+        return outputs
 
 # Example
 # mobilenet = MobileNetV2()

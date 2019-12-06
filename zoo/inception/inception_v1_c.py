@@ -17,20 +17,30 @@
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D, Flatten, Dropout
+from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D, Flatten, Dropout, Activation
 from tensorflow.keras.layers import MaxPooling2D, Dense, Concatenate, AveragePooling2D
 
-class InceptionV1(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class InceptionV1(Composable):
     """ Construct an Inception Convolutional Neural Network """
     init_weights='glorot_uniform'
-    _model = None
 
-    def __init__(self, dropout=0.4, input_shape=(224, 224, 3), n_classes=1000):
+    def __init__(self, dropout=0.4, input_shape=(224, 224, 3), n_classes=1000,
+                 init_weights='glorot_uniform', reg=None, relu=None):
         """ Construct an Inception Convolutional Neural Network
-            dropout    : percentage of dropout
-            input_shape: input shape to the neural network
-            n_classes  : number of output classes
+            dropout     : percentage of dropout
+            input_shape : input shape to the neural network
+            n_classes   : number of output classes
+            init_weights: kernel initializer
+            reg         : kernel regularizer
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        
 	# Meta-parameter: dropout percentage
         dropout = 0.4
 
@@ -49,14 +59,6 @@ class InceptionV1(object):
         # Instantiate the Model
         self._model = Model(inputs, [outputs] + aux)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = model
-
     def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
@@ -65,16 +67,19 @@ class InceptionV1(object):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', activation='relu', kernel_initializer=self.init_weights)(x)
+        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', kernel_initializer=self.init_weights)(x)
+        x = Composable.ReLU(x)
 
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
         # Second Convolutional layer which uses a mid-size filter
-        x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', activation='relu', kernel_initializer=self.init_weights)(x)
+        x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', kernel_initializer=self.init_weights)(x)
+        x = Composable.ReLU(x)
         x = ZeroPadding2D(padding=(1, 1))(x)
-        x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', activation='relu', kernel_initializer=self.init_weights)(x)
+        x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', kernel_initializer=self.init_weights)(x)
+        x = Composable.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
@@ -150,24 +155,30 @@ class InceptionV1(object):
             init_weights = InceptionV1.init_weights
 
         # 1x1 branch
-        b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(x)
+        b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', kernel_initializer=init_weights)(x)
+        b1x1 = Composable.ReLU(b1x1)
 
         # 3x3 branch
         # 3x3 reduction
-        b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(x)
+        b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', kernel_initializer=init_weights)(x)
+        b3x3 = Composable.ReLU(b3x3)
         b3x3 = ZeroPadding2D((1,1))(b3x3)
-        b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer=init_weights)(b3x3)
+        b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', kernel_initializer=init_weights)(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
 
         # 5x5 branch
         # 5x5 reduction
-        b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(x)
+        b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', kernel_initializer=init_weights)(x)
+        b5x5 = Composable.ReLU(b5x5)
         b5x5 = ZeroPadding2D((1,1))(b5x5)
-        b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', activation='relu', kernel_initializer=init_weights)(b5x5)
+        b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', kernel_initializer=init_weights)(b5x5)
+        b5x5 = Composable.ReLU(b5x5)
 
         # Pooling branch
         bpool = MaxPooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', activation='relu', kernel_initializer=init_weights)(bpool)
+        bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', kernel_initializer=init_weights)(bpool)
+        bpool = Composable.ReLU(bpool)
 
         # Concatenate the outputs (filters) of the branches
         x = Concatenate()([b1x1, b3x3, b5x5, bpool])
@@ -183,9 +194,11 @@ class InceptionV1(object):
             init_weights = InceptionV1.init_weights
 
         x = AveragePooling2D((5, 5), strides=(3, 3))(x)
-        x = Conv2D(128, (1, 1), strides=(1, 1), padding='same', activation='relu', kernel_initializer=init_weights)(x)
+        x = Conv2D(128, (1, 1), strides=(1, 1), padding='same', kernel_initializer=init_weights)(x)
+        x = Composable.ReLU(x)
         x = Flatten()(x)
-        x = Dense(1024, activation='relu', kernel_initializer=init_weights)(x)
+        x = Dense(1024, kernel_initializer=init_weights)(x)
+        x = Composable.ReLU(x)
         x = Dropout(0.7)(x)
         output = Dense(n_classes, activation='softmax', kernel_initializer=init_weights)(x)
         return output
@@ -196,13 +209,25 @@ class InceptionV1(object):
             n_classes : number of output classes
             dropout   : percentage for dropout rate
         """
+        # Save the encoding layer
+        self.encoding = x
+        
         # Pool at the end of all the convolutional residual blocks
         x = AveragePooling2D((7, 7))(x)
         x = Flatten()(x)
+
+        # Save the embedding layer
+        self.embedding = x
+        
         x = Dropout(dropout)(x)
 
         # Final Dense Outputting Layer for the outputs
-        outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Dense(n_classes, kernel_initializer=self.init_weights)(x)
+        # Save the pre-activation probabilities layer
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post activation probabilities layer
+        self.softmax = outputs
         return outputs
 
 # Example

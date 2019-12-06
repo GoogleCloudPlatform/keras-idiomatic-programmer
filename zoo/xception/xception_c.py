@@ -18,10 +18,14 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Dense, GlobalAveragePooling2D
-from tensorflow.keras.layers import SeparableConv2D, MaxPooling2D, Add
+from tensorflow.keras.layers import SeparableConv2D, MaxPooling2D, Add, Activation
 from tensorflow.keras.regularizers import l2
 
-class Xception(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class Xception(Composable):
     """ Construct an Xception Convolution Neural Network """
     # meta-parameter: number of filters per block
     entry  = [{ 'n_filters' : 128 }, { 'n_filters' : 256 }, { 'n_filters' : 728 }]
@@ -29,20 +33,21 @@ class Xception(object):
               { 'n_filters' : 728 }, { 'n_filters' : 728 }, { 'n_filters' : 728 }, 
               { 'n_filters' : 728 }, { 'n_filters' : 728 } ]
 
-    # meta-parameter: kernel regularizer
-    reg = l2(0.001)
-
     init_weights = 'glorot_uniform'
-    _model = None
 
-    def __init__(self, entry=None, middle=None, reg=l2(0.001), input_shape=(229, 229, 3), n_classes=1000):
+    def __init__(self, entry=None, middle=None, input_shape=(229, 229, 3), n_classes=1000,
+                 init_weights=init_weights, reg=None, relu=None):
         """ Construct an Xception Convolution Neural Network
-            entry      : number of blocks/filters for entry module
-            middle     : number of blocks/filters for middle module
-            reg        : kernel regularizer
-            input_shape: the input shape
-            n_classes  : number of output classes
+            entry       : number of blocks/filters for entry module
+            middle      : number of blocks/filters for middle module
+            input_shape : the input shape
+            n_classes   : number of output classes
+            init_weights: kernel initializer
+            reg         : kernel regularizer
+            relu        : max value for ReLU
         """
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        
         if entry is None:
             entry = Xception.entry
         if middle is None:
@@ -62,14 +67,6 @@ class Xception(object):
 
 	# Instantiate the model
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        return self._model
 
     @staticmethod
     def entryFlow(inputs, init_weights=None, **metaparameters):
@@ -92,14 +89,14 @@ class Xception(object):
             x = Conv2D(32, (3, 3), strides=(2, 2),
                        kernel_initializer=init_weights, kernel_regularizer=reg)(inputs)
             x = BatchNormalization()(x)
-            x = ReLU()(x)
+            x = Composable.ReLU(x)
 
             # Convolution - dimensionality expansion
             # Double the number of filters
             x = Conv2D(64, (3, 3), strides=(1, 1),
                        kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
-            x = ReLU()(x)
+            x = Composable.ReLU(x)
             return x
 
         blocks = metaparameters['blocks']
@@ -149,13 +146,24 @@ class Xception(object):
                 x         : input to the classifier
                 n_classes : number of output classes
             """
+            # Save the encoding layer
+            Xception.encoding = x
+            
             # Global Average Pooling will flatten the 10x10 feature maps into 1D feature maps
             x = GlobalAveragePooling2D()(x)
+
+            # Save the embedding layer
+            Xception.embedding = x
         
             # Fully connected output layer (classification)
-            x = Dense(n_classes, activation='softmax',
+            x = Dense(n_classes,
                     kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-            return x
+            # Save the pre-activation layer
+            Xception.probabilities = x
+            outputs = Activation('softmax')(x)
+            # Save the post-activation layer
+            Xception.softmax = outputs
+            return outputs
 
         if init_weights is None:
             init_weights = Xception.init_weights
@@ -180,7 +188,7 @@ class Xception(object):
         x = SeparableConv2D(1024, (3, 3), padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Create pooled feature maps, reduce size by 75%
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
@@ -192,13 +200,13 @@ class Xception(object):
         x = SeparableConv2D(1556, (3, 3), padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Fourth Depthwise Separable Convolution
         x = SeparableConv2D(2048, (3, 3), padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Create classifier section
         x = classifier(x, n_classes, init_weights)
@@ -232,12 +240,12 @@ class Xception(object):
         # First Depthwise Separable Convolution
         x = SeparableConv2D(n_filters, (3, 3), padding='same', kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Second depthwise Separable Convolution
         x = SeparableConv2D(n_filters, (3, 3), padding='same', kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Create pooled feature maps, reduce size by 75%
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
@@ -270,19 +278,19 @@ class Xception(object):
         x = SeparableConv2D(n_filters, (3, 3), padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Second depthwise Separable Convolution
         x = SeparableConv2D(n_filters, (3, 3), padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Third depthwise Separable Convolution
         x = SeparableConv2D(n_filters, (3, 3), padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         # Add the identity link to the output of the block
         x = Add()([x, shortcut])

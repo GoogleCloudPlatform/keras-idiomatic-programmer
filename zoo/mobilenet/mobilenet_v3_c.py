@@ -20,9 +20,13 @@
 import tensorflow as tf
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, GlobalAveragePooling2D
-from tensorflow.keras.layers import DepthwiseConv2D, Add, Reshape, Dense, Multiply
+from tensorflow.keras.layers import DepthwiseConv2D, Add, Reshape, Dense, Multiply, Activation
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
+
+import sys
+sys.path.append('../')
+from models_c import Composable
 
 def ReLU6(x):
     """ ReLU activation clipped at 6 """
@@ -32,7 +36,7 @@ def HS(x):
     """ Hard Swish activation """
     return (x * K.relu(x + 3, max_value=6.0)) / 6.0
 
-class MobileNetV3(object):
+class MobileNetV3(Composable):
     """ Construct a Mobile Convolution Neural Network V3 """
     # Meta-parameter: number of filters/filter size, blocks per group, strides of projection block, activation, and
     #                 expansion per block
@@ -72,18 +76,24 @@ class MobileNetV3(object):
     # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
     alpha = 1
     # Meta-parameter: kernel regularization
-    reg = l2(0.001)
-    init_weights = 'glorot_uniform'
-    _model = None
 
-    def __init__(self, groups, alpha=1, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000):
+    init_weights = 'glorot_uniform'
+    relu = 6.0
+
+    def __init__(self, groups, alpha=1, reg=l2(0.001), input_shape=(224, 224, 3), n_classes=1000,
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
         """ Construct a Mobile Convolution Neural Network V3
-            groups     : number of filters and blocks per group
-            alpha      : width multiplier
-            reg        : kernel regularizer
-            input_shape: the input shape
-            n_classes  : number of output classes
+            groups      : number of filters and blocks per group
+            alpha       : width multiplier
+            input_shape : the input shape
+            n_classes   : number of output classes
+            reg         : kernel regularizer
+            init_weights: kernel initializer
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        
         # predefined
         if isinstance(groups, str):
             if groups not in ['large', 'small']:
@@ -103,14 +113,6 @@ class MobileNetV3(object):
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
-
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = model
 
     def stem(self, inputs, **metaparameters):
         """ Construct the Stem Group

@@ -18,19 +18,28 @@
 import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, ReLU, ZeroPadding2D, Flatten, Dropout, BatchNormalization
-from tensorflow.keras.layers import MaxPooling2D, Dense, Concatenate, AveragePooling2D
+from tensorflow.keras.layers import MaxPooling2D, Dense, Concatenate, AveragePooling2D, Activation
 
-class InceptionV3(object):
+import sys
+sys.path.append('../')
+from models_c import Composable
+
+class InceptionV3(Composable):
     """ Construct an Inception V3 convolutional neural network """
     init_weights='glorot_uniform'
-    _model = None
 
-    def __init__(self, dropout=0.4, input_shape=(229, 229, 3), n_classes=1000):
+    def __init__(self, dropout=0.4, input_shape=(229, 229, 3), n_classes=1000,
+                 init_weights='glorot_uniform', reg=None, relu=None):
         """ Construct an Inception V3 convolutional neural network
-            dropout    : percentage of dropout rate
-            input_shape: the input to the model
-            n_classes  : number of output classes
+            dropout     : percentage of dropout rate
+            input_shape : the input to the model
+            n_classes   : number of output classes
+            init_weights: kernel initiaklizer
+            reg         : kernel regularizer
+            relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
 
         # The input tensor (299x299 in V3 vs 224x224 in V1/V2)
         inputs = Input(shape=input_shape)
@@ -47,14 +56,6 @@ class InceptionV3(object):
         # Instantiate the Model
         self._model = Model(inputs, [outputs] + aux)
 
-    @property
-    def model(self):
-        return self._model
-
-    @model.setter
-    def model(self, _model):
-        self._model = model
-
     def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
@@ -63,14 +64,14 @@ class InceptionV3(object):
         # First 3x3 convolution is strided
         x = Conv2D(32, (3, 3), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(inputs)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         x = Conv2D(32, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         # Third 3x3, filters are doubled and padding added
         x = Conv2D(64, (3, 3), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=self.init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
@@ -78,11 +79,11 @@ class InceptionV3(object):
         # 3x3 reduction
         x = Conv2D(80, (1, 1), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         # Dimensionality expansion
         x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # Pooled feature maps will be reduced by 75%
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
@@ -131,35 +132,35 @@ class InceptionV3(object):
         # 1x1 branch
         b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b1x1 = BatchNormalization()(b1x1)
-        b1x1 = ReLU()(b1x1)
+        b1x1 = Composable.ReLU(b1x1)
 
         # double 3x3 branch
         # 3x3 reduction
         b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
         b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
         b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
 
         # 5x5 branch
         # 5x5 reduction
         b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b5x5 = BatchNormalization()(b5x5)
-        b5x5 = ReLU()(b5x5)
+        b5x5 = Composable.ReLU(b5x5)
         b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b5x5)
         b5x5 = BatchNormalization()(b5x5)
-        b5x5 = ReLU()(b5x5)
+        b5x5 = Composable.ReLU(b5x5)
 
         # Pooling branch
         bpool = AveragePooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
         bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(bpool)
         bpool = BatchNormalization()(bpool)
-        bpool = ReLU()(bpool)
+        bpool = Composable.ReLU(bpool)
 
         # Concatenate the outputs (filters) of the branches
         x = Concatenate()([b1x1, b3x3, b5x5, bpool])
@@ -180,46 +181,46 @@ class InceptionV3(object):
         # 1x1 branch
         b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b1x1 = BatchNormalization()(b1x1)
-        b1x1 = ReLU()(b1x1)
+        b1x1 = Composable.ReLU(b1x1)
     
         # 7x7 branch
         # 7x7 reduction
         b7x7 = Conv2D(f7x7[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
         # factorized 7x7
         b7x7 = Conv2D(f7x7[1], (1, 7), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
         b7x7 = Conv2D(f7x7[2], (7, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
 
         # double 7x7 branch
         # 7x7 reduction
         b7x7dbl = Conv2D(f7x7dbl[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b7x7dbl = BatchNormalization()(b7x7dbl)
-        b7x7dbl = ReLU()(b7x7dbl)
+        b7x7dbl = Composable.ReLU(b7x7dbl)
         # factorized 7x7
         b7x7dbl = Conv2D(f7x7dbl[1], (1, 7), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7dbl)
         b7x7dbl = BatchNormalization()(b7x7dbl)
-        b7x7dbl = ReLU()(b7x7dbl)
+        b7x7dbl = Composable.ReLU(b7x7dbl)
         b7x7dbl = Conv2D(f7x7dbl[2], (7, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7dbl)
         b7x7dbl = BatchNormalization()(b7x7dbl)
-        b7x7dbl = ReLU()(b7x7dbl)
+        b7x7dbl = Composable.ReLU(b7x7dbl)
         b7x7dbl = Conv2D(f7x7dbl[3], (1, 7), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7dbl)
         b7x7dbl = BatchNormalization()(b7x7dbl)
-        b7x7dbl = ReLU()(b7x7dbl)
+        b7x7dbl = Composable.ReLU(b7x7dbl)
         b7x7dbl = Conv2D(f7x7dbl[4], (7, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7dbl)
         b7x7dbl = BatchNormalization()(b7x7dbl)
-        b7x7dbl = ReLU()(b7x7dbl)
+        b7x7dbl = Composable.ReLU(b7x7dbl)
 
         # Pooling branch
         bpool = AveragePooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
         bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(bpool)
         bpool = BatchNormalization()(bpool)
-        bpool = ReLU()(bpool)
+        bpool = Composable.ReLU(bpool)
 
         # Concatenate the outputs (filters) of the branches
         x = Concatenate()([b1x1, b7x7, b7x7dbl, bpool])
@@ -240,20 +241,20 @@ class InceptionV3(object):
         # 1x1 branch
         b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b1x1 = BatchNormalization()(b1x1)
-        b1x1 = ReLU()(b1x1)
+        b1x1 = Composable.ReLU(b1x1)
     
         # 3x3 branch
         # 3x3 reduction
         b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
         # Split
         b3x3_1 = Conv2D(f3x3[0], (1, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3)
         b3x3_1 = BatchNormalization()(b3x3_1)
-        b3x3_1 = ReLU()(b3x3_1)
+        b3x3_1 = Composable.ReLU(b3x3_1)
         b3x3_2 = Conv2D(f3x3[1], (3, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3)
         b3x3_2 = BatchNormalization()(b3x3_2)
-        b3x3_2 = ReLU()(b3x3_2)
+        b3x3_2 = Composable.ReLU(b3x3_2)
         # Merge
         b3x3   = Concatenate()([b3x3_1, b3x3_2])
     
@@ -261,17 +262,17 @@ class InceptionV3(object):
         # 3x3 reduction
         b3x3dbl = Conv2D(f3x3dbl[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3dbl = BatchNormalization()(b3x3dbl)
-        b3x3dbl = ReLU()(b3x3dbl)
+        b3x3dbl = Composable.ReLU(b3x3dbl)
         b3x3dbl = Conv2D(f3x3dbl[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3dbl)
         b3x3dbl = BatchNormalization()(b3x3dbl)
-        b3x3dbl = ReLU()(b3x3dbl)
+        b3x3dbl = Composable.ReLU(b3x3dbl)
         # Split
         b3x3dbl_1 = Conv2D(f3x3dbl[2], (1, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3dbl)
         b3x3dbl_1 = BatchNormalization()(b3x3dbl_1)
-        b3x3dbl_1 = ReLU()(b3x3dbl_1)
+        b3x3dbl_1 = Composable.ReLU(b3x3dbl_1)
         b3x3dbl_2 = Conv2D(f3x3dbl[3], (3, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3dbl)
         b3x3dbl_2 = BatchNormalization()(b3x3dbl_2)
-        b3x3dbl_2 = ReLU()(b3x3dbl_2)
+        b3x3dbl_2 = Composable.ReLU(b3x3dbl_2)
         # Merge
         b3x3dbl   = Concatenate()([b3x3dbl_1, b3x3dbl_2])
 
@@ -280,7 +281,7 @@ class InceptionV3(object):
         # 1x1 projection
         bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(bpool)
         bpool = BatchNormalization()(bpool)
-        bpool = ReLU()(bpool)
+        bpool = Composable.ReLU(bpool)
 
         # Concatenate the outputs (filters) of the branches
         x = Concatenate()([b1x1, b3x3, b3x3dbl, bpool])
@@ -300,20 +301,20 @@ class InceptionV3(object):
         # grid reduction
         b3x3 = Conv2D(f3x3, (3, 3), strides=2, padding='valid', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
 
         # double 3x3 branch
         # 3x3 reduction
         b3x3dbl = Conv2D(f3x3dbl[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3dbl = BatchNormalization()(b3x3dbl)
-        b3x3dbl = ReLU()(b3x3dbl)
+        b3x3dbl = Composable.ReLU(b3x3dbl)
         b3x3dbl = Conv2D(f3x3dbl[1], (3, 3), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b3x3dbl)
         b3x3dbl = BatchNormalization()(b3x3dbl)
-        b3x3dbl = ReLU()(b3x3dbl)
+        b3x3dbl = Composable.ReLU(b3x3dbl)
         # grid reduction
         b3x3dbl = Conv2D(f3x3dbl[1], (3, 3), strides=2, padding='valid', use_bias=False, kernel_initializer=init_weights)(b3x3dbl)
         b3x3dbl = BatchNormalization()(b3x3dbl)
-        b3x3dbl = ReLU()(b3x3dbl)
+        b3x3dbl = Composable.ReLU(b3x3dbl)
 
         # pool branch
         bpool   = MaxPooling2D((3, 3), strides=2)(x)
@@ -336,27 +337,27 @@ class InceptionV3(object):
         # 3x3 reduction
         b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
         # grid reduction
         b3x3 = Conv2D(f3x3[1], (3, 3), strides=2, padding='valid', use_bias=False, kernel_initializer=init_weights)(b3x3)
         b3x3 = BatchNormalization()(b3x3)
-        b3x3 = ReLU()(b3x3)
+        b3x3 = Composable.ReLU(b3x3)
 
         # 7x7 (factorized as 1x7, 7x1) + 3x3 branch
         # 7x7 reduction
         b7x7 = Conv2D(f7x7[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
         b7x7 = Conv2D(f7x7[1], (1, 7), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
         b7x7 = Conv2D(f7x7[2], (7, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(b7x7)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
         # grid reduction
         b7x7 = Conv2D(f7x7[3], (3, 3), strides=2, padding='valid', use_bias=False, kernel_initializer=init_weights)(b7x7)
         b7x7 = BatchNormalization()(b7x7)
-        b7x7 = ReLU()(b7x7)
+        b7x7 = Composable.ReLU(b7x7)
 
         # pool branch
         bpool   = MaxPooling2D((3, 3), strides=2)(x)
@@ -406,7 +407,7 @@ class InceptionV3(object):
         x = AveragePooling2D((5, 5), strides=(3, 3))(x)
         x = Conv2D(128, (1, 1), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
         # filter will be 5x5 for V3
         x = Conv2D(768, x.shape[1:3].as_list(), strides=(1, 1), use_bias=False, kernel_initializer=init_weights)(x)
         x = Flatten()(x)
@@ -419,14 +420,25 @@ class InceptionV3(object):
             n_classes : number of output classes
             dropout   : percentage for dropout rate
         """
+        # Save the encoding layer
+        self.encoding = x
+        
         # Pool at the end of all the convolutional residual blocks
         # Will be 8x8 in V3
         x = AveragePooling2D(x.shape[1:3].as_list())(x)
         x = Dropout(dropout)(x)
         x = Flatten()(x)
 
+        # Save the embedding layer
+        self.embedding = x
+
         # Final Dense Outputting Layer for the outputs
-        outputs = Dense(n_classes, activation='softmax', kernel_initializer=self.init_weights)(x)
+        x = Dense(n_classes, kernel_initializer=self.init_weights)(x)
+        # Save the pre-activation probabilities
+        self.probabilities = x
+        outputs = Activation('softmax')(x)
+        # Save the post-activation probabilities
+        self.softmax = outputs
         return outputs
 
 # Example

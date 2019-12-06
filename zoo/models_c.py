@@ -15,6 +15,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU
 from tensorflow.keras.regularizers import l2
+import tensorflow.keras.backend as K
 
 class Composable(object):
     ''' Composable base (super) class for Models '''
@@ -85,3 +86,7 @@ class Composable(object):
         x = ReLU(Composable.relu)(x)
         return x
 	
+    @staticmethod
+    def HS(x):
+        """ Hard Swish activation """
+        return (x * K.relu(x + 3, max_value=6.0)) / 6.0	

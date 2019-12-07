@@ -48,8 +48,8 @@ class AutoEncoder(Composable):
         self.input_shape = input_shape
 
         inputs = Input(input_shape)
-        encoder = AutoEncoder.encoder(inputs, layers=layers, reg=reg)
-        outputs = AutoEncoder.decoder(encoder, layers=layers, reg=reg)
+        encoder = AutoEncoder.encoder(inputs, layers=layers)
+        outputs = AutoEncoder.decoder(encoder, layers=layers)
         self._model = Model(inputs, outputs)
 
     @staticmethod
@@ -60,9 +60,13 @@ class AutoEncoder(Composable):
             reg   : kernel regularizer
         '''
         layers = metaparameters['layers']
-        reg    = metaparameters['reg']
-
-        if init_weights is None:
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = AutoEncoder.reg
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = AutoEncoder.init_weights
 
         # Progressive Feature Pooling
@@ -71,7 +75,7 @@ class AutoEncoder(Composable):
             x = Conv2D(n_filters, (3, 3), strides=2, padding='same',
                        kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
-            x = ReLU()(x)
+            x = Composable.ReLU(x)
 
         # The Encoding
         return x
@@ -84,9 +88,13 @@ class AutoEncoder(Composable):
             reg   : kernel regularizer
         '''
         layers = metaparameters['layers']
-        reg    = metaparameters['reg']
-
-        if init_weights is None:
+        if 'reg' in metaparameters:
+            reg = metaparameters['reg']
+        else:
+            reg = AutoEncoder.reg
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = AutoEncoder.init_weights
 
         # Progressive Feature Unpooling
@@ -95,13 +103,13 @@ class AutoEncoder(Composable):
             x = Conv2DTranspose(n_filters, (3, 3), strides=2, padding='same',
                                 kernel_initializer=init_weights, kernel_regularizer=reg)(x)
             x = BatchNormalization()(x)
-            x = ReLU()(x)
+            x = Composable.ReLU(x)
 
         # Last unpooling and match shape to input
         x = Conv2DTranspose(3, (3, 3), strides=2, padding='same',
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         x = BatchNormalization()(x)
-        x = ReLU()(x)
+        x = Composable.ReLU(x)
 
         # The decoded image
         return x

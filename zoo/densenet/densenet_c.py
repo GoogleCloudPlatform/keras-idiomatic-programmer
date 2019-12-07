@@ -88,10 +88,9 @@ class DenseNet(Composable):
     
         # First large convolution for abstract features for input 224 x 224 and output 112 x 112
         # Stem convolution uses 2 * k (growth rate) number of filters
-        x = Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, 2 * n_filters, (7, 7), strides=(2, 2), use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
     
         # Add padding so when downsampling we fit shape 56 x 56
         x = ZeroPadding2D(padding=((1, 1), (1, 1)))(x)
@@ -126,6 +125,7 @@ class DenseNet(Composable):
         """
         n_blocks  = metaparameters['n_blocks']
         reduction = metaparameters['reduction']
+        del metaparameters['reduction']
 
         # Construct a group of residual blocks
         for _ in range(n_blocks):
@@ -133,7 +133,7 @@ class DenseNet(Composable):
 
         # Construct interceding transition block
         if reduction is not None:
-            x = DenseNet.trans_block(x, reduction=reduction)
+            x = DenseNet.trans_block(x, reduction=reduction, **metaparameters)
         return x
 
     @staticmethod
@@ -141,20 +141,13 @@ class DenseNet(Composable):
         """ Construct a Residual Block
             x        : input to the block
             n_filters: number of filters in convolution layer in residual block
-            reg      : kernel regularizer
         """
         if 'n_filters' in metaparameters:
             n_filters = metaparameters['n_filters']
+            del metaparameters['n_filters']
         else:
             n_filters = DenseNet.n_filters
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = DenseNet.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = DenseNet.init_weights
+
             
         # Remember input tensor into residual block
         shortcut = x 
@@ -164,15 +157,15 @@ class DenseNet(Composable):
         # Dimensionality expansion, expand filters by 4 (DenseNet-B)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                              **metaparameters)
     
         # Bottleneck convolution
         # 3x3 convolution with padding=same to preserve same shape of feature maps
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+                              **metaparameters)
 
         # Concatenate the input (identity) with the output of the residual block
         # Concatenation (vs. merging) provides Feature Reuse between layers
@@ -184,20 +177,12 @@ class DenseNet(Composable):
         """ Construct a Transition Block
             x        : input layer
             reduction: percentage of reduction of feature maps
-            reg      : kernel regularizer
         """
         if 'reduction' in metaparameters:
             reduction = metaparameters['reduction']
         else:
             reduction = DenseNet.reduction
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = DenseNet.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = DenseNet.init_weights
+        del metaparameters['n_filters']
 
         # Reduce (compress) the number of feature maps (DenseNet-C)
         # shape[n] returns a class object. We use int() to cast it into the dimension size
@@ -207,8 +192,8 @@ class DenseNet(Composable):
 
         # Use 1x1 linear projection convolution
         x = BatchNormalization()(x)
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                              **metaparameters)
 
         # Use mean value (average) instead of max value sampling when pooling reduce by 75%
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)
@@ -229,8 +214,7 @@ class DenseNet(Composable):
         self.embedding = x
         
         # Fully connected output layer (classification)
-        x = Dense(n_classes,
-                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Dense(x, n_classes)
         # Save the pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

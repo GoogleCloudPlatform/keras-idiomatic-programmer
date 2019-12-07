@@ -89,10 +89,9 @@ class ResNetV1(Composable):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
@@ -138,14 +137,7 @@ class ResNetV1(Composable):
             n_filters: number of filters
         """
         n_filters = metaparameters['n_filters']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = ResNetV1.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = ResNetV1.init_weights
+        del metaparameters['n_filters']
             
         # Save input vector (feature maps) for the identity link
         shortcut = x
@@ -153,20 +145,17 @@ class ResNetV1(Composable):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = Conv2D(n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Conv2D(n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
 
         # Add the identity link (input) to the output of the residual block
@@ -181,42 +170,30 @@ class ResNetV1(Composable):
             x        : input into the block
             strides  : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
             n_filters: number of filters
-            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = ResNetV1.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = ResNetV1.init_weights
+        del metaparameters['n_filters']
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, 
-                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        shortcut = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
         shortcut = BatchNormalization()(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = Conv2D(n_filters, (1, 1), strides=strides, use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Bottleneck layer
-        x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = Conv2D(4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
 
         # Add the projection shortcut link to the output of the residual block
@@ -239,8 +216,7 @@ class ResNetV1(Composable):
       self.embedding = x
 
       # Final Dense Outputting Layer for the outputs
-      x = Dense(n_classes, 
-                      kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+      x = self.Dense(x, n_classes)
       # Save the pre-activation probabilities layer
       self.probabilities = x
       outputs = Activation('softmax')(x)

@@ -64,29 +64,26 @@ class VGG(Composable):
             blocks = n_layers
             
         # The input vector 
-        inputs = Input( input_shape )
+        inputs = Input(input_shape)
 
         # The stem group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, blocks=blocks, reg=reg)
+        x = self.learner(x, blocks=blocks)
 
         # The classifier
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         """ Construct the Stem Convolutional Group
             inputs : the input vector
-            reg    : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         x = Conv2D(64, (3, 3), strides=(1, 1), padding="same",
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = Composable.ReLU(x)
         return x
     
@@ -103,7 +100,7 @@ class VGG(Composable):
         return x
 
     @staticmethod
-    def group(x, init_weights=None, **metaparameters):
+    def group(x, **metaparameters):
         """ Construct a Convolutional Group
             x        : input to the group
             n_layers : number of convolutional layers
@@ -115,8 +112,9 @@ class VGG(Composable):
             reg = metaparameters['reg']
         else:
             reg = VGG.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = VGG.init_weights
 
         # Block of convolutional layers
@@ -129,14 +127,11 @@ class VGG(Composable):
         x = MaxPooling2D(2, strides=(2, 2))(x)
         return x
     
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the Classifier
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
 
@@ -148,13 +143,13 @@ class VGG(Composable):
     
         # Two fully connected dense layers
         x = Dense(4096, activation='relu', 
-                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = Dense(4096, activation='relu', 
-                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
 
         # Output layer for classification 
         x = Dense(n_classes, 
-                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save the probability distribution before softmax
         self.probabilities = x
         outputs = Activation('softmax')(x)

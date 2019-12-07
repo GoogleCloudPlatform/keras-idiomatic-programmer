@@ -90,10 +90,9 @@ class SEResNeXt(Composable):
         """ Construct the Stem Convolution Group
             inputs : input vector
         """
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
+        x = self.Conv2D(inputs, 64, (7, 7), strides=(2, 2), padding='same', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
         return x
 
@@ -134,20 +133,11 @@ class SEResNeXt(Composable):
         """ Construct a Squeeze and Excite block
             x    : input to the block
             ratio : amount of filter reduction during squeeze
-            reg   : kernel regularizer
         """  
         if 'ratio' in metaparameters:
             ratio = metaparameters['ratio']
         else:
             ratio = SEResNeXt.ratio
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = SEResNeXt.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = SEResNeXt.init_weights
             
         # Remember the input
         shortcut = x
@@ -163,13 +153,11 @@ class SEResNeXt(Composable):
         x = Reshape((1, 1, filters))(x)
     
         # Reduce the number of filters (1x1xC/r)
-        x = Dense(filters // ratio, activation='relu', use_bias=False, 
-                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
 
         # Excitation (dimensionality restoration)
         # Restore the number of filters (1x1xC)
-        x = Dense(filters, activation='sigmoid', use_bias=False,
-                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
 
         # Scale - multiply the squeeze/excitation output with the input (WxHxC)
         x = Multiply()([shortcut, x])
@@ -182,26 +170,17 @@ class SEResNeXt(Composable):
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of cardinality layer
-            reg        : kernel regularizer
         """ 
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
         cardinality = metaparameters['cardinality']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = SEResNeXt.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = SEResNeXt.init_weights
     
         # Remember the input
         shortcut = x
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
+        x = Composable.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                              **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -210,8 +189,8 @@ class SEResNeXt(Composable):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False,
-                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
+            groups.append(Composable.Conv2D(group, filters_card, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False,
+                                            **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -219,8 +198,8 @@ class SEResNeXt(Composable):
         x = Composable.ReLU(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                              **metaparameters)
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
@@ -239,29 +218,20 @@ class SEResNeXt(Composable):
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of cardinality layer
-            reg        : kernel regularizer
         """ 
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
         cardinality = metaparameters['cardinality']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = SEResNeXt.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = SEResNeXt.init_weights
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
-        shortcut = Conv2D(filters_out, kernel_size=(1, 1), strides=strides, padding='same', 
-                          kernel_initializer=init_weights)(x)
+        shortcut = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=strides, padding='same', 
+                                     **metaparameters)
         shortcut = BatchNormalization()(shortcut)
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                              **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -270,8 +240,8 @@ class SEResNeXt(Composable):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, kernel_size=(3, 3), strides=strides, padding='same', use_bias=False,
-                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
+            groups.append(Composable.Conv2D(group, filters_card, kernel_size=(3, 3), strides=strides, padding='same', use_bias=False,
+                                            **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -279,8 +249,8 @@ class SEResNeXt(Composable):
         x = Composable.ReLU(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                              **metasparameters)
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
@@ -305,8 +275,7 @@ class SEResNeXt(Composable):
         # Save the embedding layer
         self.embedding = x
         
-        x = Dense(n_classes,
-                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Dense(x, n_classes)
         # Save the pre-activation probabilities
         self.probabilities = x
         outputs = Activation('softmax')(x)

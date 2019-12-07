@@ -58,7 +58,7 @@ class VGG(Composable):
         if isinstance(n_layers, int):
             if n_layers not in [16, 19]:
                 raise Exception("VGG: Invalid value for n_layers")
-            blocks = self.groups[n_layers]
+            blocks = list(self.groups[n_layers])
         # user defined
         else:
             blocks = n_layers

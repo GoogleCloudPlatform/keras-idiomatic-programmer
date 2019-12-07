@@ -64,7 +64,7 @@ class ResNeXt(Composable):
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
                 raise Exception("ResNeXt: Invalid value for n_layers")
-            groups = self.groups[n_layers]
+            groups = list(self.groups[n_layers])
         # user defined
         else:
             groups = n_layers
@@ -73,26 +73,23 @@ class ResNeXt(Composable):
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, cardinality=cardinality, groups=groups, reg=reg)
+        x = self.learner(x, cardinality=cardinality, groups=groups)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         """ Construct the Stem Convolution Group
             inputs : input vector
-            reg    : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
@@ -106,15 +103,15 @@ class ResNeXt(Composable):
         groups = metaparameters['groups']
 
         # First ResNeXt Group (not-strided)
-        x = ResNeXt.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = ResNeXt.group(x, strides=(1, 1), **groups.pop(0))
 
         # Remaining ResNeXt groups
         for group in groups:
-            x = ResNeXt.group(x, **group, **metaparameters)
+            x = ResNeXt.group(x, **group)
         return x
 
     @staticmethod
-    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
+    def group(x, strides=(2, 2), **metaparameters):
         """ Construct a Residual group
             x          : input to the group
             strides    : whether its a strided convolution
@@ -127,15 +124,15 @@ class ResNeXt(Composable):
 
         # Double the size of filters to fit the first Residual Group
         # Reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-        x = ResNeXt.projection_block(x, strides=strides, nit_weights=init_weights, **metaparameters)
+        x = ResNeXt.projection_block(x, strides=strides, **metaparameters)
 
         # Remaining blocks
         for _ in range(n_blocks):
-            x = ResNeXt.identity_block(x, init_weights=init_weights, **metaparameters)	
+            x = ResNeXt.identity_block(x, **metaparameters)	
         return x
 
     @staticmethod
-    def identity_block(x, init_weights=None, **metaparameters):
+    def identity_block(x, **metaparameters):
         """ Construct a ResNeXT block with identity link
             x          : input to block
             filters_in : number of filters  (channels) at the input convolution
@@ -153,8 +150,9 @@ class ResNeXt(Composable):
             reg = metaparameters['reg']
         else:
             reg = ResNeXt.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ResNeXt.init_weights
             
         # Remember the input
@@ -190,7 +188,7 @@ class ResNeXt(Composable):
         return x
 
     @staticmethod
-    def projection_block(x, strides=(2, 2), init_weights=None, **metaparameters):
+    def projection_block(x, strides=(2, 2), **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
             strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
@@ -209,8 +207,9 @@ class ResNeXt(Composable):
             reg = metaparameters['reg']
         else:
             reg = ResNeXt.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ResNeXt.init_weights
     
         # Construct the projection shortcut
@@ -248,14 +247,11 @@ class ResNeXt(Composable):
         x = Composable.ReLU(x)
         return x
     
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the Classifier
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
 
@@ -266,7 +262,7 @@ class ResNeXt(Composable):
         self.embedding = x
         
         x = Dense(n_classes, 
-                        kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save the pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

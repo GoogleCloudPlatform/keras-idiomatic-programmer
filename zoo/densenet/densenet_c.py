@@ -58,7 +58,7 @@ class DenseNet(Composable):
         if isinstance(n_layers, int):
             if n_layers not in [121, 169, 201]:
                 raise Exception("DenseNet: Invalid value for n_layers")
-            groups = self.groups[n_layers]
+            groups = list(self.groups[n_layers])
         # user defined
         else:
             groups = n_layers
@@ -67,32 +67,29 @@ class DenseNet(Composable):
         inputs = Input(shape=input_shape)
 
         # The Stem Convolution Group
-        x = self.stem(inputs, n_filters, reg=reg)
+        x = self.stem(inputs, n_filters)
 
         # The Learner
-        x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups, reg=reg)
+        x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, n_filters, **metaparameters):
+    def stem(self, inputs, n_filters):
         """ Construct the Stem Convolution Group
             inputs   : input tensor
             n_filters: number of filters for the dense blocks (k)
-            reg      : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Pads input from 224x224 to 230x230
         x = ZeroPadding2D(padding=((3, 3), (3, 3)))(inputs)
     
         # First large convolution for abstract features for input 224 x 224 and output 112 x 112
         # Stem convolution uses 2 * k (growth rate) number of filters
         x = Conv2D(2 * n_filters, (7, 7), strides=(2, 2), use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
     
@@ -121,7 +118,7 @@ class DenseNet(Composable):
         return x
 
     @staticmethod
-    def group(x, init_weights=None, **metaparameters):
+    def group(x, **metaparameters):
         """ Construct a Dense Block
             x         : input to the block
             n_blocks  : number of residual blocks in dense block
@@ -132,7 +129,7 @@ class DenseNet(Composable):
 
         # Construct a group of residual blocks
         for _ in range(n_blocks):
-            x = DenseNet.residual_block(x, init_weights=init_weights, **metaparameters)
+            x = DenseNet.residual_block(x, **metaparameters)
 
         # Construct interceding transition block
         if reduction is not None:
@@ -140,7 +137,7 @@ class DenseNet(Composable):
         return x
 
     @staticmethod
-    def residual_block(x, init_weights=None, **metaparameters):
+    def residual_block(x, **metaparameters):
         """ Construct a Residual Block
             x        : input to the block
             n_filters: number of filters in convolution layer in residual block
@@ -154,8 +151,9 @@ class DenseNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = DenseNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = DenseNet.init_weights
             
         # Remember input tensor into residual block
@@ -182,7 +180,7 @@ class DenseNet(Composable):
         return x
 
     @staticmethod
-    def trans_block(x, init_weights=None, **metaparameters):
+    def trans_block(x, **metaparameters):
         """ Construct a Transition Block
             x        : input layer
             reduction: percentage of reduction of feature maps
@@ -196,8 +194,9 @@ class DenseNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = DenseNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = DenseNet.init_weights
 
         # Reduce (compress) the number of feature maps (DenseNet-C)
@@ -215,14 +214,11 @@ class DenseNet(Composable):
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)
         return x
     
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the Classifier Group
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
 
@@ -234,7 +230,7 @@ class DenseNet(Composable):
         
         # Fully connected output layer (classification)
         x = Dense(n_classes,
-                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save the pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

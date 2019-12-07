@@ -57,13 +57,13 @@ class Xception(Composable):
         inputs = Input(shape=input_shape)
 
 	# Create entry section with three blocks
-        x = Xception.entryFlow(inputs, blocks=entry, reg=reg)
+        x = Xception.entryFlow(inputs, blocks=entry)
 
 	# Create the middle section with eight blocks
-        x = Xception.middleFlow(x, blocks=middle, reg=reg)
+        x = Xception.middleFlow(x, blocks=middle)
 
 	# Create the exit section 
-        outputs = Xception.exitFlow(x, n_classes, reg=reg)
+        outputs = Xception.exitFlow(x, n_classes)
 
 	# Instantiate the model
         self._model = Model(inputs, outputs)
@@ -79,8 +79,12 @@ class Xception(Composable):
             reg = metaparameters['reg']
         else:
             reg = Xception.reg
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
+            init_weights = Xception.init_weights
 
-        def stem(inputs, init_weights):
+        def stem(inputs):
             """ Create the stem entry into the neural network
                 inputs : input tensor to neural network
             """
@@ -101,36 +105,30 @@ class Xception(Composable):
 
         blocks = metaparameters['blocks']
 
-        if init_weights is None:
-            init_weights = Xception.init_weights
-
         # Create the stem to the neural network
-        x = stem(inputs, init_weights)
+        x = stem(inputs)
 
         # Create residual blocks using linear projection
         for block in blocks:
-            x = Xception.projection_block(x, init_weights, **block, reg=reg)
+            x = Xception.projection_block(x, **block)
 
         return x
 
     @staticmethod
-    def middleFlow(x, init_weights=None, **metaparameters):
+    def middleFlow(x, **metaparameters):
         """ Create the middle flow section
             x     : input tensor into section
             blocks: number of filters per block
         """
         blocks = metaparameters['blocks']
 
-        if init_weights is None:
-            init_weights = Xception.init_weights
-
         # Create residual blocks
         for block in blocks:
-            x = Xception.residual_block(x, init_weights, **block, **metaparameters)
+            x = Xception.residual_block(x, **block, **metaparameters)
         return x
 
     @staticmethod
-    def exitFlow(x, n_classes, init_weights=None, **metaparameters):
+    def exitFlow(x, n_classes, **metaparameters):
         """ Create the exit flow section
             x         : input to the exit flow section
             n_classes : number of output classes
@@ -140,8 +138,12 @@ class Xception(Composable):
             reg = metaparameters['reg']
         else:
             reg = Xception.reg
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
+            init_weights = Xception.init_weights
             
-        def classifier(x, n_classes, init_weights):
+        def classifier(x, n_classes):
             """ The output classifier
                 x         : input to the classifier
                 n_classes : number of output classes
@@ -164,9 +166,6 @@ class Xception(Composable):
             # Save the post-activation layer
             Xception.softmax = outputs
             return outputs
-
-        if init_weights is None:
-            init_weights = Xception.init_weights
 
         # Remember the input
         shortcut = x
@@ -209,12 +208,12 @@ class Xception(Composable):
         x = Composable.ReLU(x)
 
         # Create classifier section
-        x = classifier(x, n_classes, init_weights)
+        x = classifier(x, n_classes)
 
         return x
 
     @staticmethod
-    def projection_block(x, init_weights=None, **metaparameters):
+    def projection_block(x, **metaparameters):
         """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
             x        : input into residual block
             n_filters: number of filters
@@ -225,8 +224,9 @@ class Xception(Composable):
             reg = metaparameters['reg']
         else:
             reg = Xception.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = Xception.init_weights
 
         # Remember the input
@@ -256,7 +256,7 @@ class Xception(Composable):
         return x
 
     @staticmethod
-    def residual_block(x, init_weights=None, **metaparameters):
+    def residual_block(x, **metaparameters):
         """ Create a residual block using Depthwise Separable Convolutions
             x        : input into residual block
             n_filters: number of filters
@@ -267,8 +267,9 @@ class Xception(Composable):
             reg = metaparameters['reg']
         else:
             reg = Xception.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = Xception.init_weights
 
         # Remember the input

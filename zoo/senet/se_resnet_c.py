@@ -60,7 +60,7 @@ class SEResNet(Composable):
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
                 raise Exception("SE-ResNet: Invalid value for n_layers")
-            groups = self.groups[n_layers]
+            groups = list(self.groups[n_layers])
         # user defined
         else:
             groups = n_layers
@@ -69,29 +69,27 @@ class SEResNet(Composable):
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, ratio=ratio, reg=reg)
+        x = self.learner(x, groups=groups, ratio=ratio)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
     
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
         """
-        reg = metaparameters['reg']
-
         # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
     
@@ -116,7 +114,7 @@ class SEResNet(Composable):
         return x	
 
     @staticmethod
-    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
+    def group(x, strides=(2, 2), **metaparameters):
         """ Construct the Squeeze-Excite Group
             x        : input to the group
             strides  : whether projection block is strided
@@ -125,15 +123,15 @@ class SEResNet(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # first block uses linear projection to match the doubling of filters between groups
-        x = SEResNet.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
+        x = SEResNet.projection_block(x, strides=strides, **metaparameters)
 
         # remaining blocks use identity link
         for _ in range(n_blocks-1):
-            x = SEResNet.identity_block(x, init_weights=init_weights, **metaparameters)
+            x = SEResNet.identity_block(x, **metaparameters)
         return x
 
     @staticmethod
-    def squeeze_excite_block(x, init_weights=None, **metaparameters):
+    def squeeze_excite_block(x, **metaparameters):
         """ Create a Squeeze and Excite block
             x     : input to the block
             ratio : amount of filter reduction during squeeze
@@ -147,8 +145,9 @@ class SEResNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = SEResNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SEResNet.init_weights
             
         # Remember the input
@@ -178,7 +177,7 @@ class SEResNet(Composable):
         return x
 
     @staticmethod
-    def identity_block(x, init_weights=None, **metaparameters):
+    def identity_block(x, **metaparameters):
         """ Create a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
@@ -189,8 +188,9 @@ class SEResNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = SEResNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SEResNet.init_weights
 
         # Save input vector (feature maps) for the identity link
@@ -216,7 +216,7 @@ class SEResNet(Composable):
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNet.squeeze_excite_block(x, init_weights=init_weights, **metaparameters)
+        x = SEResNet.squeeze_excite_block(x, **metaparameters)
     
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
@@ -224,7 +224,7 @@ class SEResNet(Composable):
         return x
 
     @staticmethod
-    def projection_block(x, strides=(2,2), init_weights=None, **metaparameters):
+    def projection_block(x, strides=(2,2), **metaparameters):
         """ Create Bottleneck Residual Block with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
@@ -237,8 +237,9 @@ class SEResNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = SEResNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SEResNet.init_weights
             
         # Construct the projection shortcut
@@ -268,21 +269,18 @@ class SEResNet(Composable):
         x = BatchNormalization()(x)
 
         # Pass the output through the squeeze and excitation block
-        x = SEResNet.squeeze_excite_block(x, init_weights=init_weights, **metaparameters)
+        x = SEResNet.squeeze_excite_block(x, **metaparameters)
 
         # Add the projection shortcut link to the output of the residual block
         x = Add()([x, shortcut])
         x = Composable.ReLU(x)
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
       """ Create the Classifier Group 
           x         : input to the classifier
           n_classes : number of output classes
-          reg       : kernel regularizer
       """
-      reg = metaparameters['reg']
-
       # Save the encoding layer
       self.encoding = x
       
@@ -294,7 +292,7 @@ class SEResNet(Composable):
 
       # Final Dense Outputting Layer for the outputs
       x = Dense(n_classes, 
-                      kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                      kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
       # Save the pre-activation probabilities layer
       self.probabilities = x
       outputs = Activation('softmax')(x)

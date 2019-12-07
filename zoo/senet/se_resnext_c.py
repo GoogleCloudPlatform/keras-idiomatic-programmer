@@ -66,7 +66,7 @@ class SEResNeXt(Composable):
         if isinstance(n_layers, int):
             if n_layers not in [50, 101, 152]:
                 raise Exception("SE-ResNeXt: Invalid value for n_layers")
-            groups = self.groups[n_layers]
+            groups = list(self.groups[n_layers])
         # user defined
         else:
             groups = n_layers
@@ -75,32 +75,29 @@ class SEResNeXt(Composable):
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, cardinality=cardinality, ratio=ratio, reg=reg)
+        x = self.learner(x, groups=groups, cardinality=cardinality, ratio=ratio)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         """ Construct the Stem Convolution Group
             inputs : input vector
-            reg    : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
         return x
 
-    def learner(self, x, init_weights=None, **metaparameters):
+    def learner(self, x, **metaparameters):
         """ Construct the Learner
             x          : input to the learner
             groups     : list of groups: filters in, filters out, number of blocks
@@ -108,15 +105,15 @@ class SEResNeXt(Composable):
         groups = metaparameters['groups']
 
         # First ResNeXt Group (not strided)
-        x = SEResNeXt.group(x, strides=(1, 1), init_weights=init_weights, **groups.pop(0), **metaparameters)
+        x = SEResNeXt.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining ResNeXt Groups
         for group in groups:
-            x = SEResNeXt.group(x, init_weights=init_weights, **group, **metaparameters)
+            x = SEResNeXt.group(x, **group, **metaparameters)
         return x
 
     @staticmethod
-    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
+    def group(x, strides=(2, 2), **metaparameters):
         """ Construct a Squeeze-Excite Group
             x          : input to the group
             strides    : whether projection block is strided
@@ -125,15 +122,15 @@ class SEResNeXt(Composable):
         n_blocks = metaparameters['n_blocks']
 
         # First block is a linear projection block
-        x = SEResNeXt.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
+        x = SEResNeXt.projection_block(x, strides=strides, **metaparameters)
 
         # Remaining blocks are identity links
         for _ in range(n_blocks-1):
-            x = SEResNeXt.identity_block(x, init_weights=init_weights, **metaparameters) 
+            x = SEResNeXt.identity_block(x, **metaparameters) 
         return x
 
     @staticmethod
-    def squeeze_excite_block(x, init_weights=None, **metaparameters):
+    def squeeze_excite_block(x, **metaparameters):
         """ Construct a Squeeze and Excite block
             x    : input to the block
             ratio : amount of filter reduction during squeeze
@@ -147,8 +144,9 @@ class SEResNeXt(Composable):
             reg = metaparameters['reg']
         else:
             reg = SEResNeXt.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SEResNeXt.init_weights
             
         # Remember the input
@@ -178,7 +176,7 @@ class SEResNeXt(Composable):
         return x
 
     @staticmethod
-    def identity_block(x, init_weights=None, **metaparameters):
+    def identity_block(x, **metaparameters):
         """ Construct a ResNeXT block with identity link
             x          : input to block
             filters_in : number of filters  (channels) at the input convolution
@@ -193,8 +191,9 @@ class SEResNeXt(Composable):
             reg = metaparameters['reg']
         else:
             reg = SEResNeXt.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SEResNeXt.init_weights
     
         # Remember the input
@@ -225,7 +224,7 @@ class SEResNeXt(Composable):
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNeXt.squeeze_excite_block(x, init_weights, **metaparameters)
+        x = SEResNeXt.squeeze_excite_block(x, **metaparameters)
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
@@ -233,7 +232,7 @@ class SEResNeXt(Composable):
         return x
 
     @staticmethod
-    def projection_block(x, strides=1, init_weights=None, **metaparameters):
+    def projection_block(x, strides=1, **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
             strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
@@ -249,8 +248,9 @@ class SEResNeXt(Composable):
             reg = metaparameters['reg']
         else:
             reg = SEResNeXt.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SEResNeXt.init_weights
     
         # Construct the projection shortcut
@@ -284,21 +284,18 @@ class SEResNeXt(Composable):
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNeXt.squeeze_excite_block(x, init_weights, **metaparameters)
+        x = SEResNeXt.squeeze_excite_block(x, **metaparameters)
 
         # Add the projection shortcut (input) to the output of the block
         x = Add()([shortcut, x])
         x = Composable.ReLU(x)
         return x
     
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the Classifier
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
 
@@ -309,7 +306,7 @@ class SEResNeXt(Composable):
         self.embedding = x
         
         x = Dense(n_classes,
-                        kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save the pre-activation probabilities
         self.probabilities = x
         outputs = Activation('softmax')(x)

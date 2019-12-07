@@ -64,18 +64,18 @@ class MobileNetV2(Composable):
         super().__init__(init_weights=init_weights, reg=reg, relu=relu)
         
         if groups is None:
-             groups = self.groups
+             groups = list(self.groups)
 
         inputs = Input(shape=(224, 224, 3))
 
         # The Stem Group
-        x = self.stem(inputs, alpha=alpha, reg=reg)
+        x = self.stem(inputs, alpha=alpha)
 
         # The Learner
-        x = self.learner(x, groups=groups, alpha=alpha, expansion=expansion, reg=reg)
+        x = self.learner(x, groups=groups, alpha=alpha, expansion=expansion)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -84,10 +84,8 @@ class MobileNetV2(Composable):
         """ Construct the Stem Group
             inputs : input tensor
             alpha  : width multiplier
-            reg    : kernel regularizer
         """
         alpha = metaparameters['alpha']
-        reg   = metaparameters['reg']
 
         # Calculate the number of filters for the stem convolution
         # Must be divisible by 8
@@ -96,7 +94,7 @@ class MobileNetV2(Composable):
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
         x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         return x
@@ -106,27 +104,25 @@ class MobileNetV2(Composable):
             x        : input to the learner
             alpha    : width multiplier
             expansion: multipler to expand number of filters
-            reg      : kernel regularizer
         """
         groups = metaparameters['groups']
         alpha  = metaparameters['alpha']
         expansion = metaparameters['expansion']
-        reg    = metaparameters['reg']
 
         last = groups.pop()
 
         # First Inverted Residual Convolution Group
         group = groups.pop(0)
-        x = MobileNetV2.group(x, **group, alpha=alpha, expansion=1, reg=reg, strides=(1, 1))
+        x = MobileNetV2.group(x, **group, alpha=alpha, expansion=1, strides=(1, 1))
 
         # Add Inverted Residual Convolution Group
         for group in groups:
-            x = MobileNetV2.group(x, **group, alpha=alpha, expansion=expansion, reg=reg)
+            x = MobileNetV2.group(x, **group, alpha=alpha, expansion=expansion)
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
         x = Conv2D(1280, (1, 1), use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         return x
@@ -149,7 +145,7 @@ class MobileNetV2(Composable):
         return x
 
     @staticmethod
-    def inverted_block(x, strides=(1, 1), init_weights=None, **metaparameters):
+    def inverted_block(x, strides=(1, 1), **metaparameters):
         """ Construct an Inverted Residual Block
             x         : input to the block
             strides   : strides
@@ -172,8 +168,9 @@ class MobileNetV2(Composable):
             reg = metaparameters['reg']
         else:
             reg = MobileNetV2.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = MobileNetV2.init_weights
             
         # Remember input
@@ -215,14 +212,11 @@ class MobileNetV2(Composable):
             x = Add()([shortcut, x]) 
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the classifier group
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Save encoding layer
         self.encoding = x
 
@@ -233,7 +227,7 @@ class MobileNetV2(Composable):
         self.embedding = x
 
         # Dense layer for final classification
-        x = Dense(n_classes, kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+        x = Dense(n_classes, kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

@@ -60,7 +60,7 @@ class MobileNetV1(Composable):
         super().__init__(init_weights=init_weights, reg=reg, relu=6.0)
         
         if groups is None:
-             groups = self.groups
+             groups = list(self.groups)
 
         if alpha < 0 or alpha > 1:
             raise Exception("MobileNet: alpha out of range")
@@ -117,7 +117,7 @@ class MobileNetV1(Composable):
         return x
 
     @staticmethod
-    def group(x, init_weights=None, **metaparameters):
+    def group(x, **metaparameters):
         """ Construct a Depthwise Separable Convolution Group
             x         : input to the group
             n_blocks  : number of blocks in the group
@@ -125,15 +125,15 @@ class MobileNetV1(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # In first block, the depthwise convolution is strided - feature map size reduction
-        x = MobileNetV1.depthwise_block(x, strides=(2, 2), init_weights=init_weights, **metaparameters)
+        x = MobileNetV1.depthwise_block(x, strides=(2, 2), **metaparameters)
     
         # Remaining blocks
         for _ in range(n_blocks - 1):
-            x = MobileNetV1.depthwise_block(x, strides=(1, 1), init_weights=init_weights, **metaparameters)
+            x = MobileNetV1.depthwise_block(x, strides=(1, 1), **metaparameters)
         return x
 
     @staticmethod
-    def depthwise_block(x, strides, init_weights=None, **metaparameters):
+    def depthwise_block(x, strides, **metaparameters):
         """ Construct a Depthwise Separable Convolution block
             x         : input to the block
             strides   : strides
@@ -147,8 +147,9 @@ class MobileNetV1(Composable):
             reg = metaparameters['reg']
         else:
             reg = MobileNetV1.reg
-
-        if init_weights is None:
+        if 'iniit_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = MobileNetV1.init_weights
             
         # Apply the width filter to the number of feature maps

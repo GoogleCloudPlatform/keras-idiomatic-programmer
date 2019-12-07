@@ -92,18 +92,18 @@ class MobileNetV3(Composable):
         if isinstance(groups, str):
             if groups not in ['large', 'small']:
                 raise Exception("MobileNetV3: Invalid value for groups")
-            groups = self.groups[groups]
+            groups = list(self.groups[groups])
 
         inputs = Input(shape=(224, 224, 3))
 
         # The Stem Group
-        x = self.stem(inputs, alpha=alpha, reg=reg)
+        x = self.stem(inputs, alpha=alpha)
 
         # The Learner
-        x = self.learner(x, groups=groups, alpha=alpha, reg=reg)
+        x = self.learner(x, groups=groups, alpha=alpha)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -112,10 +112,8 @@ class MobileNetV3(Composable):
         """ Construct the Stem Group
             inputs : input tensor
             alpha  : width multiplier
-            reg    : kernel regularizer
         """
         alpha = metaparameters['alpha']
-        reg   = metaparameters['reg']
 
         # Calculate the number of filters for the stem convolution
         # Must be divisible by 8
@@ -123,7 +121,7 @@ class MobileNetV3(Composable):
     
         # Convolutional block
         x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = BatchNormalization()(x)
         x = Composable.HS(x)
         return x
@@ -132,11 +130,9 @@ class MobileNetV3(Composable):
         """ Construct the Learner
             x        : input to the learner
             alpha    : width multiplier
-            reg      : kernel regularizer
         """
         groups = metaparameters['groups']
         alpha  = metaparameters['alpha']
-        reg    = metaparameters['reg']
 
         last = groups.pop()
 
@@ -147,7 +143,7 @@ class MobileNetV3(Composable):
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
         x = Conv2D(last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = last['activation'](x)
         return x
@@ -172,7 +168,7 @@ class MobileNetV3(Composable):
         return x
 
     @staticmethod
-    def attention_block(x, strides=(1, 1), init_weights=None, **metaparameters):
+    def attention_block(x, strides=(1, 1), **metaparameters):
         """ Construct an Attention Residual Block
             x         : input to the block
             strides   : strides
@@ -194,6 +190,10 @@ class MobileNetV3(Composable):
             reg = metaparameters['reg']
         else:
             reg = MobileNetV3.reg
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
+            init_weights = MobileNetV3.init_weights
         if 'squeeze' in metaparameters:
             squeeze = metaparameters['squeeze']
         else:
@@ -202,9 +202,6 @@ class MobileNetV3(Composable):
             activation = metaparameters['activation']
         else:
             activation = ReLU6
-
-        if init_weights is None:
-            init_weights = MobileNetV3.init_weights
             
         # Remember input
         shortcut = x
@@ -256,14 +253,11 @@ class MobileNetV3(Composable):
         x = Multiply()([shortcut, x])
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the classifier group
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Save encoding layer
         self.encoding = x
 
@@ -277,11 +271,11 @@ class MobileNetV3(Composable):
         x = Reshape((1, 1, n_channels))(x)
 
         x = Conv2D(1280, (1, 1), padding='same', activation=Composable.HS,
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
 
         # final classification
         x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax',
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Flatten the feature maps into 1D feature maps (?, N)
         outputs = Reshape((n_classes,))(x)
 

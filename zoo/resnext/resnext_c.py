@@ -46,8 +46,8 @@ class ResNeXt(Composable):
     # Meta-parameter: width of group convolution
     cardinality = 32
 
-    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001),
-                 init_weights='he_normal', relu=None):
+    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000,
+                 reg=l2(0.001), init_weights='he_normal', relu=None):
         """ Construct a Residual Next Convolution Neural Network
             n_layers    : number of layers.
             cardinality : width of group convolution
@@ -134,11 +134,12 @@ class ResNeXt(Composable):
     @staticmethod
     def identity_block(x, **metaparameters):
         """ Construct a ResNeXT block with identity link
-            x          : input to block
-            filters_in : number of filters  (channels) at the input convolution
-            filters_out: number of filters (channels) at the output convolution
-            cardinality: width of group convolution
-            reg        : kernel regularizer
+            x           : input to block
+            filters_in  : number of filters  (channels) at the input convolution
+            filters_out : number of filters (channels) at the output convolution
+            cardinality : width of group convolution
+            reg         : kernel regularizer
+            init_weights: kernel initializer
         """
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']

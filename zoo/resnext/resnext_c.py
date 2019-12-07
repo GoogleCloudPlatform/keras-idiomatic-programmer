@@ -88,10 +88,9 @@ class ResNeXt(Composable):
         """ Construct the Stem Convolution Group
             inputs : input vector
         """
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
+        x = self.Conv2D(inputs, 64, (7, 7), strides=(2, 2), padding='same', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
         return x
     
@@ -138,8 +137,6 @@ class ResNeXt(Composable):
             filters_in  : number of filters  (channels) at the input convolution
             filters_out : number of filters (channels) at the output convolution
             cardinality : width of group convolution
-            reg         : kernel regularizer
-            init_weights: kernel initializer
         """
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
@@ -147,21 +144,12 @@ class ResNeXt(Composable):
             cardinality = metaparameters['cardinality']
         else:
             cardinality = ResNeXt.cardinality
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = ResNeXt.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = ResNeXt.init_weights
             
         # Remember the input
         shortcut = x
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
+        x = Composable.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -170,8 +158,8 @@ class ResNeXt(Composable):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, (3, 3), strides=(1, 1), padding='same', use_bias=False,
-                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
+            groups.append(Composable.Conv2D(group, filters_card, (3, 3), strides=(1, 1), padding='same', use_bias=False,
+                                 **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -179,8 +167,7 @@ class ResNeXt(Composable):
         x = Composable.ReLU(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
@@ -196,7 +183,6 @@ class ResNeXt(Composable):
             filters_in : number of filters  (channels) at the input convolution
             filters_out: number of filters (channels) at the output convolution
             cardinality: width of group convolution
-            reg        : kernel regularizer
         """
         filters_in = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
@@ -204,24 +190,14 @@ class ResNeXt(Composable):
             cardinality = metaparameters['cardinality']
         else:
             cardinality = ResNeXt.cardinality
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = ResNeXt.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = ResNeXt.init_weights
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
-        shortcut = Conv2D(filters_out, (1, 1), strides=strides, padding='same',
-                          kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        shortcut = Composable.Conv2D(x, filters_out, (1, 1), strides=strides, padding='same', **metaparameters)
         shortcut = BatchNormalization()(shortcut)
 
         # Dimensionality Reduction
-        x = Conv2D(filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -230,8 +206,8 @@ class ResNeXt(Composable):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Conv2D(filters_card, (3, 3), strides=strides, padding='same', use_bias=False,
-                                 kernel_initializer=init_weights, kernel_regularizer=reg)(group))
+            groups.append(Composable.Conv2D(group, filters_card, (3, 3), strides=strides, padding='same', use_bias=False,
+                                            **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
@@ -239,8 +215,7 @@ class ResNeXt(Composable):
         x = Composable.ReLU(x)
 
         # Dimensionality restoration
-        x = Conv2D(filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
@@ -262,8 +237,7 @@ class ResNeXt(Composable):
         # Save the embedding layer
         self.embedding = x
         
-        x = Dense(n_classes, 
-                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Dense(x, n_classes)
         # Save the pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

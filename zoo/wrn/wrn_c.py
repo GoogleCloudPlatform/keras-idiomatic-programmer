@@ -51,7 +51,7 @@ class WRN(Composable):
             relu        : max value for ReLU
         """
         if groups is None:
-            groups = self.groups
+            groups = list(self.groups)
 
         # The input tensor
         inputs = Input(input_shape)
@@ -73,10 +73,9 @@ class WRN(Composable):
             inputs : the input vector
         """
         # Convolutional layer 
-        x = Conv2D(16, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+        x = self.Conv2D(inputs, 16, (3, 3), strides=(1, 1), padding='same', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
     
         return x
 
@@ -123,19 +122,12 @@ class WRN(Composable):
             n_filters: number of filters
             k        : width factor
             dropout  : dropout rate
-            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         k         = metaparameters['k']
         dropout   = metaparameters['dropout']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = WRN.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = WRN.init_weights
+        del metaparameters['n_filters']
+        del metaparameters['strides']
     
         # Save input vector (feature maps) for the identity link
         shortcut = x
@@ -144,8 +136,7 @@ class WRN(Composable):
     
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
-        x = Conv2D(n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
 
         # dropout only in identity link (not projection)
         if dropout > 0:
@@ -153,8 +144,7 @@ class WRN(Composable):
 
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
-        x = Conv2D(n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
@@ -167,36 +157,26 @@ class WRN(Composable):
             n_filters: number of filters
             k        : width factor
             strides  : whether the projection shortcut is strided
-            reg      : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         strides   = metaparameters['strides']
         k         = metaparameters['k']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = WRN.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = WRN.init_weights
+        del metaparameters['n_filters']
+        del metaparameters['strides']
    
         # Save input vector (feature maps) for the identity link
         shortcut = BatchNormalization()(x)
-        shortcut = Conv2D(n_filters *k, (3, 3), strides=strides, padding='same', use_bias=False,
-                          kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
+        shortcut = Composable.Conv2D(shortcut, n_filters *k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
    
         ## Construct the 3x3, 3x3 convolution block
    
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
-        x = Conv2D(n_filters * k, (3, 3), strides=strides, padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
 
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
-        x = Conv2D(n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
@@ -218,8 +198,7 @@ class WRN(Composable):
         self.embedding = x
 
         # Final Dense Outputting Layer for the outputs
-        x = Dense(n_classes,
-                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = Composable.Dense(x, n_classes)
         # Save pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

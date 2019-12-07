@@ -65,7 +65,7 @@ class ShuffleNet(Composable):
         super().__init__(init_weights=init_weights, reg=reg, relu=relu)
         
         if groups is None:
-            groups = ShuffleNet.groups
+            groups = list(ShuffleNet.groups)
 
         if filters is None:
             filters = self.filters[n_partitions]
@@ -74,24 +74,22 @@ class ShuffleNet(Composable):
         inputs = Input(shape=input_shape)
 
         # The Stem convolution group (referred to as Stage 1)
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction, reg=reg)
+        x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         ''' Construct the Stem Convolution Group 
             inputs : input image (tensor)
             reg    : kernel regularizer
         '''
-        reg = metaparameters['reg']
-
         x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
@@ -114,27 +112,24 @@ class ShuffleNet(Composable):
         return x
 
     @staticmethod
-    def group(x, init_weights=None, **metaparameters):
+    def group(x, **metaparameters):
         ''' Construct a Shuffle Group 
             x           : input to the group
             n_partitions: number of groups to partition feature maps (channels) into.
             n_blocks    : number of shuffle blocks for this group
         '''
         n_blocks     = metaparameters['n_blocks']
-
-        if init_weights is None:
-            init_weights = ShuffleNet.init_weights
             
         # first block is a strided shuffle block
-        x = ShuffleNet.strided_shuffle_block(x, init_weights=init_weights, **metaparameters)
+        x = ShuffleNet.strided_shuffle_block(x, **metaparameters)
     
         # remaining shuffle blocks in group
         for _ in range(n_blocks-1):
-            x = ShuffleNet.shuffle_block(x, init_weights=init_weights, **metaparameters)
+            x = ShuffleNet.shuffle_block(x, **metaparameters)
         return x
     
     @staticmethod
-    def strided_shuffle_block(x, init_weights=None, **metaparameters):
+    def strided_shuffle_block(x, **metaparameters):
         ''' Construct a Strided Shuffle Block 
             x           : input to the block
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -145,12 +140,15 @@ class ShuffleNet(Composable):
         n_partitions = metaparameters['n_partitions']
         n_filters    = metaparameters['n_filters']
         reduction    = metaparameters['reduction']
+        del metaparameters['n_filters']
+        del metaparameters['n_partitions']
         if 'reg' in metaparameters:
             reg = metaparameters['reg']
         else:
             reg = ShuffleNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ShuffleNet.init_weights
             
         # projection shortcut
@@ -163,7 +161,7 @@ class ShuffleNet(Composable):
         n_filters -= int(x.shape[3])
     
         # pointwise group convolution, with dimensionality reduction
-        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights, reg=reg)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), **metaparameters)
         x = Composable.ReLU(x)
     
         # channel shuffle layer
@@ -175,7 +173,7 @@ class ShuffleNet(Composable):
         x = BatchNormalization()(x)
 
         # pointwise group convolution, with dimensionality restoration
-        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, reg=reg)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, **metaparameters)
     
         # Concatenate the projection shortcut to the output
         x = Concatenate()([shortcut, x])
@@ -183,7 +181,7 @@ class ShuffleNet(Composable):
         return x
 
     @staticmethod
-    def shuffle_block(x, init_weights=None, **metaparameters):
+    def shuffle_block(x, **metaparameters):
         ''' Construct a shuffle Shuffle block  
             x           : input to the block
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -194,19 +192,22 @@ class ShuffleNet(Composable):
         n_partitions = metaparameters['n_partitions']
         n_filters    = metaparameters['n_filters']
         reduction    = metaparameters['reduction']
+        del metaparameters['n_filters']
+        del metaparameters['n_partitions']
         if 'reg' in metaparameters:
             reg = metaparameters['reg']
         else:
             reg = ShuffleNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ShuffleNet.init_weights
             
         # identity shortcut
         shortcut = x
     
         # pointwise group convolution, with dimensionality reduction
-        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), init_weights=init_weights, reg=reg)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), **metaparameters)
         x = Composable.ReLU(x)
     
         # channel shuffle layer
@@ -218,7 +219,7 @@ class ShuffleNet(Composable):
         x = BatchNormalization()(x)
     
         # pointwise group convolution, with dimensionality restoration
-        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, init_weights=init_weights, reg=reg)
+        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, **metaparameters)
     
         # Add the identity shortcut (input added to output)
         x = Add()([shortcut, x])
@@ -226,7 +227,7 @@ class ShuffleNet(Composable):
         return x
 
     @staticmethod
-    def pw_group_conv(x, n_partitions, n_filters, init_weights=None, **metaparameters):
+    def pw_group_conv(x, n_partitions, n_filters, **metaparameters):
         ''' A Pointwise Group Convolution  
             x           : input tensor
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -237,8 +238,9 @@ class ShuffleNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = ShuffleNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ShuffleNet.init_weights
             
         # Calculate the number of input filters (channels)
@@ -288,14 +290,11 @@ class ShuffleNet(Composable):
         x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_filters]))(x)
         return x
     
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         ''' Construct the Classifier Group 
             x         : input to the classifier
             n_classes : number of output classes
-            reg       : kernel regularizer
         '''
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
 
@@ -307,7 +306,7 @@ class ShuffleNet(Composable):
         self.embedding = x
         
         x = Dense(n_classes, 
-                  kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save the pre-activation probabilities
         self.probabilities = x
         outputs = Activation('softmax')(x)

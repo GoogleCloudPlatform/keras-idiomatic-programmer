@@ -90,22 +90,19 @@ class InceptionV3(Composable):
         return x
 
     @staticmethod
-    def group(x, blocks, inception=None, reduction=None, n_classes=1000, init_weights=None):
+    def group(x, blocks, inception=None, reduction=None, n_classes=1000):
         """ Construct an Inception group
             x         : input into the group
             blocks    : filters for each block in the group
             inception : type of inception block
             reduction : whether to end the group with grid reduction
             n_classes : number of classes for auxiliary classifier
-        """
-        if init_weights is None:
-            init_weights = InceptionV3.init_weights
-            
+        """           
         aux = [] # Auxiliary Outputs
 
         # Construct the inception blocks (modules)
         for block in blocks:
-            x = inception(x, block[0], block[1], block[2], block[3], init_weights=init_weights)           
+            x = inception(x, block[0], block[1], block[2], block[3])           
 
         # Add auxiliary classifier
         if n_classes:
@@ -127,7 +124,7 @@ class InceptionV3(Composable):
             fpool: filters for pooling branch
         """
         if init_weights is None:
-            init_weights = InceptionV1.init_weights
+            init_weights = InceptionV3.init_weights
             
         # 1x1 branch
         b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)

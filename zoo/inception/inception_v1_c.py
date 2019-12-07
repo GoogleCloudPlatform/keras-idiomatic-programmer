@@ -117,16 +117,13 @@ class InceptionV1(Composable):
         return x, aux
 
     @staticmethod
-    def group(x, blocks, pooling=True, n_classes=1000, init_weights=None):
+    def group(x, blocks, pooling=True, n_classes=1000):
         """ Construct an Inception group
             x         : input into the group
             blocks    : filters for each block in the group
             pooling   : whether to end the group with max pooling
             n_classes : number of classes for auxiliary classifier
         """
-        if init_weights is None:
-            init_weights = InceptionV1.init_weights
-
         aux = [] # Auxiliary Outputs
 
         # Construct the inception blocks (modules)

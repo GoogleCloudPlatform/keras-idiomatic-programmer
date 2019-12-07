@@ -82,9 +82,7 @@ class VGG(Composable):
         """ Construct the Stem Convolutional Group
             inputs : the input vector
         """
-        x = Conv2D(64, (3, 3), strides=(1, 1), padding="same",
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(inputs, 64, (3, 3), strides=(1, 1), padding="same", activation=Composable.ReLU)
         return x
     
     def learner(self, x, **metaparameters):
@@ -108,20 +106,12 @@ class VGG(Composable):
         """
         n_filters = metaparameters['n_filters']
         n_layers  = metaparameters['n_layers']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = VGG.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = VGG.init_weights
+        del metaparameters['n_filters']
 
         # Block of convolutional layers
         for n in range(n_layers):
-            x = Conv2D(n_filters, (3, 3), strides=(1, 1), padding="same",
-                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-            x = Composable.ReLU(x)
+            x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same",
+                                  activation=Composable.ReLU, **metaparameters)
         
         # Max pooling at the end of the block
         x = MaxPooling2D(2, strides=(2, 2))(x)
@@ -142,14 +132,11 @@ class VGG(Composable):
         self.embedding = x
     
         # Two fully connected dense layers
-        x = Dense(4096, activation='relu', 
-                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
-        x = Dense(4096, activation='relu', 
-                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Dense(x, 4096, activation=Composable.ReLU)
+        x = self.Dense(x, 4096, activation=Composable.ReLU)
 
         # Output layer for classification 
-        x = Dense(n_classes, 
-                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = Composable.Dense(x, n_classes)
         # Save the probability distribution before softmax
         self.probabilities = x
         outputs = Activation('softmax')(x)

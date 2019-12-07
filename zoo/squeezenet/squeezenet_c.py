@@ -52,32 +52,29 @@ class SqueezeNet(Composable):
         super().__init__(init_weights=init_weights, reg=reg, relu=relu)
         
         if groups is None:
-            groups = SqueezeNet.groups
+            groups = list(SqueezeNet.groups)
 
         # The input shape
         inputs = Input(shape=input_shape)
 
         # The Stem Group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, dropout=dropout, reg=reg)
+        x = self.learner(x, groups=groups, dropout=dropout)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
         
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         ''' Construct the Stem Group  
             inputs: the input tensor
-            reg   : kernel regularizer
         '''
-        reg = metaparameters['reg']
-
         x = Conv2D(96, (7, 7), strides=2, padding='same',
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
         x = Composable.ReLU(x)
         x = MaxPooling2D(3, strides=2)(x)
         return x
@@ -108,26 +105,23 @@ class SqueezeNet(Composable):
         return x
 
     @staticmethod
-    def group(x, init_weights=None, **metaparameters):
+    def group(x, **metaparameters):
         ''' Construct a Fire Group
             x     : input to the group
             blocks: list of number of filters per fire block (module)
         '''
         blocks = metaparameters['blocks']
-
-        if init_weights is None:
-            init_weights = SqueezeNet.init_weights
             
         # Add the fire blocks (modules) for this group
         for block in blocks:
-            x = SqueezeNet.fire_block(x, init_weights=init_weights, **block, **metaparameters)
+            x = SqueezeNet.fire_block(x,  **block, **metaparameters)
 
         # Delayed downsampling
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
         return x
 
     @staticmethod
-    def fire_block(x, init_weights=None, **metaparameters):
+    def fire_block(x, **metaparameters):
         ''' Construct a Fire Block
             x        : input to the block
             n_filters: number of filters
@@ -138,8 +132,9 @@ class SqueezeNet(Composable):
             reg = metaparameters['reg']
         else:
             reg = SqueezeNet.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = SqueezeNet.init_weights
             
         # squeeze layer
@@ -160,20 +155,17 @@ class SqueezeNet(Composable):
         x = Concatenate()([expand1x1, expand3x3])
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         ''' Construct the Classifier 
             x        : input to the classifier
             n_classes: number of output classes
-            reg      : kernel regularizer
         '''
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
 
         # set the number of filters equal to number of classes
         x = Conv2D(n_classes, (1, 1), strides=1, padding='same',
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = Composable.ReLU(x)
 
         # reduce each filter (class) to a single value

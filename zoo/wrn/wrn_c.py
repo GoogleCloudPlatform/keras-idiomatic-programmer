@@ -57,24 +57,21 @@ class WRN(Composable):
         inputs = Input(input_shape)
 
         # The stem convolutional group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, groups=groups, depth=depth, k=k, dropout=dropout, reg=reg)
+        x = self.learner(x, groups=groups, depth=depth, k=k, dropout=dropout)
 
         # The classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
-            reg    : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # Convolutional layer 
         x = Conv2D(16, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
                    kernel_initializer=self.init_weights, kernel_regularizer=reg)(inputs)
@@ -104,7 +101,7 @@ class WRN(Composable):
         return x
     
     @staticmethod
-    def group(x, init_weights=None, **metaparameters):
+    def group(x, **metaparameters):
         """ Construct a Wide Residual Group
             x         : input into the group
             n_blocks  : number of residual blocks with identity link
@@ -112,15 +109,15 @@ class WRN(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # first block is projection to match the number of input filters to output fitlers for the add operation
-        x = WRN.projection_block(x, init_weights=init_weights, **metaparameters)
+        x = WRN.projection_block(x, **metaparameters)
 
         # wide residual blocks
         for _ in range(n_blocks-1):
-            x = WRN.identity_block(x, init_weights=init_weights, **metaparameters)
+            x = WRN.identity_block(x, **metaparameters)
         return x
 
     @staticmethod
-    def identity_block(x, init_weights=None, **metaparameters):
+    def identity_block(x, **metaparameters):
         """ Construct a B(3,3) style block
             x        : input into the block
             n_filters: number of filters
@@ -135,8 +132,9 @@ class WRN(Composable):
             reg = metaparameters['reg']
         else:
             reg = WRN.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = WRN.init_weights
     
         # Save input vector (feature maps) for the identity link
@@ -163,7 +161,7 @@ class WRN(Composable):
         return x
 
     @staticmethod
-    def projection_block(x, init_weights=None, **metaparameters):
+    def projection_block(x, **metaparameters):
         """ Construct a B(3,3) style block
             x        : input into the block
             n_filters: number of filters
@@ -178,8 +176,9 @@ class WRN(Composable):
             reg = metaparameters['reg']
         else:
             reg = WRN.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = WRN.init_weights
    
         # Save input vector (feature maps) for the identity link
@@ -203,13 +202,11 @@ class WRN(Composable):
         x = Add()([shortcut, x])
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the Classifier Group 
             x         : input to the classifier
             n_classes : number of output classes
         """
-        reg = metaparameters['reg']
-
         # Save encoding layer
         self.encoding = x
 
@@ -222,7 +219,7 @@ class WRN(Composable):
 
         # Final Dense Outputting Layer for the outputs
         x = Dense(n_classes,
-                        kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

@@ -107,11 +107,11 @@ class ResNetV1(Composable):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        x = self.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = self.group(x, strides=(1, 1), **groups.pop(0))
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = ResNetV1.group(x, **group, **metaparameters)
+            x = ResNetV1.group(x, **group)
         return x
 
     @staticmethod

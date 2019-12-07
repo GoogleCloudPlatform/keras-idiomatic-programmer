@@ -71,30 +71,27 @@ class ResNetV2(Composable):
         inputs = Input(input_shape)
 
         # The stem convolutional group
-        x = self.stem(inputs, reg=reg)
+        x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, groups=groups, reg=reg)
+        x = self.learner(x, groups=groups)
 
         # The classifier 
-        outputs = self.classifier(x, n_classes, reg=reg)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, **metaparameters):
+    def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
-            reg    : kernel regularizer
         """
-        reg = metaparameters['reg']
-
         # The 224x224 images are zero padded (black - no signal) to be 230x230 images prior to the first convolution
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer uses large (coarse) filter
         x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
     
@@ -111,15 +108,15 @@ class ResNetV2(Composable):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        x = ResNetV2.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = ResNetV2.group(x, strides=(1, 1), **groups.pop(0))
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = ResNetV2.group(x, **group, **metaparameters)
+            x = ResNetV2.group(x, **group)
         return x
     
     @staticmethod
-    def group(x, strides=(2, 2), init_weights=None, **metaparameters):
+    def group(x, strides=(2, 2), **metaparameters):
         """ Construct a Residual Group
             x         : input into the group
             strides   : whether the projection block is a strided convolution
@@ -128,15 +125,15 @@ class ResNetV2(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # Double the size of filters to fit the first Residual Block
-        x = ResNetV2.projection_block(x, strides=strides, init_weights=init_weights, **metaparameters)
+        x = ResNetV2.projection_block(x, strides=strides, **metaparameters)
 
         # Identity residual blocks
         for _ in range(n_blocks):
-            x = ResNetV2.identity_block(x, init_weights=init_weights, **metaparameters)
+            x = ResNetV2.identity_block(x, **metaparameters)
         return x
 
     @staticmethod
-    def identity_block(x, init_weights=None, **metaparameters):
+    def identity_block(x, **metaparameters):
         """ Construct a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
@@ -147,8 +144,9 @@ class ResNetV2(Composable):
             reg = metaparameters['reg']
         else:
             reg = ResNetV2.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ResNetV2.init_weights
     
         # Save input vector (feature maps) for the identity link
@@ -179,7 +177,7 @@ class ResNetV2(Composable):
         return x
 
     @staticmethod
-    def projection_block(x, strides=(2,2), init_weights=None, **metaparameters):
+    def projection_block(x, strides=(2,2), **metaparameters):
         """ Construct a Bottleneck Residual Block of Convolutions with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
@@ -192,8 +190,9 @@ class ResNetV2(Composable):
             reg = metaparameters['reg']
         else:
             reg = ResNetV2.reg
-
-        if init_weights is None:
+        if 'init_weights' in metaparameters:
+            init_weights = metaparameters['init_weights']
+        else:
             init_weights = ResNetV2.init_weights
 
         # Construct the projection shortcut
@@ -227,13 +226,11 @@ class ResNetV2(Composable):
         x = Add()([x, shortcut])
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes):
         """ Construct the Classifier Group 
             x         : input to the classifier
             n_classes : number of output classes
         """
-        reg = metaparameters['reg']
-
         # Save the encoding layer
         self.encoding = x
         
@@ -245,7 +242,7 @@ class ResNetV2(Composable):
 
         # Final Dense Outputting Layer for the outputs
         x = Dense(n_classes, 
-                        kernel_initializer=self.init_weights, kernel_regularizer=reg)(x)
+                        kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
         # Save the pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

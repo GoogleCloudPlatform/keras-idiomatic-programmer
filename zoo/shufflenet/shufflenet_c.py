@@ -86,12 +86,10 @@ class ShuffleNet(Composable):
     def stem(self, inputs):
         ''' Construct the Stem Convolution Group 
             inputs : input image (tensor)
-            reg    : kernel regularizer
         '''
-        x = Conv2D(24, (3, 3), strides=2, padding='same', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
+        x = self.Conv2D(inputs, 24, (3, 3), strides=2, padding='same', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
         return x
 
@@ -135,7 +133,6 @@ class ShuffleNet(Composable):
             n_partitions: number of groups to partition feature maps (channels) into.
             n_filters   : number of filters
             reduction   : dimensionality reduction factor (e.g, 0.25)
-            reg         : kernel regularizer
         '''
         n_partitions = metaparameters['n_partitions']
         n_filters    = metaparameters['n_filters']
@@ -214,8 +211,8 @@ class ShuffleNet(Composable):
         x = ShuffleNet.channel_shuffle(x, n_partitions)
     
         # Depthwise 3x3 Convolution
-        x = DepthwiseConv2D((3, 3), strides=1, padding='same', use_bias=False, 
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.DepthwiseConv2D(x, (3, 3), strides=1, padding='same', use_bias=False, 
+                                       **metaparameters)
         x = BatchNormalization()(x)
     
         # pointwise group convolution, with dimensionality restoration
@@ -232,16 +229,7 @@ class ShuffleNet(Composable):
             x           : input tensor
             n_partitions: number of groups to partition feature maps (channels) into.
             n_filters   : number of filters
-            reg         : kernel regularizer
         '''
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = ShuffleNet.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = ShuffleNet.init_weights
             
         # Calculate the number of input filters (channels)
         in_filters = x.shape[3]
@@ -258,8 +246,8 @@ class ShuffleNet(Composable):
             group = Lambda(lambda x: x[:, :, :, grp_in_filters * i: grp_in_filters * (i + 1)])(x)
 
             # Perform convolution on channel group
-            conv = Conv2D(grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, 
-                          kernel_initializer=init_weights, kernel_regularizer=reg)(group)
+            conv = Composable.Conv2D(group, grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, 
+                                     **metaparameters)
             # Maintain the point-wise group convolutions in a list
             groups.append(conv)
 
@@ -305,8 +293,7 @@ class ShuffleNet(Composable):
         # Save the embedding layer
         self.embedding = x
         
-        x = Dense(n_classes, 
-                  kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Dense(x, n_classes)
         # Save the pre-activation probabilities
         self.probabilities = x
         outputs = Activation('softmax')(x)

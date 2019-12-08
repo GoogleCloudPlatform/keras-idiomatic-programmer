@@ -92,10 +92,9 @@ class MobileNetV1(Composable):
 
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-        x = Conv2D(32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, 32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
 
         # Depthwise Separable Convolution Block
         x = MobileNetV1.depthwise_block(x, (1, 1), n_filters=64, alpha=alpha)
@@ -139,18 +138,10 @@ class MobileNetV1(Composable):
             strides   : strides
             n_filters : number of filters
             alpha     : width multiplier
-            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         alpha     = metaparameters['alpha']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = MobileNetV1.reg
-        if 'iniit_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = MobileNetV1.init_weights
+        del metaparameters['n_filters']
             
         # Apply the width filter to the number of feature maps
         filters = int(n_filters * alpha)
@@ -163,14 +154,14 @@ class MobileNetV1(Composable):
             padding = 'same'
 
         # Depthwise Convolution
-        x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, 
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False, 
+                                       **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Pointwise Convolution
-        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
+                              **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         return x
@@ -202,8 +193,7 @@ class MobileNetV1(Composable):
         x = Dropout(dropout)(x)
 
         # Use convolution for classifying (emulates a fully connected layer)
-        x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax', 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax')
         # Reshape the resulting output to 1D vector of number of classes
         outputs = Reshape((n_classes, ))(x)
 

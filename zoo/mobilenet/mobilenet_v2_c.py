@@ -93,10 +93,9 @@ class MobileNetV2(Composable):
     
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-        x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
     
     def learner(self, x, **metaparameters):
@@ -121,10 +120,9 @@ class MobileNetV2(Composable):
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
-        x = Conv2D(1280, (1, 1), use_bias=False, 
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, 1280, (1, 1), use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
     @staticmethod
@@ -152,7 +150,6 @@ class MobileNetV2(Composable):
             n_filters : number of filters
             alpha     : width multiplier
             expansion : multiplier for expanding number of filters
-            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         alpha     = metaparameters['alpha']
@@ -164,14 +161,7 @@ class MobileNetV2(Composable):
             expansion = metaparameters['expansion']
         else:
             expansion = MobileNetV2.expansion
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = MobileNetV2.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = MobileNetV2.init_weights
+        del metaparameters['n_filters']
             
         # Remember input
         shortcut = x
@@ -184,8 +174,8 @@ class MobileNetV2(Composable):
         # Dimensionality Expansion (non-first block)
         if expansion > 1:
             # 1x1 linear convolution
-            x = Conv2D(expansion * n_channels, (1, 1), padding='same', use_bias=False, 
-                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+            x = Composable.Conv2D(x, expansion * n_channels, (1, 1), padding='same', use_bias=False, 
+                                  **metaparameters)
             x = BatchNormalization()(x)
             x = Composable.ReLU(x)
 
@@ -197,14 +187,14 @@ class MobileNetV2(Composable):
             padding = 'same'
 
         # Depthwise Convolution
-        x = DepthwiseConv2D((3, 3), strides, padding=padding, use_bias=False, kernel_initializer=init_weights, 
-                            kernel_regularizer=reg)(x)
+        x = Composable.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False,
+                                       **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Linear Pointwise Convolution
-        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                              **metaparameters)
         x = BatchNormalization()(x)
     
         # Number of input filters matches the number of output filters
@@ -227,7 +217,7 @@ class MobileNetV2(Composable):
         self.embedding = x
 
         # Dense layer for final classification
-        x = Dense(n_classes, kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Dense(x, n_classes)
         # Save pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

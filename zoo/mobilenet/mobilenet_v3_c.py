@@ -120,8 +120,7 @@ class MobileNetV3(Composable):
         n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
     
         # Convolutional block
-        x = Conv2D(n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
+        x = self.Conv2D(inputs, n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False)
         x = BatchNormalization()(x)
         x = Composable.HS(x)
         return x
@@ -142,8 +141,8 @@ class MobileNetV3(Composable):
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
-        x = Conv2D(last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                        **metaparameters)
         x = BatchNormalization()(x)
         x = last['activation'](x)
         return x
@@ -177,7 +176,6 @@ class MobileNetV3(Composable):
             expansion : multiplier for expanding number of filters
             squeeze   : whether to include squeeze
             activation: type of activation function
-            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
         expansion = metaparameters['expansion']
@@ -186,14 +184,6 @@ class MobileNetV3(Composable):
             alpha = metaparameters['alpha']
         else:
             alpha = MobileNetV3.alpha
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = MobileNetV3.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = MobileNetV3.init_weights
         if 'squeeze' in metaparameters:
             squeeze = metaparameters['squeeze']
         else:
@@ -202,6 +192,8 @@ class MobileNetV3(Composable):
             activation = metaparameters['activation']
         else:
             activation = ReLU6
+        del metaparameters['n_filters']
+        del metaparameters['kernel_size']
             
         # Remember input
         shortcut = x
@@ -213,24 +205,21 @@ class MobileNetV3(Composable):
     
         # Dimensionality Expansion
         # 1x1 linear convolution
-        x = Conv2D(expansion, (1, 1), padding='same', use_bias=False,
-                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, expansion, (1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = activation(x)
 
         # Depthwise Convolution
-        x = DepthwiseConv2D((3, 3), strides, padding='same', use_bias=False,
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.DepthwiseConv2D(x, (3, 3), strides, padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = activation(x)
 
         # Add squeeze (dimensionality reduction)
         if squeeze:
-            x = MobileNetV3.squeeze(x)
+            x = MobileNetV3.squeeze(x, **metaparameters)
 
         # Linear Pointwise Convolution
-        x = Conv2D(filters, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
     
         # Number of input filters matches the number of output filters
@@ -239,16 +228,18 @@ class MobileNetV3(Composable):
         return x
 
     @staticmethod
-    def squeeze(x):
+    def squeeze(x, **metaparameters):
         """ Construct a squeeze block
             x   : input to the squeeze
         """
+        del metaparameters['activation']
+        
         shortcut = x
         n_channels = x.shape[-1]
 
         x = GlobalAveragePooling2D()(x)
-        x = Dense(n_channels, activation=Composable.ReLU)(x)
-        x = Dense(n_channels, activation=Composable.HS)(x)
+        x = Composable.Dense(x, n_channels, activation=Composable.ReLU, **metaparameters)
+        x = Composable.Dense(x, n_channels, activation=Composable.HS, **metaparameters)
         x = Reshape((1, 1, n_channels))(x)
         x = Multiply()([shortcut, x])
         return x
@@ -270,12 +261,10 @@ class MobileNetV3(Composable):
         
         x = Reshape((1, 1, n_channels))(x)
 
-        x = Conv2D(1280, (1, 1), padding='same', activation=Composable.HS,
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, 1280, (1, 1), padding='same', activation=Composable.HS)
 
         # final classification
-        x = Conv2D(n_classes, (1, 1), padding='same', activation='softmax',
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(x)
+        x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax')
         # Flatten the feature maps into 1D feature maps (?, N)
         outputs = Reshape((n_classes,))(x)
 

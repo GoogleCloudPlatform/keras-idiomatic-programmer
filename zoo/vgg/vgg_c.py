@@ -52,7 +52,7 @@ class VGG(Composable):
             relu        : max value for ReLU
         """
         # Configure the base (super) class
-        super().__init__(reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
 
         # predefined
         if isinstance(n_layers, int):

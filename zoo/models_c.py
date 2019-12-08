@@ -80,19 +80,6 @@ class Composable(object):
         self._probabilities = layer
 
     @staticmethod
-    def ReLU(x):
-        """ Construct ReLU activation function
-            x  : input to activation function
-        """
-        x = ReLU(Composable.relu)(x)
-        return x
-	
-    @staticmethod
-    def HS(x):
-        """ Hard Swish activation """
-        return (x * K.relu(x + 3, max_value=6.0)) / 6.0
-
-    @staticmethod
     def Dense(x, units, activation=None, use_bias=True, **hyperparameters):
         """ Construct Dense Layer
             x           : input to layer
@@ -218,4 +205,25 @@ class Composable(object):
 
         return x
 
+    @staticmethod
+    def ReLU(x):
+        """ Construct ReLU activation function
+            x  : input to activation function
+        """
+        x = ReLU(Composable.relu)(x)
+        return x
+	
+    @staticmethod
+    def HS(x):
+        """ Construct Hard Swish activation function
+            x  : input to activation function
+        """
+        return (x * K.relu(x + 3, max_value=6.0)) / 6.0'
 
+    @staticmethod
+    def BatchNormalization(x):
+        """ Construct a Batch Normalization function
+            x : input to function
+        """
+        x = BatchNormalization(epsilon=1.001e-5)
+        return x

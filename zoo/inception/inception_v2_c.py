@@ -64,22 +64,22 @@ class InceptionV2(Composable):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = Conv2D(64, (7, 7), strides=(2, 2), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
 
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
         # Second Convolutional layer which uses a mid-size filter
-        x = Conv2D(64, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = self.Conv2D(x, 64, (1, 1), strides=(1, 1), padding='same', use_bias=False)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         x = ZeroPadding2D(padding=(1, 1))(x)
-        x = Conv2D(192, (3, 3), strides=(1, 1), padding='valid', use_bias=False, kernel_initializer=self.init_weights)(x)
+        x = self.Conv2D(x, 192, (3, 3), strides=(1, 1), padding='valid', use_bias=False)
         x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
         x = ZeroPadding2D(padding=(1, 1))(x)
@@ -117,7 +117,7 @@ class InceptionV2(Composable):
         return x, aux
 
     @staticmethod
-    def group(x, blocks, pooling=True, n_classes=1000):
+    def group(x, blocks, pooling=True, n_classes=1000, **metaparameters):
         """ Construct an Inception group
             x         : input into the group
             blocks    : filters for each block in the group
@@ -130,9 +130,9 @@ class InceptionV2(Composable):
         for block in blocks:
             # Add auxiliary classifier
             if block is None:
-               aux.append(InceptionV2.auxiliary(x, n_classes))
+               aux.append(InceptionV2.auxiliary(x, n_classes, **metaparameters))
             else:
-                x = InceptionV2.inception_block(x, block[0], block[1], block[2], block[3])           
+                x = InceptionV2.inception_block(x, block[0], block[1], block[2], block[3], **metaparameters)           
 
         if pooling:
             x = ZeroPadding2D(padding=(1, 1))(x)
@@ -140,7 +140,7 @@ class InceptionV2(Composable):
         return x, aux
 
     @staticmethod
-    def inception_block(x, f1x1, f3x3, f5x5, fpool, init_weights=None):
+    def inception_block(x, f1x1, f3x3, f5x5, fpool, **metaparameters):
         """ Construct an Inception block (module)
             x    : input to the block
             f1x1 : filters for 1x1 branch
@@ -148,38 +148,35 @@ class InceptionV2(Composable):
             f5x5 : filters for 5x5 branch
             fpool: filters for pooling branch
         """
-        if init_weights is None:
-            init_weights = InceptionV2.init_weights
-
         # 1x1 branch
-        b1x1 = Conv2D(f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        b1x1 = Composable.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
         b1x1 = BatchNormalization()(b1x1)
         b1x1 = Composable.ReLU(b1x1)
 
         # 3x3 branch
         # 3x3 reduction
-        b3x3 = Conv2D(f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        b3x3 = Composable.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
         b3x3 = BatchNormalization()(b3x3)
         b3x3 = Composable.ReLU(b3x3)
         b3x3 = ZeroPadding2D((1,1))(b3x3)
-        b3x3 = Conv2D(f3x3[1], (3, 3), strides=1, padding='valid', use_bias=False, kernel_initializer=init_weights)(b3x3)
+        b3x3 = Composable.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
         b3x3 = BatchNormalization()(b3x3)
         b3x3 = Composable.ReLU(b3x3)
 
         # 5x5 branch
         # 5x5 reduction
-        b5x5 = Conv2D(f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        b5x5 = Composable.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
         b5x5 = BatchNormalization()(b5x5)
         b5x5 = Composable.ReLU(b5x5)
         b5x5 = ZeroPadding2D((1,1))(b5x5)
-        b5x5 = Conv2D(f5x5[1], (3, 3), strides=1, padding='valid', use_bias=False, kernel_initializer=init_weights)(b5x5)
+        b5x5 = Composable.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
         b5x5 = BatchNormalization()(b5x5)
         b5x5 = Composable.ReLU(b5x5)
 
         # Pooling branch
         bpool = MaxPooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = Conv2D(fpool[0], (1, 1), strides=1, padding='same', use_bias=False, kernel_initializer=init_weights)(bpool)
+        bpool = Composable.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
         bpool = BatchNormalization()(bpool)
         bpool = Composable.ReLU(bpool)
 
@@ -188,22 +185,19 @@ class InceptionV2(Composable):
         return x
 
     @staticmethod
-    def auxiliary(x, n_classes, init_weights=None):
+    def auxiliary(x, n_classes, **metaparameters):
         """ Construct the auxiliary classier
             x        : input to the auxiliary classifier
             n_classes: number of output classes
         """
-        if init_weights is None:
-            init_weights = InceptionV2.init_weights
-
         x = AveragePooling2D((5, 5), strides=(3, 3))(x)
-        x = Conv2D(128, (1, 1), strides=(1, 1), padding='same', use_bias=False, kernel_initializer=init_weights)(x)
+        x = Composable.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
         x = Flatten()(x)
-        x = Dense(1024, activation='relu', kernel_initializer=init_weights)(x)
+        x = Composable.Dense(x, 1024, activation=Composable.ReLU, **metaparameters)
         x = Dropout(0.7)(x)
-        output = Dense(n_classes, activation='softmax', kernel_initializer=init_weights)(x)
+        output = Composable.Dense(x, n_classes, activation='softmax', **metaparameters)
         return output
 
     def classifier(self, x, n_classes, dropout=0.4):
@@ -225,7 +219,7 @@ class InceptionV2(Composable):
         x = Dropout(dropout)(x)
 
         # Final Dense Outputting Layer for the outputs
-        x = Dense(n_classes, kernel_initializer=self.init_weights)(x)
+        x = self.Dense(x, n_classes)
         # Save the pre-activation probabilities layer
         self.probabilities = x
         outputs = Activation('softmax')(x)

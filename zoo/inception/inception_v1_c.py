@@ -117,7 +117,7 @@ class InceptionV1(Composable):
         return x, aux
 
     @staticmethod
-    def group(x, blocks, pooling=True, n_classes=1000):
+    def group(x, blocks, pooling=True, n_classes=1000, **metaparameters):
         """ Construct an Inception group
             x         : input into the group
             blocks    : filters for each block in the group
@@ -130,9 +130,9 @@ class InceptionV1(Composable):
         for block in blocks:
             # Add auxiliary classifier
             if block is None:
-               aux.append(InceptionV1.auxiliary(x, n_classes))
+               aux.append(InceptionV1.auxiliary(x, n_classes, **metaparameters))
             else:
-                x = InceptionV1.inception_block(x, block[0], block[1], block[2], block[3])           
+                x = InceptionV1.inception_block(x, block[0], block[1], block[2], block[3], **metaparameters)           
 
         if pooling:
             x = ZeroPadding2D(padding=(1, 1))(x)
@@ -188,7 +188,7 @@ class InceptionV1(Composable):
         x = Composable.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = Composable.ReLU(x)
         x = Flatten()(x)
-        x = Composable.Dense(x, 1024, **metaparameters)
+        x = Composable.Dense(x, 1024, activation=Composable.ReLU, **metaparameters)
         x = Composable.ReLU(x)
         x = Dropout(0.7)(x)
         output = Composable.Dense(x, n_classes, activation='softmax', **metaparameters)

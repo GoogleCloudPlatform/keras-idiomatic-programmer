@@ -73,16 +73,7 @@ class Xception(Composable):
         """ Create the entry flow section
             inputs : input tensor to neural network
             blocks : number of filters per block
-            reg    : kernel nregularizer
         """
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = Xception.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = Xception.init_weights
 
         def stem(inputs):
             """ Create the stem entry into the neural network
@@ -90,15 +81,13 @@ class Xception(Composable):
             """
             # Strided convolution - dimensionality reduction
             # Reduce feature maps by 75%
-            x = Conv2D(32, (3, 3), strides=(2, 2),
-                       kernel_initializer=init_weights, kernel_regularizer=reg)(inputs)
+            x = Composable.Conv2D(inputs, 32, (3, 3), strides=(2, 2), **metaparameters)
             x = BatchNormalization()(x)
             x = Composable.ReLU(x)
 
             # Convolution - dimensionality expansion
             # Double the number of filters
-            x = Conv2D(64, (3, 3), strides=(1, 1),
-                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+            x = Composable.Conv2D(x, 64, (3, 3), strides=(1, 1), **metaparameters)
             x = BatchNormalization()(x)
             x = Composable.ReLU(x)
             return x
@@ -132,17 +121,7 @@ class Xception(Composable):
         """ Create the exit flow section
             x         : input to the exit flow section
             n_classes : number of output classes
-            reg       : kernel regularizer
-        """
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = Xception.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = Xception.init_weights
-            
+        """        
         def classifier(x, n_classes):
             """ The output classifier
                 x         : input to the classifier
@@ -158,8 +137,7 @@ class Xception(Composable):
             Xception.embedding = x
         
             # Fully connected output layer (classification)
-            x = Dense(n_classes,
-                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+            x = Composable.Dense(x, n_classes, **metaparameters)
             # Save the pre-activation layer
             Xception.probabilities = x
             outputs = Activation('softmax')(x)
@@ -172,20 +150,17 @@ class Xception(Composable):
 
         # Strided convolution to double number of filters in identity link to
         # match output of residual block for the add operation (projection shortcut)
-        shortcut = Conv2D(1024, (1, 1), strides=(2, 2), padding='same',
-                          kernel_initializer=init_weights)(shortcut)
+        shortcut = Composable.Conv2D(x, 1024, (1, 1), strides=(2, 2), padding='same', **metaparameters)
         shortcut = BatchNormalization()(shortcut)
 
         # First Depthwise Separable Convolution
         # Dimensionality reduction - reduce number of filters
-        x = SeparableConv2D(728, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, 728, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
 
         # Second Depthwise Separable Convolution
         # Dimensionality restoration
-        x = SeparableConv2D(1024, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, 1024, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -196,14 +171,12 @@ class Xception(Composable):
         x = Add()([x, shortcut])
 
         # Third Depthwise Separable Convolution
-        x = SeparableConv2D(1556, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, 1556, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Fourth Depthwise Separable Convolution
-        x = SeparableConv2D(2048, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, 2048, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -217,33 +190,25 @@ class Xception(Composable):
         """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
             x        : input into residual block
             n_filters: number of filters
-            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = Xception.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = Xception.init_weights
+        del metaparameters['n_filters']
 
         # Remember the input
         shortcut = x
     
         # Strided convolution to double number of filters in identity link to
         # match output of residual block for the add operation (projection shortcut)
-        shortcut = Conv2D(n_filters, (1, 1), strides=(2, 2), padding='same', kernel_initializer=init_weights)(shortcut)
+        shortcut = Composable.Conv2D(x, n_filters, (1, 1), strides=(2, 2), padding='same', **metaparameters)
         shortcut = BatchNormalization()(shortcut)
 
         # First Depthwise Separable Convolution
-        x = SeparableConv2D(n_filters, (3, 3), padding='same', kernel_initializer=init_weights)(x)
+        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Second depthwise Separable Convolution
-        x = SeparableConv2D(n_filters, (3, 3), padding='same', kernel_initializer=init_weights)(x)
+        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
@@ -260,36 +225,25 @@ class Xception(Composable):
         """ Create a residual block using Depthwise Separable Convolutions
             x        : input into residual block
             n_filters: number of filters
-            reg       : kernel regularizer
         """
         n_filters = metaparameters['n_filters']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = Xception.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = Xception.init_weights
+        del metaparameters['n_filters']
 
         # Remember the input
         shortcut = x
 
         # First Depthwise Separable Convolution
-        x = SeparableConv2D(n_filters, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Second depthwise Separable Convolution
-        x = SeparableConv2D(n_filters, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
 
         # Third depthwise Separable Convolution
-        x = SeparableConv2D(n_filters, (3, 3), padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
         x = BatchNormalization()(x)
         x = Composable.ReLU(x)
     

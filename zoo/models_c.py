@@ -14,6 +14,7 @@
 
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
+from tensorflow.keras.layers import DepthwiseConv2D
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 
@@ -164,3 +165,30 @@ class Composable(object):
         x = Conv2DTranspose(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
+
+    @staticmethod
+    def DepthwiseConv2D(x, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+        """ Construct a DepthwiseConv2D layer
+            x           : input to layer
+            kernel_size : kernel (filter) size
+            strides     : strides
+            padding     : how to pad when filter overlaps the edge
+            activation  : activation function
+            use_bias    : whether to include the bias
+            init_weights: kernel initializer
+            reg         : kernel regularizer        : kernel regularizer
+        """
+        if 'reg' in hyperparameters:
+            reg = hyperparameters['reg']
+        else:
+            reg = Composable.reg
+        if 'init_weights' in hyperparameters:
+            init_weights = hyperparameters['init_weights']
+        else:
+            init_weights = Composable.init_weights
+
+        x = DepthwiseConv2D(kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
+                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        return x
+
+

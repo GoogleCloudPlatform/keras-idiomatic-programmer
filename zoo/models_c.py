@@ -80,7 +80,8 @@ class Composable(object):
     def probabilities(self, layer):
         self._probabilities = layer
 
-    def classifier(self, x, n_classes, **metaparameters):
+    @staticmethod
+    def classifier(x, n_classes, **metaparameters):
       """ Construct the Classifier Group 
           x         : input to the classifier
           n_classes : number of output classes
@@ -93,22 +94,22 @@ class Composable(object):
 
       if pooling is not None:
           # Save the encoding layer (high dimensionality)
-          self.encoding = x
+          Composable.encoding = x
 
           # Pool at the end of all the convolutional residual blocks
           x = pooling()(x)
 
           # Save the embedding layer (low dimensionality)
-          self.embedding = x
+          Composable.embedding = x
 
       # Final Dense Outputting Layer for the outputs
-      x = self.Dense(x, n_classes, **metaparameters)
+      x = Composable.Dense(x, n_classes, **metaparameters)
       
       # Save the pre-activation probabilities layer
-      self.probabilities = x
+      Composable.probabilities = x
       outputs = Activation('softmax')(x)
       # Save the post-activation probabilities layer
-      self.softmax = outputs
+      Composable.softmax = outputs
       return outputs
 
     @staticmethod

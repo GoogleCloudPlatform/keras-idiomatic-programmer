@@ -14,7 +14,7 @@
 
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
-from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D
+from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
@@ -91,16 +91,23 @@ class Composable(object):
           pooling = metaparameters['pooling']
       else:
           pooling = GlobalAveragePooling2D
+      if 'dropout' in metaparameters:
+          dropout = metaparameters['dropout']
+      else:
+          dropout = None
 
       if pooling is not None:
           # Save the encoding layer (high dimensionality)
           Composable.encoding = x
 
-          # Pool at the end of all the convolutional residual blocks
+          # Pooling at the end of all the convolutional groups
           x = pooling()(x)
 
           # Save the embedding layer (low dimensionality)
           Composable.embedding = x
+
+      if dropout is not None:
+          x = Dropout(dropout)(x)
 
       # Final Dense Outputting Layer for the outputs
       x = Composable.Dense(x, n_classes, **metaparameters)

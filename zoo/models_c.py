@@ -84,18 +84,25 @@ class Composable(object):
       """ Construct the Classifier Group 
           x         : input to the classifier
           n_classes : number of output classes
+          pooling   : type of feature map pooling
       """
-      # Save the encoding layer (high dimensionality)
-      self.encoding = x
+      if 'pooling' in metaparameters:
+          pooling = metaparameters['pooling']
+      else:
+          pooling = GlobalAveragePooling2D
 
-      # Pool at the end of all the convolutional residual blocks
-      x = GlobalAveragePooling2D()(x)
+      if pooling is not None:
+          # Save the encoding layer (high dimensionality)
+          self.encoding = x
 
-      # Save the embedding layer (low dimensionality)
-      self.embedding = x
+          # Pool at the end of all the convolutional residual blocks
+          x = pooling()(x)
+
+          # Save the embedding layer (low dimensionality)
+          self.embedding = x
 
       # Final Dense Outputting Layer for the outputs
-      x = self.Dense(x, n_classes, *metaparameters)
+      x = self.Dense(x, n_classes, **metaparameters)
       
       # Save the pre-activation probabilities layer
       self.probabilities = x

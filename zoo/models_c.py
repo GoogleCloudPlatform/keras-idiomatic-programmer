@@ -15,6 +15,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
 from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D
+from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 
@@ -78,6 +79,30 @@ class Composable(object):
     @probabilities.setter
     def probabilities(self, layer):
         self._probabilities = layer
+
+    def classifier(self, x, n_classes, **metaparameters):
+      """ Construct the Classifier Group 
+          x         : input to the classifier
+          n_classes : number of output classes
+      """
+      # Save the encoding layer (high dimensionality)
+      self.encoding = x
+
+      # Pool at the end of all the convolutional residual blocks
+      x = GlobalAveragePooling2D()(x)
+
+      # Save the embedding layer (low dimensionality)
+      self.embedding = x
+
+      # Final Dense Outputting Layer for the outputs
+      x = self.Dense(x, n_classes, *metaparameters)
+      
+      # Save the pre-activation probabilities layer
+      self.probabilities = x
+      outputs = Activation('softmax')(x)
+      # Save the post-activation probabilities layer
+      self.softmax = outputs
+      return outputs
 
     @staticmethod
     def Dense(x, units, activation=None, use_bias=True, **hyperparameters):
@@ -218,7 +243,7 @@ class Composable(object):
         """ Construct Hard Swish activation function
             x  : input to activation function
         """
-        return (x * K.relu(x + 3, max_value=6.0)) / 6.0'
+        return (x * K.relu(x + 3, max_value=6.0)) / 6.0
 
     @staticmethod
     def BatchNormalization(x):
@@ -227,3 +252,4 @@ class Composable(object):
         """
         x = BatchNormalization(epsilon=1.001e-5)
         return x
+        

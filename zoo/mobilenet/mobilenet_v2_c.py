@@ -14,6 +14,7 @@
 
 
 # MobileNet v2 + composable (2019)
+# Trainable params: 3,504,872
 # Paper: https://arxiv.org/pdf/1801.04381.pdf
 # 224x224 input: 3,504,872 parameters
 
@@ -201,29 +202,6 @@ class MobileNetV2(Composable):
         if n_channels == filters and strides == (1, 1):
             x = Add()([shortcut, x]) 
         return x
-
-    def classifier(self, x, n_classes):
-        """ Construct the classifier group
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save encoding layer
-        self.encoding = x
-
-        # Flatten the feature maps into 1D feature maps (?, N)
-        x = GlobalAveragePooling2D()(x)
-
-        # Save embedding layer
-        self.embedding = x
-
-        # Dense layer for final classification
-        x = self.Dense(x, n_classes)
-        # Save pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save post-activation probabilities layer
-        self.softmax = outputs
-        return outputs
 
 # Example
 # mobilenet = MobileNetV2()

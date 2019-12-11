@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Wide Residual Networks (2016)
+# Trainable params: 38,547,418
 # Paper: https://arxiv.org/pdf/1605.07146.pdf 
 
 import tensorflow as tf
@@ -181,30 +182,6 @@ class WRN(Composable):
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
         return x
-
-    def classifier(self, x, n_classes):
-        """ Construct the Classifier Group 
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save encoding layer
-        self.encoding = x
-
-        # Pool at the end of all the convolutional residual blocks (8, 8)
-        x = AveragePooling2D((x.shape[1], x.shape[2]))(x)
-        x = Flatten()(x)
-
-        # Save embedding layer
-        self.embedding = x
-
-        # Final Dense Outputting Layer for the outputs
-        x = Composable.Dense(x, n_classes)
-        # Save pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save post-activation probabilities layer
-        self.softmax = outputs
-        return outputs
 
 # Example
 # wrn = WRN(depth=28,k=10)

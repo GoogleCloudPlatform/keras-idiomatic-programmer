@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # SE-ResNeXt (50, 101, 152)
+# Trainable params: 27,547,688
 # Paper: https://arxiv.org/pdf/1709.01507.pdf
 
 import tensorflow as tf
@@ -250,7 +251,7 @@ class SEResNeXt(Composable):
 
         # Dimensionality restoration
         x = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                              **metasparameters)
+                              **metaparameters)
         x = BatchNormalization()(x)
     
         # Pass the output through the squeeze and excitation block
@@ -260,27 +261,6 @@ class SEResNeXt(Composable):
         x = Add()([shortcut, x])
         x = Composable.ReLU(x)
         return x
-    
-    def classifier(self, x, n_classes):
-        """ Construct the Classifier
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save the encoding layer
-        self.encoding = x
-
-        # Final Dense Outputting Layer 
-        x = GlobalAveragePooling2D()(x)
-
-        # Save the embedding layer
-        self.embedding = x
-        
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Sace the post-activation probabilities
-        return outputs
 
 # Example
 # senet = SEResNeXt(50)

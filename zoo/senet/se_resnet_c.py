@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # SE-ResNet (50/101/152 + composable) v1.0
+# Trainable params: 28,071,976
 # Paper: https://arxiv.org/pdf/1709.01507.pdf
 
 import tensorflow as tf
@@ -154,11 +155,11 @@ class SEResNet(Composable):
         x = Reshape((1, 1, filters))(x)
     
         # Reduce the number of filters (1x1xC/r)
-        x = self.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
+        x = Composable.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
 
         # Excitation (dimensionality restoration)
         # Restore the number of filters (1x1xC)
-        x = self.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
+        x = Composable.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
 
         # Scale - multiply the squeeze/excitation output with the input (WxHxC)
         x = Multiply()([shortcut, x])
@@ -216,7 +217,7 @@ class SEResNet(Composable):
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Composable.Conv2D(4 * n_filters, (1, 1), strides=strides, use_bias=False, 
+        shortcut = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, 
                                      **metaparameters)
         shortcut = BatchNormalization()(shortcut)
 
@@ -247,29 +248,6 @@ class SEResNet(Composable):
         x = Add()([x, shortcut])
         x = Composable.ReLU(x)
         return x
-
-    def classifier(self, x, n_classes):
-      """ Create the Classifier Group 
-          x         : input to the classifier
-          n_classes : number of output classes
-      """
-      # Save the encoding layer
-      self.encoding = x
-      
-      # Pool at the end of all the convolutional residual blocks
-      x = GlobalAveragePooling2D()(x)
-
-      # Save the embedding layer
-      self.embedding = x
-
-      # Final Dense Outputting Layer for the outputs
-      x = self.Dense(x, n_classes)
-      # Save the pre-activation probabilities layer
-      self.probabilities = x
-      outputs = Activation('softmax')(x)
-      # Save the post-activation probabilities layer
-      self.softmax = outputs
-      return outputs
 
 # Example
 # senet = SEResNet(50)

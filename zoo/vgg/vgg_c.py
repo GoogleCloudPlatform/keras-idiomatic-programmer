@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # VGG (16 and 19 & Composable) (2014)
+# Trainable params: 138,357,544
 # Paper: https://arxiv.org/pdf/1409.1556.pdf
 
 import tensorflow as tf
@@ -135,13 +136,7 @@ class VGG(Composable):
         x = self.Dense(x, 4096, activation=Composable.ReLU)
         x = self.Dense(x, 4096, activation=Composable.ReLU)
 
-        # Output layer for classification 
-        x = Composable.Dense(x, n_classes)
-        # Save the probability distribution before softmax
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the probability distribution after softmax
-        self.softmax = outputs
+        outputs = super().classifier(x, n_classes, pooling=None)
         return outputs
 
 # Example of constructing a VGG 16

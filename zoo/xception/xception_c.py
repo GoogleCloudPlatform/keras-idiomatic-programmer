@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Xception + Composable (2016)
+# Trainable params: 22,944,896
 # https://arxiv.org/pdf/1610.02357.pdf
 
 import tensorflow as tf
@@ -121,30 +122,7 @@ class Xception(Composable):
         """ Create the exit flow section
             x         : input to the exit flow section
             n_classes : number of output classes
-        """        
-        def classifier(x, n_classes):
-            """ The output classifier
-                x         : input to the classifier
-                n_classes : number of output classes
-            """
-            # Save the encoding layer
-            Xception.encoding = x
-            
-            # Global Average Pooling will flatten the 10x10 feature maps into 1D feature maps
-            x = GlobalAveragePooling2D()(x)
-
-            # Save the embedding layer
-            Xception.embedding = x
-        
-            # Fully connected output layer (classification)
-            x = Composable.Dense(x, n_classes, **metaparameters)
-            # Save the pre-activation layer
-            Xception.probabilities = x
-            outputs = Activation('softmax')(x)
-            # Save the post-activation layer
-            Xception.softmax = outputs
-            return outputs
-
+        """     
         # Remember the input
         shortcut = x
 
@@ -181,7 +159,7 @@ class Xception(Composable):
         x = Composable.ReLU(x)
 
         # Create classifier section
-        x = classifier(x, n_classes)
+        x = Composable.classifier(x, n_classes, **metaparameters)
 
         return x
 

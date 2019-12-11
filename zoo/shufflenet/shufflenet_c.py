@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ShuffleNet v1.0 (composable)
+# Trainable params: 1,680,620
 # Paper: https://arxiv.org/pdf/1707.01083.pdf
 
 import tensorflow as tf
@@ -277,29 +278,6 @@ class ShuffleNet(Composable):
         # Restore shape
         x = Lambda(lambda z: K.reshape(z, [-1, height, width, n_filters]))(x)
         return x
-    
-    def classifier(self, x, n_classes):
-        ''' Construct the Classifier Group 
-            x         : input to the classifier
-            n_classes : number of output classes
-        '''
-        # Save the encoding layer
-        self.encoding = x
-
-        # Use global average pooling to flatten feature maps to 1D vector, where
-        # each feature map is a single averaged value (pixel) in flatten vector
-        x = GlobalAveragePooling2D()(x)
-
-        # Save the embedding layer
-        self.embedding = x
-        
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities
-        self.softmax = outputs
-        return outputs
     
 # Example
 # shufflenet = ShuffleNet()

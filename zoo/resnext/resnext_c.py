@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNeXt (50, 101, 152)
+# Trainable params: 31,010,344
 # Paper: https://arxiv.org/pdf/1611.05431.pdf
 
 import tensorflow as tf
@@ -222,28 +223,6 @@ class ResNeXt(Composable):
         x = Add()([shortcut, x])
         x = Composable.ReLU(x)
         return x
-    
-    def classifier(self, x, n_classes):
-        """ Construct the Classifier
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save the encoding layer
-        self.encoding = x
-
-        # Final Dense Outputting Layer 
-        x = GlobalAveragePooling2D()(x)
-
-        # Save the embedding layer
-        self.embedding = x
-        
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities layer
-        self.softmax = outputs
-        return outputs
 
 
 # Example

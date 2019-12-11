@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # DenseNet-BC 121/169/201 + composable (2016)
+# Trainable params: 7,976,808
 # Paper: https://arxiv.org/pdf/1608.06993.pdf
 
 import tensorflow as tf
@@ -198,29 +199,6 @@ class DenseNet(Composable):
         # Use mean value (average) instead of max value sampling when pooling reduce by 75%
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)
         return x
-    
-    def classifier(self, x, n_classes):
-        """ Construct the Classifier Group
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save the encoding layer
-        self.encoding = x
-
-        # Global Average Pooling will flatten the 7x7 feature maps into 1D feature maps
-        x = GlobalAveragePooling2D()(x)
-
-        # Save the embeddinglayer
-        self.embedding = x
-        
-        # Fully connected output layer (classification)
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities layer
-        self.softmax = outputs
-        return outputs
     
 # Example
 # densenet = DenseNet(121)

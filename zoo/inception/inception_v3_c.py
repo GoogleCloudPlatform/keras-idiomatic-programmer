@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Inception v3:
+# Trainable params: 33,666,688
 # Paper: https://arxiv.org/pdf/1512.00567.pdf
 
 import tensorflow as tf
@@ -411,13 +412,7 @@ class InceptionV3(Composable):
         # Save the embedding layer
         self.embedding = x
 
-        # Final Dense Outputting Layer for the outputs
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities
-        self.softmax = outputs
+        outputs = super().classifier(x, n_classes, pooling=None)
         return outputs
 
 # Example

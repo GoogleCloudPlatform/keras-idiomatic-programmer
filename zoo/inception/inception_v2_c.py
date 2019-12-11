@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Inception v2 (GoogLeNet) - Composable
+# Trainable params: 13,004,888
 # Paper: https://arxiv.org/pdf/1409.4842.pdf
 
 import tensorflow as tf
@@ -216,15 +217,7 @@ class InceptionV2(Composable):
         # Save the embedding layer
         self.embedding = x
         
-        x = Dropout(dropout)(x)
-
-        # Final Dense Outputting Layer for the outputs
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities layer
-        self.softmax = outputs
+        outputs = super().classifier(x, n_classes, pooling=None, dropout=dropout)
         return outputs
 
 # Example

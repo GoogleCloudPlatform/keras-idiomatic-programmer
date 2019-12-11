@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNetb (50, 101, 152 + composable) version 1.5
+# Trainable params: 31,487,272
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
 # The strides=2 in the projection_block is moved from the 1x1 convolution to the 
 # 3x3 convolution. Gained 0.5% more accuracy on ImageNet
@@ -199,29 +200,6 @@ class ResNetV1_5(Composable):
         x = Add()([x, shortcut])
         x = Composable.ReLU(x)
         return x
-
-    def classifier(self, x, n_classes):
-        """ Construct the Classifier Group 
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save the encoding layer
-        self.encoding = x
-
-        # Pool at the end of all the convolutional residual blocks
-        x = GlobalAveragePooling2D()(x)
-
-        # Save the embedding layer
-        self.embedding = x
-
-        # Final Dense Outputting Layer for the outputs
-        x = self.Dense(x, n_classes)
-        # Save the pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities layer
-        self.softmax = outputs
-        return outputs
 
 
 # Example of a ResNet50 V1.5

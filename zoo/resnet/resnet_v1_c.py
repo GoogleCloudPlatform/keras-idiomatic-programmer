@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNet (50, 101, 152 + Composable) v1.0
+# Trainable params: 31,487,272
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
@@ -201,29 +202,5 @@ class ResNetV1(Composable):
         x = Composable.ReLU(x)
         return x
 
-    def classifier(self, x, n_classes, **metaparameters):
-      """ Construct the Classifier Group 
-          x         : input to the classifier
-          n_classes : number of output classes
-      """
-      # Save the encoding layer
-      self.encoding = x
-
-      # Pool at the end of all the convolutional residual blocks
-      x = GlobalAveragePooling2D()(x)
-
-      # Save the embedding layer
-      self.embedding = x
-
-      # Final Dense Outputting Layer for the outputs
-      x = self.Dense(x, n_classes)
-      # Save the pre-activation probabilities layer
-      self.probabilities = x
-      outputs = Activation('softmax')(x)
-      # Save the post-activation probabilities layer
-      self.softmax = outputs
-      return outputs
-
 # Example of ResNet50
 # resnet = ResNetV1(50)
-

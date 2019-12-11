@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # ResNet (50, 101, 152 + composable) version 2
+# Trainable params: 31,479,336
 # Paper: https://arxiv.org/pdf/1603.05027.pdf
 # In this version, the BatchNormalization and ReLU activation are moved to be before the convolution in the bottleneck/projection blocks.
 # In v1 and v1.5 they were after. 
@@ -203,28 +204,6 @@ class ResNetV2(Composable):
         x = Add()([x, shortcut])
         return x
 
-    def classifier(self, x, n_classes):
-        """ Construct the Classifier Group 
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Save the encoding layer
-        self.encoding = x
-        
-        # Pool at the end of all the convolutional residual blocks
-        x = GlobalAveragePooling2D()(x)
-
-        # Save the embedding layer
-        self.embedding = x
-
-        # Final Dense Outputting Layer for the outputs
-        x = Composable.Dense(x, n_classes)
-        # Save the pre-activation probabilities layer
-        self.probabilities = x
-        outputs = Activation('softmax')(x)
-        # Save the post-activation probabilities layer
-        self.softmax = outputs
-        return outputs
-
 # Example
-# resnet = ResNetV2(50)
+resnet = ResNetV2(50)
+resnet.model.summary()

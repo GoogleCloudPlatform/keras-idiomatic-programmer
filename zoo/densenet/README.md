@@ -65,9 +65,9 @@ model = Model(inputs, outputs)
 
 ```python
 def group(x, n_blocks, n_filters, reduction=None):
-    """ Construct a Dense Block
+    """ Construct a Dense Group
         x         : input to the block
-        n_blocks  : number of residual blocks in dense block
+        n_blocks  : number of residual blocks in dense group
         n_filters : number of filters in convolution layer in residual block
         reduction : amount to reduce feature maps by
     """

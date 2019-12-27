@@ -119,9 +119,9 @@ class DenseNet(Composable):
 
     @staticmethod
     def group(x, **metaparameters):
-        """ Construct a Dense Block
-            x         : input to the block
-            n_blocks  : number of residual blocks in dense block
+        """ Construct a Dense Group
+            x         : input to the group
+            n_blocks  : number of residual blocks in dense group
             reduction : amount to reduce (compress) feature maps by
         """
         n_blocks  = metaparameters['n_blocks']

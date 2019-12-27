@@ -58,8 +58,8 @@ def learner(x, groups, n_filters, reduction):
     return x
 
 def group(x, n_blocks, n_filters, reduction=None):
-    """ Construct a Dense Block
-        x         : input to the block
+    """ Construct a Dense Group
+        x         : input to the group
         n_blocks  : number of residual blocks in dense block
         n_filters : number of filters in convolution layer in residual block
         reduction : amount to reduce feature maps by

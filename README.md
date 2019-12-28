@@ -2,18 +2,16 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![License](https://i.creativecommons.org/l/by/4.0/80x15.png)](LICENSE)
 
-# Idiomatic Programmer
+# Google Cloud AI Developer Relations
 
-This repository contains the handbooks in softcopy (PDF) and code examples from the Idiomatic Programmer
-handbook series, as well as presentation packs and accompanying code labs. The Idiomatic Programmer materials are produced by Google AI Developer Relations. The audience for the materials are software engineers and data scientists wanting to learn machine learning. Our first series focuses on the [tf.Keras](https://keras.io/) framework and computer vision, along with [OpenCV](https://opencv.org/).
+This repository contains content produced by *Google Cloud AI Developer Relations* for machine learning and artificial intelligence. The content covers a wide spectrum from educational, training, and research, covering from novices, junior/intermediate to advanced.  
 
-The material has been designed both for self-learning, and for being incorporating into instructional material for universities, private coding schools, and professional training. Licensed as Apache 2.0 and CC-BY, organizations are free to integrate and customize the material into their curriculum.
+The content has been designed both for self-learning, and for being incorporating into instructional material for universities, private coding schools, and professional training. Licensed as Apache 2.0 and CC-BY, organizations are free to integrate and customize the material into their curriculum.
 
 The repository is organized by:
 
 | Directory     | Description   |
 | ------------- | ------------- |
-| `src`         | code snippets for handbooks (e.g., handbook1) - Apache 2.0 license |
 | `handbooks`   | PDF softcopy of handbooks - CC-BY 4.0 license |
 |               | Primer - Statistics Fundamentals for Machine Learning |
 |               | Handbook 1 - Learning Keras - Computer Vision Models |

@@ -13,10 +13,6 @@ The repository is organized by:
 | Directory     | Description   |
 | ------------- | ------------- |
 | `handbooks`   | PDF softcopy of handbooks - CC-BY 4.0 license (2019) |
-|               | Primer - Statistics Fundamentals for Machine Learning |
-|               | Handbook 1 - Learning Keras - Computer Vision Models |
-|               | Handbook 2 - Learning Keras (OpenCV) - Computer Vision Data Engineering |
-|               | Handbook 3 - Learning Keras - Computer Vision Training and Deployment |
 | `books` .     | PDF softcopy of books - preview versions |
 |               | Deep Learning by Design |
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license (2019) |

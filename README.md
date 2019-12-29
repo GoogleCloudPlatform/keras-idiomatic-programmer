@@ -16,17 +16,6 @@ The repository is organized by:
 | `books` .     | PDF softcopy of books - preview versions |
 |               | Deep Learning by Design |
 | `workshops`   | workshops (presentation slides and code labs) - CC-BY 4.0 license (2019) |
-|               | Neural Networks |
-|               | Convolutional Neural Networks |
-|               | Wide Convolutional Neural Networks |
-|               | Advanced Neural Networks |
-|               | Mobile Networks |
-|               | Data Engineering |
-|               | Data Augmentation |
-|               | Training |
-|               | Transfer Learning |
-|               | Production |
-|               | Modern CNN Architectures |
 | `notebooks`   | notebooks for production-grade solutions |
 | `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
 | `community labs`| Labs for community participation in research |

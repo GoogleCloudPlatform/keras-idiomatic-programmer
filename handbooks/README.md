@@ -13,4 +13,3 @@
 
 *This collection is literally my Keras bible. a great one.* - Roozebh Sanaei, Computer Vision Engineer at Rapsodo
 
-*This [composable design pattern] is so amazing of an effort.* -  Sayak Paul, GDE/ML and Deep Learning Associate at PyImageSearch

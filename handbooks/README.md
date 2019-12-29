@@ -1,3 +1,10 @@
+| Description   |
+| ------------- |
+| Primer - Statistics Fundamentals for Machine Learning |
+| Handbook 1 - Learning Keras - Computer Vision Models |
+| Handbook 2 - Learning Keras (OpenCV) - Computer Vision Data Engineering |
+| Handbook 3 - Learning Keras - Computer Vision Training and Deployment |
+
 ## Quotes
 
 *This is an absolutely excellent tutorial. I love the style and level of detail---not too much, not too little.* -- Andrew Moore, VP of Engineering, Google Cloud

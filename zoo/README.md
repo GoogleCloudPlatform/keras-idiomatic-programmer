@@ -51,6 +51,8 @@ All the models here are coded using the idiomatic design pattern for models. The
 | `Siamese Twin` | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |<br/>
 *AutoEncoders*<br/>
 | `Auto Encoder` | no paper - general principles |<br/>
+*Generative Adversarial Networks*<br/>
+| `DCGAN` | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/pdf/1511.06434.pdf) |<br/>
 
 ## Architecture Representation
 

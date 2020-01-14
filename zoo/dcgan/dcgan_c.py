@@ -12,10 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# DCGAN + composable (2016)
+# Paper: https://arxiv.org/pdf/1511.06434.pdf
+
 from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Dense, Flatten, Conv2D, Conv2DTranspose, Reshape
-from tensorflow.keras.layers import ReLU, LeakyReLU, Activation
+from tensorflow.keras.layers import Flatten, Reshape, Dropout, Dense, ReLU
+from tensorflow.keras.layers import LeakyReLU, Activation, ZeroPadding2D
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, BatchNormalization
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import Adam
+
+import matplotlib.pyplot as plt
 
 import sys
 sys.path.append('../')
@@ -23,7 +30,7 @@ from models_c import Composable
 
 class DCGAN(Composable):
     
-    def __init__(self, latent=100, input_shape=(28, 28, 1), reg=l2(0.001), init_weights='he_normal', relu=None): 
+    def __init__(self, latent=100, input_shape=(28, 28, 1), reg=None, init_weights='glorot_uniform', relu=None): 
         """ Construct a Deep Convolutional GAN (DC-GAN)
             latent      : dimension of latent space
             input_shape : input shape
@@ -48,7 +55,7 @@ class DCGAN(Composable):
             channels : number of channels
         """
         def stem(inputs):
-            x = Dense(128 * 7 * 7, activation="relu")(inputs)
+            x = self.Dense(inputs, 128 * 7 * 7, activation="relu")
             x = Reshape((7, 7, 128))(x)
             return x
         
@@ -58,7 +65,7 @@ class DCGAN(Composable):
             x = BatchNormalization(momentum=0.8)(x)
             x = ReLU()(x)
         
-            x = Conv2DTranspose(64, (3, 3), strides=2, padding='same')(x) 
+            x = Conv2DTranspose(64, (3, 3), strides=2, padding='same')(x)
             x = Conv2D(64, (3, 3), padding="same")(x)
             x = BatchNormalization(momentum=0.8)(x)
             x = ReLU()(x)
@@ -184,10 +191,10 @@ class DCGAN(Composable):
             if epoch % save_interval == 0:
                 self.save_imgs(epoch)
                 
-    
-                
-                
     def save_imgs(self, epoch, latent=100):
+        import os
+        if not os.path.isdir('images'):
+            os.mkdir('images')
         r, c = 5, 5
         noise = np.random.normal(0, 1, (r * c, latent))
         gen_imgs = self.g.predict(noise)
@@ -207,11 +214,11 @@ class DCGAN(Composable):
 
      
     
+# Example
 model = DCGAN()
-(X_train, _), (_, _) = mnist.load_data()
-
-# Rescale -1 to 1
-X_train = X_train / 127.5 - 1.
-X_train = np.expand_dims(X_train, axis=3)
-
-model.train(X_train, latent=100, epochs=4000)
+from tensorflow.keras.datasets import mnist
+import numpy as np
+(x_train, _), (_, _) = mnist.load_data()
+x_train = x_train / 127.5 - 1.
+x_train = np.expand_dims(x_train, axis=3)
+model.train(x_train, latent=100, epochs=4000)

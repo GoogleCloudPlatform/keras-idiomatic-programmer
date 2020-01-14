@@ -91,7 +91,7 @@ class ResNetV1(Composable):
     
         # First Convolutional layer which uses a large (coarse) filter 
         x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
@@ -111,11 +111,10 @@ class ResNetV1(Composable):
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = ResNetV1.group(x, **group)
+            x = self.group(x, **group)
         return x
 
-    @staticmethod
-    def group(x, strides=(2, 2), **metaparameters):
+    def group(self, x, strides=(2, 2), **metaparameters):
         """ Construct a Residual Group 
             x         : input into the group
             strides   : whether the projection block is a strided convolution
@@ -124,15 +123,14 @@ class ResNetV1(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # Double the size of filters to fit the first Residual Block
-        x = ResNetV1.projection_block(x, strides=strides, **metaparameters)
+        x = self.projection_block(x, strides=strides, **metaparameters)
 
         # Identity residual blocks
         for _ in range(n_blocks):
-            x = ResNetV1.identity_block(x,  **metaparameters)
+            x = self.identity_block(x,  **metaparameters)
         return x
 
-    @staticmethod
-    def identity_block(x, **metaparameters):
+    def identity_block(self, x, **metaparameters):
         """ Construct a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
@@ -146,26 +144,25 @@ class ResNetV1(Composable):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = Composable.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Bottleneck layer
-        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Composable.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def projection_block(x, strides=(2,2), **metaparameters):
+    def projection_block(self, x, strides=(2,2), **metaparameters):
         """ Construct Bottleneck Residual Block with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
@@ -177,30 +174,50 @@ class ResNetV1(Composable):
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = self.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
+        shortcut = self.BatchNormalization(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = Composable.Conv2D(x, n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Bottleneck layer
-        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
 
         # Add the projection shortcut link to the output of the residual block
         x = Add()([x, shortcut])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
 # Example of ResNet50
 # resnet = ResNetV1(50)
+
+def example():
+    ''' Example for constructing/training a ResNet V1 model
+    '''
+    # Example of constructing a mini-ResNet
+    groups = [ { 'n_filters' : 64, 'n_blocks': 1 },
+               { 'n_filters': 128, 'n_blocks': 2 },
+               { 'n_filters': 256, 'n_blocks': 2 }]
+    resnet = ResNetV1(groups, input_shape=(32, 32, 3), n_classes=10)
+    resnet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    resnet.model.summary()
+
+    # train on CIFAR-10
+    from tensorflow.keras.datasets import cifar10
+    import numpy as np
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = (x_train / 255.0).astype(np.float32)
+
+    resnet.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
+

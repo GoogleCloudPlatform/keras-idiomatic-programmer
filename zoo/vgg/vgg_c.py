@@ -139,6 +139,9 @@ class VGG(Composable):
         outputs = super().classifier(x, n_classes, pooling=None)
         return outputs
 
+# Example stock VGG16
+# vgg = VGG(16)
+
 def example():
     ''' Example for constructing/training a VGG model
     '''

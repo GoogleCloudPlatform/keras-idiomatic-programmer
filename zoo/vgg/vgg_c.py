@@ -83,7 +83,8 @@ class VGG(Composable):
         """ Construct the Stem Convolutional Group
             inputs : the input vector
         """
-        x = self.Conv2D(inputs, 64, (3, 3), strides=(1, 1), padding="same", activation=Composable.ReLU)
+        x = self.Conv2D(inputs, 64, (3, 3), strides=(1, 1), padding="same")
+        x = self.ReLU(x)
         return x
     
     def learner(self, x, **metaparameters):
@@ -98,8 +99,7 @@ class VGG(Composable):
             x = self.group(x, **block, **metaparameters)
         return x
 
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         """ Construct a Convolutional Group
             x        : input to the group
             n_layers : number of convolutional layers
@@ -111,8 +111,8 @@ class VGG(Composable):
 
         # Block of convolutional layers
         for n in range(n_layers):
-            x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same",
-                                  activation=Composable.ReLU, **metaparameters)
+            x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same",
+                            activation=self.ReLU, **metaparameters)
         
         # Max pooling at the end of the block
         x = MaxPooling2D(2, strides=(2, 2))(x)
@@ -133,11 +133,27 @@ class VGG(Composable):
         self.embedding = x
     
         # Two fully connected dense layers
-        x = self.Dense(x, 4096, activation=Composable.ReLU)
-        x = self.Dense(x, 4096, activation=Composable.ReLU)
+        x = self.Dense(x, 4096, activation=self.ReLU)
+        x = self.Dense(x, 4096, activation=self.ReLU)
 
         outputs = super().classifier(x, n_classes, pooling=None)
         return outputs
 
-# Example of constructing a VGG 16
-# vgg = VGG(16)
+def example():
+    ''' Example for constructing/training a VGG model
+    '''
+    # Example of constructing a mini-VGG
+    groups = [ { 'n_layers': 1, 'n_filters': 64 },
+               { 'n_layers': 2, 'n_filters': 128 },
+               { 'n_layers': 2, 'n_filters': 256 } ]
+    vgg = VGG(groups, input_shape=(32, 32, 3), n_classes=10)
+    vgg.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    vgg.model.summary()
+
+    # train on CIFAR-10
+    from tensorflow.keras.datasets import cifar10
+    import numpy as np
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = (x_train / 255.0).astype(np.float32)
+
+    vgg.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)

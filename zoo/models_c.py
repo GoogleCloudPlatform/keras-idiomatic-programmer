@@ -15,7 +15,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
 from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
-from tensorflow.keras.layers import GlobalAveragePooling2D, Activation
+from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
 from tensorflow.keras.regularizers import l2
 import tensorflow.keras.backend as K
 
@@ -261,10 +261,10 @@ class Composable(object):
         return (x * K.relu(x + 3, max_value=6.0)) / 6.0
 
     @staticmethod
-    def BatchNormalization(x):
+    def BatchNormalization(x, **params):
         """ Construct a Batch Normalization function
             x : input to function
         """
-        x = BatchNormalization(epsilon=1.001e-5)
+        x = BatchNormalization(epsilon=1.001e-5, **params)(x)
         return x
         

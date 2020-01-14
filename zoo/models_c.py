@@ -22,13 +22,14 @@ import tensorflow.keras.backend as K
 class Composable(object):
     ''' Composable base (super) class for Models '''
     init_weights = 'he_normal'	# weight initialization
-    reg          = l2(0.001)    # kernel regularizer
+    reg          = None         # kernel regularizer
     relu         = None         # ReLU max value
 
     def __init__(self, init_weights=None, reg=None, relu=None):
         """ Constructor
-            init_weights :
+            init_weights : kernel initializer
             relu         :
+            reg          : kernel regularizer
         """
         if init_weights is not None:
             self.init_weights = init_weights
@@ -80,8 +81,7 @@ class Composable(object):
     def probabilities(self, layer):
         self._probabilities = layer
 
-    @staticmethod
-    def classifier(x, n_classes, **metaparameters):
+    def classifier(self, x, n_classes, **metaparameters):
       """ Construct the Classifier Group 
           x         : input to the classifier
           n_classes : number of output classes
@@ -98,29 +98,28 @@ class Composable(object):
 
       if pooling is not None:
           # Save the encoding layer (high dimensionality)
-          Composable.encoding = x
+          self.encoding = x
 
           # Pooling at the end of all the convolutional groups
           x = pooling()(x)
 
           # Save the embedding layer (low dimensionality)
-          Composable.embedding = x
+          self.embedding = x
 
       if dropout is not None:
           x = Dropout(dropout)(x)
 
       # Final Dense Outputting Layer for the outputs
-      x = Composable.Dense(x, n_classes, **metaparameters)
+      x = self.Dense(x, n_classes, **metaparameters)
       
       # Save the pre-activation probabilities layer
-      Composable.probabilities = x
+      self.probabilities = x
       outputs = Activation('softmax')(x)
       # Save the post-activation probabilities layer
-      Composable.softmax = outputs
+      self.softmax = outputs
       return outputs
 
-    @staticmethod
-    def Dense(x, units, activation=None, use_bias=True, **hyperparameters):
+    def Dense(self, x, units, activation=None, use_bias=True, **hyperparameters):
         """ Construct Dense Layer
             x           : input to layer
             activation  : activation function
@@ -131,18 +130,17 @@ class Composable(object):
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
         else:
-            reg = Composable.reg
+            reg = self.reg
         if 'init_weights' in hyperparameters:
             init_weights = hyperparameters['init_weights']
         else:
-            init_weights = Composable.init_weights
+            init_weights = self.init_weights
             
         x = Dense(units, activation, use_bias=use_bias,
                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    @staticmethod
-    def Conv2D(x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def Conv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
         """ Construct a Conv2D layer
             x           : input to layer
             n_filters   : number of filters
@@ -157,18 +155,17 @@ class Composable(object):
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
         else:
-            reg = Composable.reg
+            reg = self.reg
         if 'init_weights' in hyperparameters:
             init_weights = hyperparameters['init_weights']
         else:
-            init_weights = Composable.init_weights
+            init_weights = self.init_weights
 
         x = Conv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
                    kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    @staticmethod
-    def Conv2DTranspose(x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def Conv2DTranspose(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
         """ Construct a Conv2DTranspose layer
             x           : input to layer
             n_filters   : number of filters
@@ -183,18 +180,17 @@ class Composable(object):
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
         else:
-            reg = Composable.reg
+            reg = self.reg
         if 'init_weights' in hyperparameters:
             init_weights = hyperparameters['init_weights']
         else:
-            init_weights = Composable.init_weights
+            init_weights = self.init_weights
 
         x = Conv2DTranspose(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    @staticmethod
-    def DepthwiseConv2D(x, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def DepthwiseConv2D(self, x, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
         """ Construct a DepthwiseConv2D layer
             x           : input to layer
             kernel_size : kernel (filter) size
@@ -208,18 +204,17 @@ class Composable(object):
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
         else:
-            reg = Composable.reg
+            reg = self.reg
         if 'init_weights' in hyperparameters:
             init_weights = hyperparameters['init_weights']
         else:
-            init_weights = Composable.init_weights
+            init_weights = self.init_weights
 
         x = DepthwiseConv2D(kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    @staticmethod
-    def SeparableConv2D(x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def SeparableConv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
         """ Construct a SeparableConv2D layer
             x           : input to layer
             n_filters   : number of filters
@@ -234,34 +229,31 @@ class Composable(object):
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
         else:
-            reg = Composable.reg
+            reg = self.reg
         if 'init_weights' in hyperparameters:
             init_weights = hyperparameters['init_weights']
         else:
-            init_weights = Composable.init_weights
+            init_weights = self.init_weights
 
         x = SeparableConv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
                             kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         return x
 
-    @staticmethod
-    def ReLU(x):
+    def ReLU(self, x):
         """ Construct ReLU activation function
             x  : input to activation function
         """
-        x = ReLU(Composable.relu)(x)
+        x = ReLU(self.relu)(x)
         return x
 	
-    @staticmethod
-    def HS(x):
+    def HS(self, x):
         """ Construct Hard Swish activation function
             x  : input to activation function
         """
         return (x * K.relu(x + 3, max_value=6.0)) / 6.0
 
-    @staticmethod
-    def BatchNormalization(x, **params):
+    def BatchNormalization(self, x, **params):
         """ Construct a Batch Normalization function
             x : input to function
         """

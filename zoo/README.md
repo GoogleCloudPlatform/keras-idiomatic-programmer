@@ -52,7 +52,7 @@ All the models here are coded using the idiomatic design pattern for models. The
 *AutoEncoders*<br/>
 | `Auto Encoder` | no paper - general principles |<br/>
 *Generative Adversarial Networks*<br/>
-| `DCGAN` | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks](https://arxiv.org/pdf/1511.06434.pdf) |<br/>
+| `DCGAN` | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks, 2016](https://arxiv.org/pdf/1511.06434.pdf) |<br/>
 
 ## Architecture Representation
 

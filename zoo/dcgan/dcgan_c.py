@@ -55,24 +55,25 @@ class DCGAN(Composable):
             channels : number of channels
         """
         def stem(inputs):
-            x = self.Dense(inputs, 128 * 7 * 7, activation="relu")
+            x = self.Dense(inputs, 128 * 7 * 7)
+            x = self.ReLU(x)
             x = Reshape((7, 7, 128))(x)
             return x
         
         def learner(x):
-            x = Conv2DTranspose(128, (3, 3), strides=2, padding='same')(x)
-            x = Conv2D(128, (3, 3), padding="same")(x)
-            x = BatchNormalization(momentum=0.8)(x)
-            x = ReLU()(x)
+            x = self.Conv2DTranspose(x, 128, (3, 3), strides=2, padding='same')
+            x = self.Conv2D(x, 128, (3, 3), padding="same")
+            x = self.BatchNormalization(x, momentum=0.8)
+            x = self.ReLU(x)
         
-            x = Conv2DTranspose(64, (3, 3), strides=2, padding='same')(x)
-            x = Conv2D(64, (3, 3), padding="same")(x)
-            x = BatchNormalization(momentum=0.8)(x)
-            x = ReLU()(x)
+            x = self.Conv2DTranspose(x, 64, (3, 3), strides=2, padding='same')
+            x = self.Conv2D(x, 64, (3, 3), padding="same")
+            x = self.BatchNormalization(x, momentum=0.8)
+            x = self.ReLU(x)
             return x
         
         def classifier(x):
-            outputs = Conv2D(channels, (3, 3), activation='tanh', padding="same")(x)
+            outputs = self.Conv2D(x, channels, (3, 3), activation='tanh', padding="same")
             return outputs
         
         # Construct the Generator
@@ -91,32 +92,32 @@ class DCGAN(Composable):
         """
         
         def stem(inputs):
-            x = Conv2D(32, (3, 3), strides=2, padding="same")(inputs)
+            x = self.Conv2D(inputs, 32, (3, 3), strides=2, padding="same")
             x = LeakyReLU(alpha=0.2)(x)
             x = Dropout(0.25)(x)
             return x
         
         def learner(x):
-            x = Conv2D(64, (3, 3), strides=2, padding="same")(x)
+            x = self.Conv2D(x, 64, (3, 3), strides=2, padding="same")
             x = ZeroPadding2D(padding=((0,1),(0,1)))(x)
-            x = BatchNormalization(momentum=0.8)(x)
+            x = self.BatchNormalization(x, momentum=0.8)
             x = LeakyReLU(alpha=0.2)(x)
             x = Dropout(0.25)(x)
         
-            x = Conv2D(128, (3, 3), strides=2, padding="same")(x)
-            x = BatchNormalization(momentum=0.8)(x)
+            x = self.Conv2D(x, 128, (3, 3), strides=2, padding="same")
+            x = self.BatchNormalization(x, momentum=0.8)
             x = LeakyReLU(alpha=0.2)(x)
             x = Dropout(0.25)(x)
         
-            x = Conv2D(256, (3, 3), strides=1, padding="same")(x)
-            x = BatchNormalization(momentum=0.8)(x)
+            x = self.Conv2D(x, 256, (3, 3), strides=1, padding="same")
+            x = self.BatchNormalization(x, momentum=0.8)
             x = LeakyReLU(alpha=0.2)(x)
             x = Dropout(0.25)(x)
             return x
         
         def classifier(x):
             x = Flatten()(x)
-            outputs = Dense(1, activation='sigmoid')(x)
+            outputs = self.Dense(x, 1, activation='sigmoid')
             return outputs
         
         # Construct the discriminator

@@ -277,7 +277,7 @@ class Composable(object):
             lr    : current learning rate
         """
         # double the learning rate
-        return lr * 2
+        return lr * 2.0
 
     def warmup(self, x_train, y_train, epochs=2, loss='sparse_categorical_crossentropy', lr=1e-6):
         """ Warmup for numerical stability
@@ -288,6 +288,6 @@ class Composable(object):
             lr      : warmup learning rate
         """
         self.compile(loss=loss, optimizer=Adam(lr), metrics=['acc'])
-        lrate = LearningRateScheduler(warmup_scheduler)
+        lrate = LearningRateScheduler(self.warmup_scheduler)
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=128, verbose=1,
                        callbacks=[lrate])

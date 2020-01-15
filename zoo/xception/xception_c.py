@@ -50,27 +50,26 @@ class Xception(Composable):
         super().__init__(init_weights=init_weights, reg=reg, relu=relu)
         
         if entry is None:
-            entry = Xception.entry
+            entry = self.entry
         if middle is None:
-            middle = Xception.middle
+            middle = self.middle
 
         # Create the input vector
         inputs = Input(shape=input_shape)
 
 	# Create entry section with three blocks
-        x = Xception.entryFlow(inputs, blocks=entry)
+        x = self.entryFlow(inputs, blocks=entry)
 
 	# Create the middle section with eight blocks
-        x = Xception.middleFlow(x, blocks=middle)
+        x = self.middleFlow(x, blocks=middle)
 
 	# Create the exit section 
-        outputs = Xception.exitFlow(x, n_classes)
+        outputs = self.exitFlow(x, n_classes)
 
 	# Instantiate the model
         self._model = Model(inputs, outputs)
 
-    @staticmethod
-    def entryFlow(inputs, init_weights=None, **metaparameters):
+    def entryFlow(self, inputs, init_weights=None, **metaparameters):
         """ Create the entry flow section
             inputs : input tensor to neural network
             blocks : number of filters per block
@@ -82,15 +81,15 @@ class Xception(Composable):
             """
             # Strided convolution - dimensionality reduction
             # Reduce feature maps by 75%
-            x = Composable.Conv2D(inputs, 32, (3, 3), strides=(2, 2), **metaparameters)
-            x = BatchNormalization()(x)
-            x = Composable.ReLU(x)
+            x = self.Conv2D(inputs, 32, (3, 3), strides=(2, 2), **metaparameters)
+            x = self.BatchNormalization(x)
+            x = self.ReLU(x)
 
             # Convolution - dimensionality expansion
             # Double the number of filters
-            x = Composable.Conv2D(x, 64, (3, 3), strides=(1, 1), **metaparameters)
-            x = BatchNormalization()(x)
-            x = Composable.ReLU(x)
+            x = self.Conv2D(x, 64, (3, 3), strides=(1, 1), **metaparameters)
+            x = self.BatchNormalization(x)
+            x = self.ReLU(x)
             return x
 
         blocks = metaparameters['blocks']
@@ -100,12 +99,11 @@ class Xception(Composable):
 
         # Create residual blocks using linear projection
         for block in blocks:
-            x = Xception.projection_block(x, **block)
+            x = self.projection_block(x, **block)
 
         return x
 
-    @staticmethod
-    def middleFlow(x, **metaparameters):
+    def middleFlow(self, x, **metaparameters):
         """ Create the middle flow section
             x     : input tensor into section
             blocks: number of filters per block
@@ -114,11 +112,10 @@ class Xception(Composable):
 
         # Create residual blocks
         for block in blocks:
-            x = Xception.residual_block(x, **block, **metaparameters)
+            x = self.residual_block(x, **block, **metaparameters)
         return x
 
-    @staticmethod
-    def exitFlow(x, n_classes, **metaparameters):
+    def exitFlow(self, x, n_classes, **metaparameters):
         """ Create the exit flow section
             x         : input to the exit flow section
             n_classes : number of output classes
@@ -128,19 +125,19 @@ class Xception(Composable):
 
         # Strided convolution to double number of filters in identity link to
         # match output of residual block for the add operation (projection shortcut)
-        shortcut = Composable.Conv2D(x, 1024, (1, 1), strides=(2, 2), padding='same', **metaparameters)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = self.Conv2D(x, 1024, (1, 1), strides=(2, 2), padding='same', **metaparameters)
+        shortcut = self.BatchNormalization(shortcut)
 
         # First Depthwise Separable Convolution
         # Dimensionality reduction - reduce number of filters
-        x = Composable.SeparableConv2D(x, 728, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.SeparableConv2D(x, 728, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
 
         # Second Depthwise Separable Convolution
         # Dimensionality restoration
-        x = Composable.SeparableConv2D(x, 1024, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, 1024, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Create pooled feature maps, reduce size by 75%
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
@@ -149,22 +146,21 @@ class Xception(Composable):
         x = Add()([x, shortcut])
 
         # Third Depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, 1556, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, 1556, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Fourth Depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, 2048, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, 2048, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Create classifier section
-        x = Composable.classifier(x, n_classes, **metaparameters)
+        x = self.classifier(x, n_classes, **metaparameters)
 
         return x
 
-    @staticmethod
-    def projection_block(x, **metaparameters):
+    def projection_block(self, x, **metaparameters):
         """ Create a residual block using Depthwise Separable Convolutions with Projection shortcut
             x        : input into residual block
             n_filters: number of filters
@@ -177,18 +173,18 @@ class Xception(Composable):
     
         # Strided convolution to double number of filters in identity link to
         # match output of residual block for the add operation (projection shortcut)
-        shortcut = Composable.Conv2D(x, n_filters, (1, 1), strides=(2, 2), padding='same', **metaparameters)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = self.Conv2D(x, n_filters, (1, 1), strides=(2, 2), padding='same', **metaparameters)
+        shortcut = self.BatchNormalization(shortcut)
 
         # First Depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Second depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Create pooled feature maps, reduce size by 75%
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
@@ -198,8 +194,7 @@ class Xception(Composable):
 
         return x
 
-    @staticmethod
-    def residual_block(x, **metaparameters):
+    def residual_block(self, x, **metaparameters):
         """ Create a residual block using Depthwise Separable Convolutions
             x        : input into residual block
             n_filters: number of filters
@@ -211,19 +206,19 @@ class Xception(Composable):
         shortcut = x
 
         # First Depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Second depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Third depthwise Separable Convolution
-        x = Composable.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.SeparableConv2D(x, n_filters, (3, 3), padding='same', **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
     
         # Add the identity link to the output of the block
         x = Add()([x, shortcut])
@@ -231,3 +226,16 @@ class Xception(Composable):
 
 # Example
 # xception = Xception()
+
+def example():
+    ''' Example for constructing/training a Xception model on CIFAR-10
+    '''
+    # Example of constructing a mini-Xception
+    entry  = [{ 'n_filters' : 128 }, { 'n_filters' : 728 }]
+    middle = [{ 'n_filters' : 728 }, { 'n_filters' : 728 }, { 'n_filters' : 728 }]
+
+    xception = Xception(entry=entry, middle=middle, input_shape=(32, 32, 3), n_classes=10)
+    xception.model.summary()
+    xception.cifar10()
+
+# example()

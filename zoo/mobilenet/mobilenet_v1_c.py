@@ -45,7 +45,7 @@ class MobileNetV1(Composable):
     init_weights = 'glorot_uniform'
     relu = 6.0
 
-    def __init__(self, alpha=1, pho=1, dropout=0.5, groups=None, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups=None, alpha=1, pho=1, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
         """ Construct a Mobile Convolution Neural Network
             alpha       : width multipler
@@ -93,11 +93,11 @@ class MobileNetV1(Composable):
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
         x = self.Conv2D(x, 32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Depthwise Separable Convolution Block
-        x = MobileNetV1.depthwise_block(x, (1, 1), n_filters=64, alpha=alpha)
+        x = self.depthwise_block(x, (1, 1), n_filters=64, alpha=alpha)
         return x
     
     def learner(self, x, **metaparameters):
@@ -111,12 +111,11 @@ class MobileNetV1(Composable):
 
         # Add Depthwise Separable Convolution Group
         for group in groups:
-            x = MobileNetV1.group(x, **group, alpha=alpha)
+            x = self.group(x, **group, alpha=alpha)
 
         return x
 
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         """ Construct a Depthwise Separable Convolution Group
             x         : input to the group
             n_blocks  : number of blocks in the group
@@ -124,15 +123,14 @@ class MobileNetV1(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # In first block, the depthwise convolution is strided - feature map size reduction
-        x = MobileNetV1.depthwise_block(x, strides=(2, 2), **metaparameters)
+        x = self.depthwise_block(x, strides=(2, 2), **metaparameters)
     
         # Remaining blocks
         for _ in range(n_blocks - 1):
-            x = MobileNetV1.depthwise_block(x, strides=(1, 1), **metaparameters)
+            x = self.depthwise_block(x, strides=(1, 1), **metaparameters)
         return x
 
-    @staticmethod
-    def depthwise_block(x, strides, **metaparameters):
+    def depthwise_block(self, x, strides, **metaparameters):
         """ Construct a Depthwise Separable Convolution block
             x         : input to the block
             strides   : strides
@@ -154,16 +152,16 @@ class MobileNetV1(Composable):
             padding = 'same'
 
         # Depthwise Convolution
-        x = Composable.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False, 
-                                       **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False, 
+                                 **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Pointwise Convolution
-        x = Composable.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
-                              **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
+                        **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
         return x
 
     def classifier(self, x, n_classes, **metaparameters):
@@ -203,3 +201,17 @@ class MobileNetV1(Composable):
 
 # Example
 # mobilenet = MobileNetV1()
+
+def example():
+    ''' Example for constructing/training a Mobilenet model on CIFAR-10
+    '''
+    # Example of constructing a mini-Mobilenet
+    groups = [ { 'n_filters': 128,  'n_blocks': 1 },
+               { 'n_filters': 256,  'n_blocks': 1 },
+               { 'n_filters': 512,  'n_blocks': 2 } ]
+    mobilenet = MobileNetV1(groups, input_shape=(32, 32, 3), n_classes=10)
+    mobilenet.model.summary()
+    mobilenet.cifar10()
+
+# reports reshape bug during training
+example()

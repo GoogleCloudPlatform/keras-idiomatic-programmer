@@ -67,7 +67,7 @@ class MobileNetV2(Composable):
         if groups is None:
              groups = list(self.groups)
 
-        inputs = Input(shape=(224, 224, 3))
+        inputs = Input(shape=input_shape)
 
         # The Stem Group
         x = self.stem(inputs, alpha=alpha)
@@ -95,7 +95,7 @@ class MobileNetV2(Composable):
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
         x = self.Conv2D(x, n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
         return x
     
@@ -113,21 +113,20 @@ class MobileNetV2(Composable):
 
         # First Inverted Residual Convolution Group
         group = groups.pop(0)
-        x = MobileNetV2.group(x, **group, alpha=alpha, expansion=1, strides=(1, 1))
+        x = self.group(x, **group, alpha=alpha, expansion=1, strides=(1, 1))
 
         # Add Inverted Residual Convolution Group
         for group in groups:
-            x = MobileNetV2.group(x, **group, alpha=alpha, expansion=expansion)
+            x = self.group(x, **group, alpha=alpha, expansion=expansion)
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
         x = self.Conv2D(x, 1280, (1, 1), use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def group(x, strides=(2, 2), **metaparameters):
+    def group(self, x, strides=(2, 2), **metaparameters):
         """ Construct an Inverted Residual Group
             x         : input to the group
             strides   : whether first inverted residual block is strided.
@@ -136,15 +135,14 @@ class MobileNetV2(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # In first block, the inverted residual block maybe strided - feature map size reduction
-        x = MobileNetV2.inverted_block(x, strides=strides, **metaparameters)
+        x = self.inverted_block(x, strides=strides, **metaparameters)
     
         # Remaining blocks
         for _ in range(n_blocks - 1):
-            x = MobileNetV2.inverted_block(x, strides=(1, 1), **metaparameters)
+            x = self.inverted_block(x, strides=(1, 1), **metaparameters)
         return x
 
-    @staticmethod
-    def inverted_block(x, strides=(1, 1), **metaparameters):
+    def inverted_block(self, x, strides=(1, 1), **metaparameters):
         """ Construct an Inverted Residual Block
             x         : input to the block
             strides   : strides
@@ -157,11 +155,11 @@ class MobileNetV2(Composable):
         if 'alpha' in metaparameters:
             alpha = metaparameters['alpha']
         else:
-            alpha = MobileNetV2.alpha
+            alpha = self.alpha
         if 'expansion' in metaparameters:
             expansion = metaparameters['expansion']
         else:
-            expansion = MobileNetV2.expansion
+            expansion = self.expansion
         del metaparameters['n_filters']
             
         # Remember input
@@ -175,10 +173,10 @@ class MobileNetV2(Composable):
         # Dimensionality Expansion (non-first block)
         if expansion > 1:
             # 1x1 linear convolution
-            x = Composable.Conv2D(x, expansion * n_channels, (1, 1), padding='same', use_bias=False, 
-                                  **metaparameters)
-            x = BatchNormalization()(x)
-            x = Composable.ReLU(x)
+            x = self.Conv2D(x, expansion * n_channels, (1, 1), padding='same', use_bias=False, 
+                            **metaparameters)
+            x = self.BatchNormalization(x)
+            x = self.ReLU(x)
 
         # Strided convolution to match number of filters
         if strides == (2, 2):
@@ -188,15 +186,15 @@ class MobileNetV2(Composable):
             padding = 'same'
 
         # Depthwise Convolution
-        x = Composable.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False,
-                                       **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False,
+                                 **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Linear Pointwise Convolution
-        x = Composable.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                              **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False,
+                        **metaparameters)
+        x = self.BatchNormalization(x)
     
         # Number of input filters matches the number of output filters
         if n_channels == filters and strides == (1, 1):
@@ -205,3 +203,16 @@ class MobileNetV2(Composable):
 
 # Example
 # mobilenet = MobileNetV2()
+
+def example():
+    ''' Example for constructing/training a MobileNet V2 model on CIFAR-10
+    '''
+    # Example of constructing a mini-MobileNet
+    groups = [ { 'n_filters': 16,  'n_blocks': 1 },
+               { 'n_filters': 32,  'n_blocks': 2 },
+               { 'n_filters': 64,  'n_blocks': 3 } ]
+    mobilenet = MobileNetV2(groups, input_shape=(32, 32, 3), n_classes=10)
+    mobilenet.model.summary()
+    mobilenet.cifar10()
+
+# example()

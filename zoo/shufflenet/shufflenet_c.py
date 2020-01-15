@@ -89,7 +89,7 @@ class ShuffleNet(Composable):
             inputs : input image (tensor)
         '''
         x = self.Conv2D(inputs, 24, (3, 3), strides=2, padding='same', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
         return x
@@ -107,11 +107,10 @@ class ShuffleNet(Composable):
 
         # Assemble the shuffle groups
         for group in groups:
-            x = ShuffleNet.group(x, **group, **filters.pop(0), **metaparameters)
+            x = self.group(x, **group, **filters.pop(0), **metaparameters)
         return x
 
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         ''' Construct a Shuffle Group 
             x           : input to the group
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -120,15 +119,14 @@ class ShuffleNet(Composable):
         n_blocks     = metaparameters['n_blocks']
             
         # first block is a strided shuffle block
-        x = ShuffleNet.strided_shuffle_block(x, **metaparameters)
+        x = self.strided_shuffle_block(x, **metaparameters)
     
         # remaining shuffle blocks in group
         for _ in range(n_blocks-1):
-            x = ShuffleNet.shuffle_block(x, **metaparameters)
+            x = self.shuffle_block(x, **metaparameters)
         return x
     
-    @staticmethod
-    def strided_shuffle_block(x, **metaparameters):
+    def strided_shuffle_block(self, x, **metaparameters):
         ''' Construct a Strided Shuffle Block 
             x           : input to the block
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -143,11 +141,11 @@ class ShuffleNet(Composable):
         if 'reg' in metaparameters:
             reg = metaparameters['reg']
         else:
-            reg = ShuffleNet.reg
+            reg = self.reg
         if 'init_weights' in metaparameters:
             init_weights = metaparameters['init_weights']
         else:
-            init_weights = ShuffleNet.init_weights
+            init_weights = self.init_weights
             
         # projection shortcut
         shortcut = x
@@ -159,27 +157,26 @@ class ShuffleNet(Composable):
         n_filters -= int(x.shape[3])
     
         # pointwise group convolution, with dimensionality reduction
-        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), **metaparameters)
-        x = Composable.ReLU(x)
+        x = self.pw_group_conv(x, n_partitions, int(reduction * n_filters), **metaparameters)
+        x = self.ReLU(x)
     
         # channel shuffle layer
-        x = ShuffleNet.channel_shuffle(x, n_partitions)
+        x = self.channel_shuffle(x, n_partitions)
 
         # Depthwise 3x3 Strided Convolution
-        x = DepthwiseConv2D((3, 3), strides=2, padding='same', use_bias=False, 
-                           kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-        x = BatchNormalization()(x)
+        x = self.DepthwiseConv2D(x, (3, 3), strides=2, padding='same', use_bias=False,
+                                 **metaparameters)
+        x = self.BatchNormalization(x)
 
         # pointwise group convolution, with dimensionality restoration
-        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, **metaparameters)
+        x = self.pw_group_conv(x, n_partitions, n_filters, **metaparameters)
     
         # Concatenate the projection shortcut to the output
         x = Concatenate()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def shuffle_block(x, **metaparameters):
+    def shuffle_block(self, x, **metaparameters):
         ''' Construct a shuffle Shuffle block  
             x           : input to the block
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -195,37 +192,36 @@ class ShuffleNet(Composable):
         if 'reg' in metaparameters:
             reg = metaparameters['reg']
         else:
-            reg = ShuffleNet.reg
+            reg = self.reg
         if 'init_weights' in metaparameters:
             init_weights = metaparameters['init_weights']
         else:
-            init_weights = ShuffleNet.init_weights
+            init_weights = self.init_weights
             
         # identity shortcut
         shortcut = x
     
         # pointwise group convolution, with dimensionality reduction
-        x = ShuffleNet.pw_group_conv(x, n_partitions, int(reduction * n_filters), **metaparameters)
-        x = Composable.ReLU(x)
+        x = self.pw_group_conv(x, n_partitions, int(reduction * n_filters), **metaparameters)
+        x = self.ReLU(x)
     
         # channel shuffle layer
-        x = ShuffleNet.channel_shuffle(x, n_partitions)
+        x = self.channel_shuffle(x, n_partitions)
     
         # Depthwise 3x3 Convolution
-        x = Composable.DepthwiseConv2D(x, (3, 3), strides=1, padding='same', use_bias=False, 
-                                       **metaparameters)
+        x = self.DepthwiseConv2D(x, (3, 3), strides=1, padding='same', use_bias=False, 
+                                 **metaparameters)
         x = BatchNormalization()(x)
     
         # pointwise group convolution, with dimensionality restoration
-        x = ShuffleNet.pw_group_conv(x, n_partitions, n_filters, **metaparameters)
+        x = self.pw_group_conv(x, n_partitions, n_filters, **metaparameters)
     
         # Add the identity shortcut (input added to output)
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def pw_group_conv(x, n_partitions, n_filters, **metaparameters):
+    def pw_group_conv(self, x, n_partitions, n_filters, **metaparameters):
         ''' A Pointwise Group Convolution  
             x           : input tensor
             n_partitions: number of groups to partition feature maps (channels) into.
@@ -247,19 +243,18 @@ class ShuffleNet(Composable):
             group = Lambda(lambda x: x[:, :, :, grp_in_filters * i: grp_in_filters * (i + 1)])(x)
 
             # Perform convolution on channel group
-            conv = Composable.Conv2D(group, grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, 
-                                     **metaparameters)
+            conv = self.Conv2D(group, grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, 
+                               **metaparameters)
             # Maintain the point-wise group convolutions in a list
             groups.append(conv)
 
         # Concatenate the outputs of the group pointwise convolutions together
         x = Concatenate()(groups)
         # Do batch normalization of the concatenated filters (feature maps)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         return x
 
-    @staticmethod
-    def channel_shuffle(x, n_partitions):
+    def channel_shuffle(self, x, n_partitions):
         ''' Implements the channel shuffle layer 
             x            : input tensor
             n_partitions : number of groups to partition feature maps (channels) into.
@@ -281,3 +276,15 @@ class ShuffleNet(Composable):
     
 # Example
 # shufflenet = ShuffleNet()
+
+def example():
+    ''' Example for constructing/training a ShuffleNet model on CIFAR-10
+    '''
+    # Example of constructing a mini-ShuffleNet
+    groups  = [ { 'n_blocks' : 2 }, { 'n_blocks' : 4 } ]
+    shufflenet = ShuffleNet(groups, input_shape=(32, 32, 3), n_classes=10)
+    shufflenet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    shufflenet.model.summary()
+    shufflenet.cifar10()
+
+# example()

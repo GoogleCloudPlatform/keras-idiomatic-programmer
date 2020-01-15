@@ -90,7 +90,7 @@ class SEResNet(Composable):
     
         # First Convolutional layer which uses a large (coarse) filter 
         x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
@@ -106,15 +106,14 @@ class SEResNet(Composable):
         groups = metaparameters['groups']
 
         # First Residual Block Group (not strided)
-        x = SEResNet.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = self.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining Residual Block Groups (strided)
         for group in groups:
-            x = SEResNet.group(x, **group, **metaparameters)
+            x = self.group(x, **group, **metaparameters)
         return x	
 
-    @staticmethod
-    def group(x, strides=(2, 2), **metaparameters):
+    def group(self, x, strides=(2, 2), **metaparameters):
         """ Construct the Squeeze-Excite Group
             x        : input to the group
             strides  : whether projection block is strided
@@ -123,15 +122,14 @@ class SEResNet(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # first block uses linear projection to match the doubling of filters between groups
-        x = SEResNet.projection_block(x, strides=strides, **metaparameters)
+        x = self.projection_block(x, strides=strides, **metaparameters)
 
         # remaining blocks use identity link
         for _ in range(n_blocks-1):
-            x = SEResNet.identity_block(x, **metaparameters)
+            x = self.identity_block(x, **metaparameters)
         return x
 
-    @staticmethod
-    def squeeze_excite_block(x, **metaparameters):
+    def squeeze_excite_block(self, x, **metaparameters):
         """ Create a Squeeze and Excite block
             x     : input to the block
             ratio : amount of filter reduction during squeeze
@@ -139,7 +137,7 @@ class SEResNet(Composable):
         if 'ratio' in metaparameters:
             ratio = metaparameters['ratio']
         else:
-            ratio = SEResNet.ratio
+            ratio = self.ratio
             
         # Remember the input
         shortcut = x
@@ -155,18 +153,17 @@ class SEResNet(Composable):
         x = Reshape((1, 1, filters))(x)
     
         # Reduce the number of filters (1x1xC/r)
-        x = Composable.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
+        x = self.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
 
         # Excitation (dimensionality restoration)
         # Restore the number of filters (1x1xC)
-        x = Composable.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
+        x = self.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
 
         # Scale - multiply the squeeze/excitation output with the input (WxHxC)
         x = Multiply()([shortcut, x])
         return x
 
-    @staticmethod
-    def identity_block(x, **metaparameters):
+    def identity_block(self, x, **metaparameters):
         """ Create a Bottleneck Residual Block with Identity Link
             x        : input into the block
             n_filters: number of filters
@@ -180,32 +177,31 @@ class SEResNet(Composable):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = Composable.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, 
                               **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Bottleneck layer
-        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
-                              **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, 
+                        **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = Composable.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
-                              **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, 
+                        **metaparameters)
+        x = self.BatchNormalization(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNet.squeeze_excite_block(x, **metaparameters)
+        x = self.squeeze_excite_block(x, **metaparameters)
     
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def projection_block(x, strides=(2,2), **metaparameters):
+    def projection_block(self, x, strides=(2,2), **metaparameters):
         """ Create Bottleneck Residual Block with Projection Shortcut
             Increase the number of filters by 4X
             x        : input into the block
@@ -217,36 +213,36 @@ class SEResNet(Composable):
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, 
-                                     **metaparameters)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = self.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, 
+                               **metaparameters)
+        shortcut = self.BatchNormalization(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = Composable.Conv2D(x, n_filters, (1, 1), strides=strides, use_bias=False, 
-                              **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=strides, use_bias=False, 
+                        **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Bottleneck layer
-        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                              **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+                        **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                              **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                        **metaparameters)
+        x = self.BatchNormalization(x)
 
         # Pass the output through the squeeze and excitation block
-        x = SEResNet.squeeze_excite_block(x, **metaparameters)
+        x = self.squeeze_excite_block(x, **metaparameters)
 
         # Add the projection shortcut link to the output of the residual block
         x = Add()([x, shortcut])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
 # Example

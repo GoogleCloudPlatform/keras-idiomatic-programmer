@@ -92,7 +92,7 @@ class SEResNeXt(Composable):
             inputs : input vector
         """
         x = self.Conv2D(inputs, 64, (7, 7), strides=(2, 2), padding='same', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = MaxPooling2D((3, 3), strides=(2, 2), padding='same')(x)
         return x
@@ -105,15 +105,14 @@ class SEResNeXt(Composable):
         groups = metaparameters['groups']
 
         # First ResNeXt Group (not strided)
-        x = SEResNeXt.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = self.group(x, strides=(1, 1), **groups.pop(0), **metaparameters)
 
         # Remaining ResNeXt Groups
         for group in groups:
-            x = SEResNeXt.group(x, **group, **metaparameters)
+            x = self.group(x, **group, **metaparameters)
         return x
 
-    @staticmethod
-    def group(x, strides=(2, 2), **metaparameters):
+    def group(self, x, strides=(2, 2), **metaparameters):
         """ Construct a Squeeze-Excite Group
             x          : input to the group
             strides    : whether projection block is strided
@@ -122,23 +121,22 @@ class SEResNeXt(Composable):
         n_blocks = metaparameters['n_blocks']
 
         # First block is a linear projection block
-        x = SEResNeXt.projection_block(x, strides=strides, **metaparameters)
+        x = self.projection_block(x, strides=strides, **metaparameters)
 
         # Remaining blocks are identity links
         for _ in range(n_blocks-1):
-            x = SEResNeXt.identity_block(x, **metaparameters) 
+            x = self.identity_block(x, **metaparameters) 
         return x
 
-    @staticmethod
-    def squeeze_excite_block(x, **metaparameters):
+    def squeeze_excite_block(self, x, **metaparameters):
         """ Construct a Squeeze and Excite block
-            x    : input to the block
+            x     : input to the block
             ratio : amount of filter reduction during squeeze
         """  
         if 'ratio' in metaparameters:
             ratio = metaparameters['ratio']
         else:
-            ratio = SEResNeXt.ratio
+            ratio = self.ratio
             
         # Remember the input
         shortcut = x
@@ -154,18 +152,17 @@ class SEResNeXt(Composable):
         x = Reshape((1, 1, filters))(x)
     
         # Reduce the number of filters (1x1xC/r)
-        x = Composable.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
+        x = self.Dense(x, filters // ratio, activation='relu', use_bias=False, **metaparameters)
 
         # Excitation (dimensionality restoration)
         # Restore the number of filters (1x1xC)
-        x = Composable.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
+        x = self.Dense(x, filters, activation='sigmoid', use_bias=False, **metaparameters)
 
         # Scale - multiply the squeeze/excitation output with the input (WxHxC)
         x = Multiply()([shortcut, x])
         return x
 
-    @staticmethod
-    def identity_block(x, **metaparameters):
+    def identity_block(self, x, **metaparameters):
         """ Construct a ResNeXT block with identity link
             x          : input to block
             filters_in : number of filters  (channels) at the input convolution
@@ -180,39 +177,38 @@ class SEResNeXt(Composable):
         shortcut = x
 
         # Dimensionality Reduction
-        x = Composable.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                              **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                        **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Composable.Conv2D(group, filters_card, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False,
-                                            **metaparameters))
+            groups.append(self.Conv2D(group, filters_card, kernel_size=(3, 3), strides=(1, 1), padding='same', use_bias=False,
+                                      **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration
-        x = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                              **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                        **metaparameters)
+        x = self.BatchNormalization(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNeXt.squeeze_excite_block(x, **metaparameters)
+        x = self.squeeze_excite_block(x, **metaparameters)
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def projection_block(x, strides=1, **metaparameters):
+    def projection_block(self, x, strides=1, **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
             strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
@@ -226,40 +222,40 @@ class SEResNeXt(Composable):
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
-        shortcut = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=strides, padding='same', 
-                                     **metaparameters)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = self.Conv2D(x, filters_out, kernel_size=(1, 1), strides=strides, padding='same', 
+                               **metaparameters)
+        shortcut = self.BatchNormalization()(shortcut)
 
         # Dimensionality Reduction
-        x = Composable.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                              **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                        **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Composable.Conv2D(group, filters_card, kernel_size=(3, 3), strides=strides, padding='same', use_bias=False,
-                                            **metaparameters))
+            groups.append(self.Conv2D(group, filters_card, kernel_size=(3, 3), strides=strides, padding='same', use_bias=False,
+                                      **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration
-        x = Composable.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
-                              **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, filters_out, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
+                        **metaparameters)
+        x = self.BatchNormalization(x)
     
         # Pass the output through the squeeze and excitation block
-        x = SEResNeXt.squeeze_excite_block(x, **metaparameters)
+        x = self.squeeze_excite_block(x, **metaparameters)
 
         # Add the projection shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
 # Example

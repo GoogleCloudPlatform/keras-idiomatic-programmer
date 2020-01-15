@@ -226,7 +226,7 @@ class ResNeXt(Composable):
 # resnext = ResNeXt(50)
 
 def example():
-    ''' Example for constructing/training a ResNeXt model
+    ''' Example for constructing/training a ResNeXt model on CIFAR-10
     '''
     # Example of constructing a mini-ResNeXt
     groups =  [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 1 },
@@ -234,23 +234,7 @@ def example():
                 { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 2 } ]
     resnext = ResNeXt(groups, input_shape=(32, 32, 3), n_classes=10)
     resnext.model.summary()
+    resnext.cifar10()
 
-    # train on CIFAR-10
-    from tensorflow.keras.datasets import cifar10
-    import numpy as np
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    x_train = (x_train / 255.0).astype(np.float32)
-    x_test  = (x_test / 255.0).astype(np.float32)
-
-    print("Warmup the model for numerical stability")
-    resnext.warmup(x_train, y_train, epochs=2)
-
-    print("Full training")
-    resnext.compile()
-    resnext.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
-    resnext.model.evaluate(x_test, y_test)
-
-    # Epoch 10/10
-
-#example()
+# example()
 

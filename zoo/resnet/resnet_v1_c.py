@@ -210,7 +210,6 @@ def example():
                { 'n_filters': 128, 'n_blocks': 2 },
                { 'n_filters': 256, 'n_blocks': 2 }]
     resnet = ResNetV1(groups, input_shape=(32, 32, 3), n_classes=10)
-    resnet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
     resnet.model.summary()
 
     # train on CIFAR-10
@@ -220,8 +219,15 @@ def example():
     x_train = (x_train / 255.0).astype(np.float32)
     x_test  = (x_test / 255.0).astype(np.float32)
 
+    # Warmup the model for numerical stability
+    resnet.warmup(x_train, y_train, epochs=2)
+
+    # Full training
+    resnet.compile()
     resnet.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
     resnet.model.evaluate(x_test, y_test)
 
     # Epoch 10/10
-    # 50000/50000 [==============================] - 385s 8ms/sample - loss: 1.2153 - acc: 0.7361
+    # 50000/50000 [==============================] - 927s 19ms/sample - loss: 1.2046 - acc: 0.7378
+
+# example()

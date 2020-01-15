@@ -28,7 +28,7 @@ class AutoEncoder(Composable):
     layers = [ {'n_filters': 64 }, { 'n_filters': 32 }, { 'n_filters': 16 } ]
 
     def __init__(self, layers=None, input_shape=(32, 32, 3),
-                 init_weights='he_normal', reg=None):
+                 init_weights='he_normal', reg=None, relu=None):
         ''' Construct an AutoEncoder
             input_shape : input shape to the autoencoder
             layers      : the number of filters per layer
@@ -36,10 +36,10 @@ class AutoEncoder(Composable):
             reg         : kernel regularizer
         '''
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
 
         if layers is None:
-           layers = AutoEncoder.layers
+           layers = self.layers
 
         # remember the layers
         self.layers = layers
@@ -48,68 +48,45 @@ class AutoEncoder(Composable):
         self.input_shape = input_shape
 
         inputs = Input(input_shape)
-        encoder = AutoEncoder.encoder(inputs, layers=layers)
-        outputs = AutoEncoder.decoder(encoder, layers=layers)
+        encoder = self.encoder(inputs, layers=layers)
+        outputs = self.decoder(encoder, layers=layers)
         self._model = Model(inputs, outputs)
 
-    @staticmethod
-    def encoder(x, init_weights=None, **metaparameters):
+    def encoder(self, x, **metaparameters):
         ''' Construct the Encoder 
             x     : input to the encoder
             layers: number of filters per layer
-            reg   : kernel regularizer
         '''
         layers = metaparameters['layers']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = AutoEncoder.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = AutoEncoder.init_weights
 
         # Progressive Feature Pooling
         for layer in layers:
             n_filters = layer['n_filters']
-            x = Conv2D(n_filters, (3, 3), strides=2, padding='same',
-                       kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-            x = BatchNormalization()(x)
-            x = Composable.ReLU(x)
+            x = self.Conv2D(x, n_filters, (3, 3), strides=2, padding='same')
+            x = self.BatchNormalization(x)
+            x = self.ReLU(x)
 
         # The Encoding
         return x
 
-    @staticmethod
-    def decoder(x, init_weights=None, **metaparameters):
+    def decoder(self, x, init_weights=None, **metaparameters):
         ''' Construct the Decoder
             x     : input to the decoder
-            layers: number of filters per layer
-            reg   : kernel regularizer
+            layers: filters per layer
         '''
         layers = metaparameters['layers']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = AutoEncoder.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = AutoEncoder.init_weights
 
         # Progressive Feature Unpooling
         for _ in range(len(layers)-1, 0, -1):
             n_filters = layers[_]['n_filters']
-            x = Conv2DTranspose(n_filters, (3, 3), strides=2, padding='same',
-                                kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-            x = BatchNormalization()(x)
-            x = Composable.ReLU(x)
+            x = self.Conv2DTranspose(x, n_filters, (3, 3), strides=2, padding='same')
+            x = self.BatchNormalization(x)
+            x = self.ReLU(x)
 
         # Last unpooling and match shape to input
-        x = Conv2DTranspose(3, (3, 3), strides=2, padding='same',
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2DTranspose(x, 3, (3, 3), strides=2, padding='same')
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # The decoded image
         return x
@@ -142,3 +119,23 @@ class AutoEncoder(Composable):
 
 # Train the model, and extract pretrained encoder
 # e = autoencoder.extract()
+
+def example():
+    ''' Example for constructing/training an AutoEncoder  model on CIFAR-10
+    '''
+    # Example of constructing an AutoEncoder
+    ae = AutoEncoder(input_shape=(32, 32, 3))
+    ae.model.summary()
+
+    from tensorflow.keras.datasets import cifar10
+    import numpy as np
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = (x_train / 255.0).astype(np.float32)
+    x_test  = (x_test  / 255.0).astype(np.float32)
+
+    ae.compile()
+    ae.model.fit(x_train, x_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
+    ae.model.evaluate(x_test, x_test)
+
+
+# example()

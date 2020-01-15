@@ -184,24 +184,12 @@ class WRN(Composable):
 # wrn = WRN(depth=28, k=10)
 
 def example():
-    ''' Example for constructing/training a VGG model
+    ''' Example for constructing/training a WRN model on CIFAR-10
     '''
-    # Example of constructing a WRN
+    # Example of constructing a mini WRN
     wrn = WRN(depth=14, k=2, input_shape=(32, 32, 3), n_classes=10)
     wrn.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
     wrn.model.summary()
+    wrn.cifar10()
 
-    # train on CIFAR-10
-    from tensorflow.keras.datasets import cifar10
-    import numpy as np
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    x_train = (x_train / 255.0).astype(np.float32)
-    x_test  = (x_test /  255.0).astype(np.float32)
-
-    wrn.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
-    wrn.model.evaluate(x_test, y_test)
-
-    # Epoch 10/10
-    # 50000/50000 [==============================] - 825s 17ms/sample - loss: 0.4230 - acc: 0.8520
-
-example()
+# example()

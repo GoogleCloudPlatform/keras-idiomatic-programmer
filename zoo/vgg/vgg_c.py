@@ -143,24 +143,16 @@ class VGG(Composable):
 # vgg = VGG(16)
 
 def example():
-    ''' Example for constructing/training a VGG model
+    ''' Example for constructing/training a VGG model on CIFAR-10
     '''
     # Example of constructing a mini-VGG
     groups = [ { 'n_layers': 1, 'n_filters': 64 },
                { 'n_layers': 2, 'n_filters': 128 },
                { 'n_layers': 2, 'n_filters': 256 } ]
     vgg = VGG(groups, input_shape=(32, 32, 3), n_classes=10)
-    vgg.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
     vgg.model.summary()
 
     # train on CIFAR-10
-    from tensorflow.keras.datasets import cifar10
-    import numpy as np
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    x_train = (x_train / 255.0).astype(np.float32)
+    vgg.cifar10()
 
-    vgg.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
-    vgg.model.evaluate(x_test, y_test)
-
-    # Epoch 10/10
-    # 50000/50000 [==============================] - 735s 15ms/sample - loss: 0.2801 - acc: 0.9025
+# example()

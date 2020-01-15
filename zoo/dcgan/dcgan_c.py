@@ -21,6 +21,7 @@ from tensorflow.keras.layers import LeakyReLU, Activation, ZeroPadding2D
 from tensorflow.keras.layers import Conv2D, Conv2DTranspose, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam
+import numpy as np
 
 import matplotlib.pyplot as plt
 
@@ -41,23 +42,24 @@ class DCGAN(Composable):
         super().__init__(reg=reg, init_weights=init_weights, relu=relu)
         
         # Construct the generator
-        self.g = self.generator(latent=latent, channels=input_shape[2])
-        
+        self.g = self.generator(latent=latent, height=input_shape[0], channels=input_shape[2])
+
         # Construct the discriminator
         self.d = self.discriminator(input_shape=input_shape, optimizer=Adam(0.0002, 0.5))
         
         # Construct the combined (stacked) generator/discriminator model (GAN)
         self.model = self.gan(latent=latent, optimizer=Adam(0.0002, 0.5))
          
-    def generator(self, latent=100, channels=1):
+    def generator(self, latent=100, height=28, channels=1):
         """ Construct the Generator
             latent   : dimension of latent space
             channels : number of channels
         """
         def stem(inputs):
-            x = self.Dense(inputs, 128 * 7 * 7)
+            factor = height // 4
+            x = self.Dense(inputs, 128 * factor * factor)
             x = self.ReLU(x)
-            x = Reshape((7, 7, 128))(x)
+            x = Reshape((factor, factor, 128))(x)
             return x
         
         def learner(x):
@@ -207,7 +209,8 @@ class DCGAN(Composable):
         cnt = 0
         for i in range(r):
             for j in range(c):
-                axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                #MNIST: axs[i,j].imshow(gen_imgs[cnt, :,:,0], cmap='gray')
+                axs[i,j].imshow(gen_imgs[cnt, :,:,0])
                 axs[i,j].axis('off')
                 cnt += 1
         fig.savefig("images/mnist_%d.png" % epoch)
@@ -216,10 +219,26 @@ class DCGAN(Composable):
      
     
 # Example
-model = DCGAN()
+# model = DCGAN()
+'''
 from tensorflow.keras.datasets import mnist
 import numpy as np
 (x_train, _), (_, _) = mnist.load_data()
 x_train = x_train / 127.5 - 1.
 x_train = np.expand_dims(x_train, axis=3)
 model.train(x_train, latent=100, epochs=4000)
+'''
+
+def example():
+    # Build/Train a DCGAN for CIFAR-10
+
+    gan = DCGAN(input_shape=(32, 32, 3))
+    gan.model.summary()
+
+    from tensorflow.keras.datasets import cifar10
+    import numpy as np
+    (x_train, _), (_, _) = cifar10.load_data()
+    x_train = x_train / 127.5 - 1.
+    gan.train(x_train, latent=100, epochs=4000)
+
+# example()

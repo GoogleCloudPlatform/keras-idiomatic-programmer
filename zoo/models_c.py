@@ -17,7 +17,7 @@ from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
 from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
 from tensorflow.keras.regularizers import l2
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.callbacks import LearningRateScheduler
 import tensorflow.keras.backend as K
 
@@ -271,11 +271,13 @@ class Composable(object):
         """
         self.model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
-    def warmup_scheduler(epoch, lr):
+    def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training
             epoch : current epoch iteration
             lr    : current learning rate
         """
+        if epoch == 0:
+           return lr
         # double the learning rate
         return lr * 2.0
 
@@ -287,7 +289,25 @@ class Composable(object):
             loss    : the loss function
             lr      : warmup learning rate
         """
-        self.compile(loss=loss, optimizer=Adam(lr), metrics=['acc'])
-        lrate = LearningRateScheduler(self.warmup_scheduler)
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=128, verbose=1,
+        self.compile(loss=loss, optimizer=SGD(lr), metrics=['acc'])
+        lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=1, verbose=1,
                        callbacks=[lrate])
+
+    def cifar10(self, epochs=10):
+        """ Train on CIFAR-10
+            epochs : number of epochs for full training
+        """
+        from tensorflow.keras.datasets import cifar10
+        import numpy as np
+        (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        x_train = (x_train / 255.0).astype(np.float32)
+        x_test  = (x_test  / 255.0).astype(np.float32)
+
+        print("Warmup the model for numerical stability")
+        self.warmup(x_train, y_train, epochs=2)
+
+        print("Full training")
+        self.compile()
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, validation_split=0.1, verbose=1)
+        self.model.evaluate(x_test, y_test)

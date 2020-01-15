@@ -171,7 +171,7 @@ class SqueezeNet(Composable):
 def example():
     ''' Example for constructing/training a SqueezeNet model on CIFAR-10
     '''
-    # Example of constructing a mini-ResNet
+    # Example of constructing a mini-SqueezeNet
     groups = [ [ { 'n_filters' : 16 }, { 'n_filters' : 16 }, { 'n_filters' : 32 } ],
                [ { 'n_filters' : 64 } ] ]
     squeezenet = SqueezeNet(groups, input_shape=(32, 32, 3), n_classes=10)

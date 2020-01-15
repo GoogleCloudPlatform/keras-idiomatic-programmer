@@ -90,7 +90,7 @@ class DenseNet(Composable):
         # First large convolution for abstract features for input 224 x 224 and output 112 x 112
         # Stem convolution uses 2 * k (growth rate) number of filters
         x = self.Conv2D(x, 2 * n_filters, (7, 7), strides=(2, 2), use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
         # Add padding so when downsampling we fit shape 56 x 56
@@ -110,15 +110,14 @@ class DenseNet(Composable):
 
         # Create the dense groups and interceding transition blocks
         for group in groups:
-            x = DenseNet.group(x, **group, **metaparameters)
+            x = self.group(x, **group, **metaparameters)
 
         # Add the last dense group w/o a following transition block
         metaparameters['reduction'] = None
-        x = DenseNet.group(x, **last, **metaparameters)
+        x = self.group(x, **last, **metaparameters)
         return x
 
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         """ Construct a Dense Group
             x         : input to the group
             n_blocks  : number of residual blocks in dense group
@@ -130,15 +129,14 @@ class DenseNet(Composable):
 
         # Construct a group of residual blocks
         for _ in range(n_blocks):
-            x = DenseNet.residual_block(x, **metaparameters)
+            x = self.residual_block(x, **metaparameters)
 
         # Construct interceding transition block
         if reduction is not None:
-            x = DenseNet.trans_block(x, reduction=reduction, **metaparameters)
+            x = self.trans_block(x, reduction=reduction, **metaparameters)
         return x
 
-    @staticmethod
-    def residual_block(x, **metaparameters):
+    def residual_block(self, x, **metaparameters):
         """ Construct a Residual Block
             x        : input to the block
             n_filters: number of filters in convolution layer in residual block
@@ -147,7 +145,7 @@ class DenseNet(Composable):
             n_filters = metaparameters['n_filters']
             del metaparameters['n_filters']
         else:
-            n_filters = DenseNet.n_filters
+            n_filters = self.n_filters
 
             
         # Remember input tensor into residual block
@@ -156,25 +154,24 @@ class DenseNet(Composable):
         # BN-RE-Conv pre-activation form of convolutions
 
         # Dimensionality expansion, expand filters by 4 (DenseNet-B)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
-        x = Composable.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                              **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
+        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                        **metaparameters)
     
         # Bottleneck convolution
         # 3x3 convolution with padding=same to preserve same shape of feature maps
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
-        x = Composable.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
-                              **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+                        **metaparameters)
 
         # Concatenate the input (identity) with the output of the residual block
         # Concatenation (vs. merging) provides Feature Reuse between layers
         x = Concatenate()([shortcut, x])
         return x
 
-    @staticmethod
-    def trans_block(x, **metaparameters):
+    def trans_block(self, x, **metaparameters):
         """ Construct a Transition Block
             x        : input layer
             reduction: percentage of reduction of feature maps
@@ -182,7 +179,7 @@ class DenseNet(Composable):
         if 'reduction' in metaparameters:
             reduction = metaparameters['reduction']
         else:
-            reduction = DenseNet.reduction
+            reduction = self.reduction
         del metaparameters['n_filters']
 
         # Reduce (compress) the number of feature maps (DenseNet-C)
@@ -192,9 +189,9 @@ class DenseNet(Composable):
         # BN-LI-Conv pre-activation form of convolutions
 
         # Use 1x1 linear projection convolution
-        x = BatchNormalization()(x)
-        x = Composable.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                              **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, 
+                        **metaparameters)
 
         # Use mean value (average) instead of max value sampling when pooling reduce by 75%
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)
@@ -202,3 +199,14 @@ class DenseNet(Composable):
     
 # Example
 # densenet = DenseNet(121)
+
+def example():
+    ''' Example for constructing/training a DenseNet model on CIFAR-10
+    '''
+    # Example of constructing a mini-DenseNet
+    groups = [ { 'n_blocks': 3 }, { 'n_blocks': 6 }, { 'n_blocks': 12 } ]
+    densenet = DenseNet(groups, input_shape=(32, 32, 3), n_classes=10)
+    densenet.model.summary()
+    densenet.cifar10()
+
+# example()

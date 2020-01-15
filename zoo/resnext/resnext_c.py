@@ -90,7 +90,7 @@ class ResNeXt(Composable):
             inputs : input vector
         """
         x = self.Conv2D(inputs, 64, (7, 7), strides=(2, 2), padding='same', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
         return x
@@ -103,15 +103,14 @@ class ResNeXt(Composable):
         groups = metaparameters['groups']
 
         # First ResNeXt Group (not-strided)
-        x = ResNeXt.group(x, strides=(1, 1), **groups.pop(0))
+        x = self.group(x, strides=(1, 1), **groups.pop(0))
 
         # Remaining ResNeXt groups
         for group in groups:
-            x = ResNeXt.group(x, **group)
+            x = self.group(x, **group)
         return x
 
-    @staticmethod
-    def group(x, strides=(2, 2), **metaparameters):
+    def group(self, x, strides=(2, 2), **metaparameters):
         """ Construct a Residual group
             x          : input to the group
             strides    : whether its a strided convolution
@@ -124,15 +123,14 @@ class ResNeXt(Composable):
 
         # Double the size of filters to fit the first Residual Group
         # Reduce feature maps by 75% (strides=2, 2) to fit the next Residual Group
-        x = ResNeXt.projection_block(x, strides=strides, **metaparameters)
+        x = self.projection_block(x, strides=strides, **metaparameters)
 
         # Remaining blocks
         for _ in range(n_blocks):
-            x = ResNeXt.identity_block(x, **metaparameters)	
+            x = self.identity_block(x, **metaparameters)	
         return x
 
-    @staticmethod
-    def identity_block(x, **metaparameters):
+    def identity_block(self, x, **metaparameters):
         """ Construct a ResNeXT block with identity link
             x           : input to block
             filters_in  : number of filters  (channels) at the input convolution
@@ -144,40 +142,39 @@ class ResNeXt(Composable):
         if 'cardinality' in metaparameters:
             cardinality = metaparameters['cardinality']
         else:
-            cardinality = ResNeXt.cardinality
+            cardinality = self.cardinality
             
         # Remember the input
         shortcut = x
 
         # Dimensionality Reduction
-        x = Composable.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Composable.Conv2D(group, filters_card, (3, 3), strides=(1, 1), padding='same', use_bias=False,
-                                 **metaparameters))
+            groups.append(self.Conv2D(group, filters_card, (3, 3), strides=(1, 1), padding='same', use_bias=False,
+                                      **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration
-        x = Composable.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
-    @staticmethod
-    def projection_block(x, strides=(2, 2), **metaparameters):
+    def projection_block(self, x, strides=(2, 2), **metaparameters):
         """ Construct a ResNeXT block with projection shortcut
             x          : input to the block
             strides    : whether entry convolution is strided (i.e., (2, 2) vs (1, 1))
@@ -190,41 +187,70 @@ class ResNeXt(Composable):
         if 'cardinality' in metaparameters:
             cardinality = metaparameters['cardinality']
         else:
-            cardinality = ResNeXt.cardinality
+            cardinality = self.cardinality
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
-        shortcut = Composable.Conv2D(x, filters_out, (1, 1), strides=strides, padding='same', **metaparameters)
-        shortcut = BatchNormalization()(shortcut)
+        shortcut = self.Conv2D(x, filters_out, (1, 1), strides=strides, padding='same', **metaparameters)
+        shortcut = self.BatchNormalization(shortcut)
 
         # Dimensionality Reduction
-        x = Composable.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Cardinality (Wide) Layer (split-transform)
         filters_card = filters_in // cardinality
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(Composable.Conv2D(group, filters_card, (3, 3), strides=strides, padding='same', use_bias=False,
-                                            **metaparameters))
+            groups.append(self.Conv2D(group, filters_card, (3, 3), strides=strides, padding='same', use_bias=False,
+                                      **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
         x = Concatenate()(groups)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Dimensionality restoration
-        x = Composable.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
         x = Add()([shortcut, x])
-        x = Composable.ReLU(x)
+        x = self.ReLU(x)
         return x
 
 
 # Example
 # resnext = ResNeXt(50)
+
+def example():
+    ''' Example for constructing/training a ResNeXt model
+    '''
+    # Example of constructing a mini-ResNeXt
+    groups =  [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 1 },
+                { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 2 },
+                { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 2 } ]
+    resnext = ResNeXt(groups, input_shape=(32, 32, 3), n_classes=10)
+    resnext.model.summary()
+
+    # train on CIFAR-10
+    from tensorflow.keras.datasets import cifar10
+    import numpy as np
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = (x_train / 255.0).astype(np.float32)
+    x_test  = (x_test / 255.0).astype(np.float32)
+
+    print("Warmup the model for numerical stability")
+    resnext.warmup(x_train, y_train, epochs=2)
+
+    print("Full training")
+    resnext.compile()
+    resnext.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
+    resnext.model.evaluate(x_test, y_test)
+
+    # Epoch 10/10
+
+#example()
 

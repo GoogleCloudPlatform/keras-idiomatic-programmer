@@ -18,6 +18,7 @@ from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import LearningRateScheduler
 import tensorflow.keras.backend as K
 
 class Composable(object):
@@ -270,8 +271,15 @@ class Composable(object):
         """
         self.model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
+    def warmup_scheduler(epoch, lr):
+        """ learning rate schedular for warmup training
+            epoch : current epoch iteration
+            lr    : current learning rate
+        """
+        # double the learning rate
+        return lr * 2
 
-    def warmup(self, x_train, y_train, epochs=5, loss='sparse_categorical_crossentropy', lr=1e-6):
+    def warmup(self, x_train, y_train, epochs=2, loss='sparse_categorical_crossentropy', lr=1e-6):
         """ Warmup for numerical stability
             x_train : training images
             y_train : training labels
@@ -280,4 +288,6 @@ class Composable(object):
             lr      : warmup learning rate
         """
         self.compile(loss=loss, optimizer=Adam(lr), metrics=['acc'])
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=128, verbose=1)
+        lrate = LearningRateScheduler(warmup_scheduler)
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=128, verbose=1,
+                       callbacks=[lrate])

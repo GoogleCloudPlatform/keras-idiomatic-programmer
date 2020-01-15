@@ -161,3 +161,6 @@ def example():
 
     vgg.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
     vgg.model.evaluate(x_test, y_test)
+
+    # Epoch 10/10
+    # 50000/50000 [==============================] - 735s 15ms/sample - loss: 0.2801 - acc: 0.9025

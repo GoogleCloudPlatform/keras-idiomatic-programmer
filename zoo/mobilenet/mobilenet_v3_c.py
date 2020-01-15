@@ -121,8 +121,8 @@ class MobileNetV3(Composable):
     
         # Convolutional block
         x = self.Conv2D(inputs, n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False)
-        x = BatchNormalization()(x)
-        x = Composable.HS(x)
+        x = self.BatchNormalization(x)
+        x = self.HS(x)
         return x
     
     def learner(self, x, **metaparameters):
@@ -137,18 +137,17 @@ class MobileNetV3(Composable):
 
         # Add Attention Residual Convolution Groups
         for group in groups:
-            x = MobileNetV3.group(x, **group, **metaparameters)
+            x = self.group(x, **group, **metaparameters)
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
         x = self.Conv2D(x, last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', use_bias=False,
                         **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = last['activation'](x)
         return x
 
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         """ Construct an Attention Residual Group
             x         : input to the group
             blocks    : expansion per block
@@ -159,15 +158,14 @@ class MobileNetV3(Composable):
         del metaparameters['strides']
 
         # In first block, the attention residual block maybe strided - feature map size reduction
-        x = MobileNetV3.attention_block(x, strides=strides, expansion=blocks.pop(0), **metaparameters)
+        x = self.attention_block(x, strides=strides, expansion=blocks.pop(0), **metaparameters)
     
         # Remaining blocks
         for block in blocks:
-            x = MobileNetV3.attention_block(x, strides=(1, 1), expansion=block, **metaparameters)
+            x = self.attention_block(x, strides=(1, 1), expansion=block, **metaparameters)
         return x
 
-    @staticmethod
-    def attention_block(x, strides=(1, 1), **metaparameters):
+    def attention_block(self, x, strides=(1, 1), **metaparameters):
         """ Construct an Attention Residual Block
             x         : input to the block
             strides   : strides
@@ -183,7 +181,7 @@ class MobileNetV3(Composable):
         if 'alpha' in metaparameters:
             alpha = metaparameters['alpha']
         else:
-            alpha = MobileNetV3.alpha
+            alpha = self.alpha
         if 'squeeze' in metaparameters:
             squeeze = metaparameters['squeeze']
         else:
@@ -205,30 +203,29 @@ class MobileNetV3(Composable):
     
         # Dimensionality Expansion
         # 1x1 linear convolution
-        x = Composable.Conv2D(x, expansion, (1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, expansion, (1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
         x = activation(x)
 
         # Depthwise Convolution
-        x = Composable.DepthwiseConv2D(x, (3, 3), strides, padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.DepthwiseConv2D(x, (3, 3), strides, padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
         x = activation(x)
 
         # Add squeeze (dimensionality reduction)
         if squeeze:
-            x = MobileNetV3.squeeze(x, **metaparameters)
+            x = self.squeeze(x, **metaparameters)
 
         # Linear Pointwise Convolution
-        x = Composable.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
+        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
     
         # Number of input filters matches the number of output filters
         if n_channels == filters and strides == (1, 1):
             x = Add()([shortcut, x]) 
         return x
 
-    @staticmethod
-    def squeeze(x, **metaparameters):
+    def squeeze(self, x, **metaparameters):
         """ Construct a squeeze block
             x   : input to the squeeze
         """
@@ -238,8 +235,8 @@ class MobileNetV3(Composable):
         n_channels = x.shape[-1]
 
         x = GlobalAveragePooling2D()(x)
-        x = Composable.Dense(x, n_channels, activation=Composable.ReLU, **metaparameters)
-        x = Composable.Dense(x, n_channels, activation=Composable.HS, **metaparameters)
+        x = self.Dense(x, n_channels, activation=self.ReLU, **metaparameters)
+        x = self.Dense(x, n_channels, activation=self.HS, **metaparameters)
         x = Reshape((1, 1, n_channels))(x)
         x = Multiply()([shortcut, x])
         return x
@@ -275,3 +272,14 @@ class MobileNetV3(Composable):
 
 # Example
 # mobilenet = MobileNetV3('large')
+
+def example():
+    ''' Example for constructing/training a MobileNet V3 model on CIFAR-10
+    '''
+    # Example of constructing a mini-MobileNet
+    mobilenet = MobileNetV3('small', input_shape=(32, 32, 3), n_classes=10)
+    mobilenet.model.summary()
+    mobilenet.cifar10()
+
+# some bug with activation function
+example()

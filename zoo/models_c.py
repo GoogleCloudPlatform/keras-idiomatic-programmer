@@ -278,7 +278,7 @@ class Composable(object):
         """
         if epoch == 0:
            return lr
-        return epoch * e_lr / w_epochs
+        return epoch * self.e_lr / self.w_epochs
 
     def warmup(self, x_train, y_train, epochs=10, steps=2000, loss='sparse_categorical_crossentropy', 
                s_lr=1e-6, e_lr=0.001):
@@ -312,7 +312,7 @@ class Composable(object):
         x_test  = (x_test  / 255.0).astype(np.float32)
 
         print("Warmup the model for numerical stability")
-        self.warmup(x_train, y_train, epochs=2)
+        self.warmup(x_train, y_train)
 
         print("Full training")
         self.compile()

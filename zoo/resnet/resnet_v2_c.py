@@ -205,7 +205,7 @@ class ResNetV2(Composable):
 # resnet = ResNetV2(50)
 
 def example():
-    ''' Example for constructing/training a ResNet V2 model
+    ''' Example for constructing/training a ResNet V2 model on CIFAR-10
     '''
     # Example of constructing a mini-ResNet
     groups = [ { 'n_filters' : 64, 'n_blocks': 1 },
@@ -214,18 +214,6 @@ def example():
     resnet = ResNetV2(groups, input_shape=(32, 32, 3), n_classes=10)
     resnet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
     resnet.model.summary()
+    resnet.cifar10()
 
-    # train on CIFAR-10
-    from tensorflow.keras.datasets import cifar10
-    import numpy as np
-    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-    x_train = (x_train / 255.0).astype(np.float32)
-    x_test  = (x_test / 255.0).astype(np.float32)
-
-    resnet.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
-    resnet.model.evaluate(x_test, y_test)
-
-    # Epoch 10/10
-    # 50000/50000 [==============================] - 368s 7ms/sample - loss: 1.1079 - acc: 0.7319
-
-example()
+# example()

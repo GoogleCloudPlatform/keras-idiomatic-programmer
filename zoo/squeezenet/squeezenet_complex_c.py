@@ -37,7 +37,7 @@ class SqueezeNetComplex(Composable):
     
     init_weights = 'glorot_uniform'
 
-    def _init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
                 init_weights='glorot_uniform', reg=l2(0.001), relu=None):
         ''' Construct a SqueezeNet Complex Bypass Convolution Neural Network
             groups      : number of blocks/filters per group
@@ -48,13 +48,13 @@ class SqueezeNetComplex(Composable):
             reg         : kernel regularizer
             relu        : max value for ReLU
         '''
-        super().__init__(init_weights=init_weights, reg=l2(0.001), relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
         
         if groups is None:
             groups = list(SqueezeNetComplex.groups)
             
         # The input shape
-        inputs = Input((224, 224, 3))
+        inputs = Input(shape=input_shape)
 
         # The Stem Group
         x = self.stem(inputs)
@@ -71,9 +71,8 @@ class SqueezeNetComplex(Composable):
         ''' Construct the Stem Group
             inputs : input tensor
         '''      
-        x = Conv2D(96, (7, 7), strides=2, padding='same',
-                   kernel_initializer=self.init_weights, kernel_regularizer=self.reg)(inputs)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(inputs, 96, (7, 7), strides=2, padding='same')
+        x = self.ReLU(x)
         x = MaxPooling2D(3, strides=2)(x)
         return x
 
@@ -87,23 +86,22 @@ class SqueezeNetComplex(Composable):
         if 'dropout' in metaparameters:
             dropout = metaparameters['dropout']
         else:
-            dropout = SqueezeNetComplex.dropout
+            dropout = self.dropout
 
         last = groups.pop()
         
         # Add fire groups, progressively increase number of filters
         for group in groups:
-        	x = SqueezeNetComplex.group(x, blocks=group, **metaparameters)
+        	x = self.group(x, blocks=group, **metaparameters)
 
         # Last fire block (module)
-        x = SqueezeNetComplex.fire_block(x, **last[0], **metaparameters)
+        x = self.fire_block(x, **last[0], **metaparameters)
 
         # Dropout is delayed to end of fire modules
         x = Dropout(dropout)(x)
         return x
 
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         ''' Construct a Fire Group
             x      : input to the group
             blocks: list of number of filters per fire block (module)
@@ -112,28 +110,18 @@ class SqueezeNetComplex(Composable):
             
         # Add the fire blocks (modules) for this group
         for block in blocks:
-            x = SqueezeNetComplex.fire_block(x, **block, **metaparameters)
+            x = self.fire_block(x, **block, **metaparameters)
 
         # Delayed downsampling
         x = MaxPooling2D((3, 3), strides=2)(x)
         return x
 
-    @staticmethod
-    def fire_block(x, **metaparameters):
+    def fire_block(self, x, **metaparameters):
         ''' Construct a Fire Block  with complex bypass
             x        : input to the block
             n_filters: number of filters in block
-            reg      : kernel regularizer
         '''
         n_filters = metaparameters['n_filters']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = SqueezeNetComplex.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = SqueezeNetComplex.init_weights
             
         # remember the input (identity)
         shortcut = x
@@ -141,23 +129,19 @@ class SqueezeNetComplex(Composable):
         # if the number of input filters does not equal the number of output filters, then use
         # a transition convolution to match the number of filters in identify link to output
         if shortcut.shape[3] != 8 * n_filters:
-            shortcut = Conv2D(n_filters * 8, (1, 1), strides=1,  padding='same',
-                              kernel_initializer=init_weights, kernel_regularizer=reg)(shortcut)
-            shortcut = Composable.ReLU(shortcut)
+            shortcut = self.Conv2D(shortcut, n_filters * 8, (1, 1), strides=1,  padding='same')
+            shortcut = self.ReLU(shortcut)
 
         # squeeze layer
-        squeeze = Conv2D(n_filters, (1, 1), strides=1, padding='same',
-                         kernel_initializer=init_weights, kernel_regularizer=reg)(x)
-        squeeze = Composable.ReLU(squeeze)
+        squeeze = self.Conv2D(x, n_filters, (1, 1), strides=1, padding='same')
+        squeeze = self.ReLU(squeeze)
 
         # branch the squeeze layer into a 1x1 and 3x3 convolution and double the number
         # of filters
-        expand1x1 = Conv2D(n_filters * 4, (1, 1), strides=1, padding='same',
-                           kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
-        expand1x1 = Composable.ReLU(expand1x1)
-        expand3x3 = Conv2D(n_filters * 4, (3, 3), strides=1, padding='same',
-                           kernel_initializer=init_weights, kernel_regularizer=reg)(squeeze)
-        expand3x3 = Composable.ReLU(expand3x3)
+        expand1x1 = self.Conv2D(squeeze, n_filters * 4, (1, 1), strides=1, padding='same')
+        expand1x1 = self.ReLU(expand1x1)
+        expand3x3 = self.Conv2D(squeeze, n_filters * 4, (3, 3), strides=1, padding='same')
+        expand3x3 = self.ReLU(expand3x3)
 
         # concatenate the feature maps from the 1x1 and 3x3 branches
         x = Concatenate()([expand1x1, expand3x3])
@@ -176,9 +160,8 @@ class SqueezeNetComplex(Composable):
         self.encoding = x
         
         # set the number of filters equal to number of classes
-        x = Conv2D(n_classes, (1, 1), strides=1,  padding='same',
-                   kernel_initializer=self.init_weights, kernel_regulazier=self.reg)(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, n_classes, (1, 1), strides=1,  padding='same')
+        x = self.ReLU(x)
         # reduce each filter (class) to a single value
         x = GlobalAveragePooling2D()(x)
 
@@ -192,4 +175,14 @@ class SqueezeNetComplex(Composable):
 # Example
 # squeezenet = SqueezeNetComplex()
 
+def example():
+    ''' Example for constructing/training a SqueezeNet Complex  model on CIFAR-10
+    '''
+    # Example of constructing a mini-SqueezeNet
+    groups = [ [ { 'n_filters' : 16 }, { 'n_filters' : 16 }, { 'n_filters' : 32 } ],
+               [ { 'n_filters' : 64 } ] ]
+    squeezenet = SqueezeNetComplex(groups, input_shape=(32, 32, 3), n_classes=10)
+    squeezenet.model.summary()
+    squeezenet.cifar10()
 
+# example()

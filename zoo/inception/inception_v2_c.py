@@ -66,7 +66,7 @@ class InceptionV2(Composable):
     
         # First Convolutional layer which uses a large (coarse) filter 
         x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Pooled feature maps will be reduced by 75%
@@ -75,11 +75,11 @@ class InceptionV2(Composable):
 
         # Second Convolutional layer which uses a mid-size filter
         x = self.Conv2D(x, 64, (1, 1), strides=(1, 1), padding='same', use_bias=False)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
         x = ZeroPadding2D(padding=(1, 1))(x)
         x = self.Conv2D(x, 192, (3, 3), strides=(1, 1), padding='valid', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
         # Pooled feature maps will be reduced by 75%
@@ -95,30 +95,29 @@ class InceptionV2(Composable):
         aux = [] # Auxiliary Outputs
 
         # Group 3
-        x, o = InceptionV2.group(x, [((64,),  (96,128),   (16, 32), (32,)),  # 3a
-                                     ((128,), (128, 192), (32, 96), (64,))]) # 3b
+        x, o = self.group(x, [((64,),  (96,128),   (16, 32), (32,)),  # 3a
+                              ((128,), (128, 192), (32, 96), (64,))]) # 3b
         aux += o
 
         # Group 4
-        x, o = InceptionV2.group(x, [((192,),  (96, 208), (16, 48), (64,)), # 4a
-                                     None, 				 # auxiliary classifier
-                                     ((160,), (112, 224), (24, 64), (64,)), # 4b
-                                     ((128,), (128, 256), (24, 64), (64,)), # 4c
-                                     ((112,), (144, 288), (32, 64), (64,)), # 4d
-                                     None,                                  # auxiliary classifier
-                                     ((256,), (160, 320), (32, 128), (128,))], # 4e
-                                     n_classes=n_classes) 
+        x, o = self.group(x, [((192,),  (96, 208), (16, 48), (64,)), # 4a
+                              None, 				 # auxiliary classifier
+                              ((160,), (112, 224), (24, 64), (64,)), # 4b
+                              ((128,), (128, 256), (24, 64), (64,)), # 4c
+                              ((112,), (144, 288), (32, 64), (64,)), # 4d
+                              None,                                  # auxiliary classifier
+                              ((256,), (160, 320), (32, 128), (128,))], # 4e
+                              n_classes=n_classes) 
         aux += o
 
         # Group 5
-        x, o = InceptionV2.group(x, [((256,), (160, 320), (32, 128), (128,)), # 5a
-                                     ((384,), (192, 384), (48, 128), (128,))],# 5b
-                                     pooling=False) 
+        x, o = self.group(x, [((256,), (160, 320), (32, 128), (128,)), # 5a
+                              ((384,), (192, 384), (48, 128), (128,))],# 5b
+                              pooling=False) 
         aux += o
         return x, aux
 
-    @staticmethod
-    def group(x, blocks, pooling=True, n_classes=1000, **metaparameters):
+    def group(self, x, blocks, pooling=True, n_classes=1000, **metaparameters):
         """ Construct an Inception group
             x         : input into the group
             blocks    : filters for each block in the group
@@ -131,17 +130,16 @@ class InceptionV2(Composable):
         for block in blocks:
             # Add auxiliary classifier
             if block is None:
-               aux.append(InceptionV2.auxiliary(x, n_classes, **metaparameters))
+               aux.append(self.auxiliary(x, n_classes, **metaparameters))
             else:
-                x = InceptionV2.inception_block(x, block[0], block[1], block[2], block[3], **metaparameters)           
+                x = self.inception_block(x, block[0], block[1], block[2], block[3], **metaparameters)           
 
         if pooling:
             x = ZeroPadding2D(padding=(1, 1))(x)
             x = MaxPooling2D((3, 3), strides=2)(x)
         return x, aux
 
-    @staticmethod
-    def inception_block(x, f1x1, f3x3, f5x5, fpool, **metaparameters):
+    def inception_block(self, x, f1x1, f3x3, f5x5, fpool, **metaparameters):
         """ Construct an Inception block (module)
             x    : input to the block
             f1x1 : filters for 1x1 branch
@@ -150,55 +148,54 @@ class InceptionV2(Composable):
             fpool: filters for pooling branch
         """
         # 1x1 branch
-        b1x1 = Composable.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
-        b1x1 = BatchNormalization()(b1x1)
-        b1x1 = Composable.ReLU(b1x1)
+        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b1x1 = self.BatchNormalization(b1x1)
+        b1x1 = self.ReLU(b1x1)
 
         # 3x3 branch
         # 3x3 reduction
-        b3x3 = Composable.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
-        b3x3 = BatchNormalization()(b3x3)
-        b3x3 = Composable.ReLU(b3x3)
+        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.BatchNormalization(b3x3)
+        b3x3 = self.ReLU(b3x3)
         b3x3 = ZeroPadding2D((1,1))(b3x3)
-        b3x3 = Composable.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
-        b3x3 = BatchNormalization()(b3x3)
-        b3x3 = Composable.ReLU(b3x3)
+        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
+        b3x3 = self.BatchNormalization(b3x3)
+        b3x3 = self.ReLU(b3x3)
 
         # 5x5 branch
         # 5x5 reduction
-        b5x5 = Composable.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
-        b5x5 = BatchNormalization()(b5x5)
-        b5x5 = Composable.ReLU(b5x5)
+        b5x5 = self.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b5x5 = self.BatchNormalization(b5x5)
+        b5x5 = self.ReLU(b5x5)
         b5x5 = ZeroPadding2D((1,1))(b5x5)
-        b5x5 = Composable.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
-        b5x5 = BatchNormalization()(b5x5)
-        b5x5 = Composable.ReLU(b5x5)
+        b5x5 = self.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
+        b5x5 = self.BatchNormalization(b5x5)
+        b5x5 = self.ReLU(b5x5)
 
         # Pooling branch
         bpool = MaxPooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = Composable.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
-        bpool = BatchNormalization()(bpool)
-        bpool = Composable.ReLU(bpool)
+        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        bpool = self.BatchNormalization(bpool)
+        bpool = self.ReLU(bpool)
 
         # Concatenate the outputs (filters) of the branches
         x = Concatenate()([b1x1, b3x3, b5x5, bpool])
         return x
 
-    @staticmethod
-    def auxiliary(x, n_classes, **metaparameters):
+    def auxiliary(self, x, n_classes, **metaparameters):
         """ Construct the auxiliary classier
             x        : input to the auxiliary classifier
             n_classes: number of output classes
         """
         x = AveragePooling2D((5, 5), strides=(3, 3))(x)
-        x = Composable.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
+        x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
         x = Flatten()(x)
-        x = Composable.Dense(x, 1024, activation=Composable.ReLU, **metaparameters)
+        x = self.Dense(x, 1024, activation=Composable.ReLU, **metaparameters)
         x = Dropout(0.7)(x)
-        output = Composable.Dense(x, n_classes, activation='softmax', **metaparameters)
+        output = self.Dense(x, n_classes, activation='softmax', **metaparameters)
         return output
 
     def classifier(self, x, n_classes, dropout=0.4):
@@ -222,3 +219,15 @@ class InceptionV2(Composable):
 
 # Example
 # inception = InceptionV2()
+
+def example():
+    ''' Example for constructing/training a Inception V2 model on CIFAR-10
+    '''
+    # Example of constructing an Inception
+
+    inception = InceptionV2(input_shape=(32, 32, 3), n_classes=10)
+    inception.model.summary()
+    inception.cifar10()
+
+# Can't train on V2, since 32x32 is too small
+# example()

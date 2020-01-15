@@ -247,3 +247,17 @@ class SEResNet(Composable):
 
 # Example
 # senet = SEResNet(50)
+
+def example():
+    ''' Example for constructing/training a SE-ResNet model on CIFAR-10
+    '''
+    # Example of constructing a mini-ResNet
+    groups = [ { 'n_filters' : 64, 'n_blocks': 1 },
+               { 'n_filters': 128, 'n_blocks': 2 },
+               { 'n_filters': 256, 'n_blocks': 2 } ]
+    senet = SEResNet(groups, input_shape=(32, 32, 3), n_classes=10)
+    senet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    senet.model.summary()
+    senet.cifar10()
+
+# example()

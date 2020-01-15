@@ -17,6 +17,7 @@ from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
 from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras.optimizers import Adam
 import tensorflow.keras.backend as K
 
 class Composable(object):
@@ -260,3 +261,23 @@ class Composable(object):
         x = BatchNormalization(epsilon=1.001e-5, **params)(x)
         return x
         
+
+    def compile(self, loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001), metrics=['acc']):
+        """ Compile the model for training
+            loss     : the loss function
+            optimizer: the optimizer
+            metrics  : metrics to report
+        """
+        self.model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
+
+
+    def warmup(self, x_train, y_train, epochs=5, loss='sparse_categorical_crossentropy', lr=1e-6):
+        """ Warmup for numerical stability
+            x_train : training images
+            y_train : training labels
+            epochs  : number of epochs for warmup
+            loss    : the loss function
+            lr      : warmup learning rate
+        """
+        self.compile(loss=loss, optimizer=Adam(lr), metrics=['acc'])
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=128, verbose=1)

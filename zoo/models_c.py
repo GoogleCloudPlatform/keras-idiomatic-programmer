@@ -280,13 +280,12 @@ class Composable(object):
            return lr
         return epoch * self.e_lr / self.w_epochs
 
-    def warmup(self, x_train, y_train, epochs=10, steps=2000, loss='sparse_categorical_crossentropy', 
+    def warmup(self, x_train, y_train, epochs=5, loss='sparse_categorical_crossentropy', 
                s_lr=1e-6, e_lr=0.001):
         """ Warmup for numerical stability
             x_train : training images
             y_train : training labels
             epochs  : number of epochs for warmup
-            steps   : number of steps per epoch
             loss    : the loss function
             s_lr    : start warmup learning rate
             e_lr    : end warmup learning rate
@@ -298,7 +297,7 @@ class Composable(object):
         self.w_lr     = e_lr
 
         # Train the model
-        self.model.fit(x_train, y_train, epochs=epochs, steps_per_epoch=steps, batch_size=32, verbose=1,
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
                        callbacks=[lrate])
 
     def cifar10(self, epochs=10):

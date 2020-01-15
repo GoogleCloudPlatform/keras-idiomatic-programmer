@@ -224,7 +224,7 @@ class SEResNeXt(Composable):
         # Increase filters by 2X to match shape when added to output of block
         shortcut = self.Conv2D(x, filters_out, kernel_size=(1, 1), strides=strides, padding='same', 
                                **metaparameters)
-        shortcut = self.BatchNormalization()(shortcut)
+        shortcut = self.BatchNormalization(shortcut)
 
         # Dimensionality Reduction
         x = self.Conv2D(x, filters_in, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False,
@@ -260,3 +260,17 @@ class SEResNeXt(Composable):
 
 # Example
 # senet = SEResNeXt(50)
+
+def example():
+    ''' Example for constructing/training a SE-ResNeXt model on CIFAR-10
+    '''
+    # Example of constructing a mini-SE-ResNeXt
+    groups = [ { 'filters_in': 128,  'filters_out' : 256,  'n_blocks': 1 },
+               { 'filters_in': 256,  'filters_out' : 512,  'n_blocks': 2 },
+               { 'filters_in': 512,  'filters_out' : 1024, 'n_blocks': 2 } ]
+    senet = SEResNeXt(groups, input_shape=(32, 32, 3), n_classes=10)
+    senet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    senet.model.summary()
+    senet.cifar10()
+
+# example()

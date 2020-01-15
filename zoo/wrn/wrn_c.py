@@ -38,7 +38,6 @@ class WRN(Composable):
     # Meta-parameter: dropout
     dropout = 0
 
-
     def __init__(self, groups=None, depth=16, k=8, dropout=0, input_shape=(32, 32, 3), n_classes=10,
                  init_weights='he_normal', reg=None, relu=None):
         """ Construct a Wids Residual (Convolutional Neural) Network 
@@ -51,6 +50,9 @@ class WRN(Composable):
             reg         : kernel regularization
             relu        : max value for ReLU
         """
+        # Configure base (super) class
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+
         if groups is None:
             groups = list(self.groups)
 

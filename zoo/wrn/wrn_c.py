@@ -75,7 +75,7 @@ class WRN(Composable):
         """
         # Convolutional layer 
         x = self.Conv2D(inputs, 16, (3, 3), strides=(1, 1), padding='same', use_bias=False)
-        x = BatchNormalization()(x)
+        x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
         return x
@@ -93,15 +93,14 @@ class WRN(Composable):
         n_blocks = (depth - 4) // 6
 
         # first group, the projection block is not strided
-        x = WRN.group(x, n_blocks=n_blocks, strides=(1, 1), **groups.pop(0), **metaparameters)
+        x = self.group(x, n_blocks=n_blocks, strides=(1, 1), **groups.pop(0), **metaparameters)
         
         # remaining groups
         for group in groups:
-            x = WRN.group(x, n_blocks=n_blocks, strides=(2, 2), **group, **metaparameters)
+            x = self.group(x, n_blocks=n_blocks, strides=(2, 2), **group, **metaparameters)
         return x
     
-    @staticmethod
-    def group(x, **metaparameters):
+    def group(self, x, **metaparameters):
         """ Construct a Wide Residual Group
             x         : input into the group
             n_blocks  : number of residual blocks with identity link
@@ -109,15 +108,14 @@ class WRN(Composable):
         n_blocks  = metaparameters['n_blocks']
 
         # first block is projection to match the number of input filters to output fitlers for the add operation
-        x = WRN.projection_block(x, **metaparameters)
+        x = self.projection_block(x, **metaparameters)
 
         # wide residual blocks
         for _ in range(n_blocks-1):
-            x = WRN.identity_block(x, **metaparameters)
+            x = self.identity_block(x, **metaparameters)
         return x
 
-    @staticmethod
-    def identity_block(x, **metaparameters):
+    def identity_block(self, x, **metaparameters):
         """ Construct a B(3,3) style block
             x        : input into the block
             n_filters: number of filters
@@ -135,24 +133,23 @@ class WRN(Composable):
     
         ## Construct the 3x3, 3x3 convolution block
     
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
-        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
 
         # dropout only in identity link (not projection)
         if dropout > 0:
             x = Dropout(dropout)
 
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
-        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
         return x
 
-    @staticmethod
-    def projection_block(x, **metaparameters):
+    def projection_block(self, x, **metaparameters):
         """ Construct a B(3,3) style block
             x        : input into the block
             n_filters: number of filters
@@ -166,22 +163,45 @@ class WRN(Composable):
         del metaparameters['strides']
    
         # Save input vector (feature maps) for the identity link
-        shortcut = BatchNormalization()(x)
-        shortcut = Composable.Conv2D(shortcut, n_filters *k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
+        shortcut = self.BatchNormalization(x)
+        shortcut = self.Conv2D(shortcut, n_filters *k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
    
         ## Construct the 3x3, 3x3 convolution block
    
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
-        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
 
-        x = BatchNormalization()(x)
-        x = Composable.ReLU(x)
-        x = Composable.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
         return x
 
 # Example
-# wrn = WRN(depth=28,k=10)
+# wrn = WRN(depth=28, k=10)
+
+def example():
+    ''' Example for constructing/training a VGG model
+    '''
+    # Example of constructing a WRN
+    wrn = WRN(depth=14, k=2, input_shape=(32, 32, 3), n_classes=10)
+    wrn.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
+    wrn.model.summary()
+
+    # train on CIFAR-10
+    from tensorflow.keras.datasets import cifar10
+    import numpy as np
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    x_train = (x_train / 255.0).astype(np.float32)
+    x_test  = (x_test /  255.0).astype(np.float32)
+
+    wrn.model.fit(x_train, y_train, epochs=10, batch_size=32, verbose=1)
+    wrn.model.evaluate(x_test, y_test)
+
+    # Epoch 10/10
+    # 50000/50000 [==============================] - 825s 17ms/sample - loss: 0.4230 - acc: 0.8520
+
+example()

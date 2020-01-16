@@ -28,13 +28,14 @@ sys.path.append('../')
 from models_c import Composable
 
 class MobileNetV3(Composable):
-    ReLU6 = Composable.ReLU
-    HS    = Composable.HS
-    
     """ Construct a Mobile Convolution Neural Network V3 """
+
     # Meta-parameter: number of filters/filter size, blocks per group, strides of projection block, activation, and
     #                 expansion per block
-    groups = { 'large' : [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'strides': (1, 1), 
+    def GROUPS(self):
+        ReLU6 = self.ReLU
+        HS    = self.HS
+        self.groups = { 'large' : [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'strides': (1, 1), 
                              'activation': ReLU6, 'blocks': [16], 'squeeze': False }, 
                            { 'n_filters' : 24,    'kernel_size': (3, 3), 'strides': (2, 2), 
                              'activation': ReLU6, 'blocks': [64, 72], 'squeeze': False},
@@ -51,7 +52,7 @@ class MobileNetV3(Composable):
                              'activation': HS ,   'blocks': None, 'squeeze': False}
                          ],
 
-               'small' : [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'strides': (2, 2),
+                      'small' : [ { 'n_filters' : 16,    'kernel_size': (3, 3), 'strides': (2, 2),
                              'activation': ReLU6, 'blocks': [16], 'squeeze': True },
                            { 'n_filters' : 24,    'kernel_size': (3, 3), 'strides': (2, 2),
                              'activation': ReLU6, 'blocks': [72, 88], 'squeeze': False},
@@ -65,7 +66,7 @@ class MobileNetV3(Composable):
                            { 'n_filters' : 576,   'kernel_size': (1, 1), 'strides': (1, 1),
                              'activation': HS ,   'blocks': None, 'squeeze': False}
                          ]
-              }
+                      }
 
     # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
     alpha = 1
@@ -87,6 +88,9 @@ class MobileNetV3(Composable):
         """
         # Configure base (super) class
         super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+
+        # Variable Binding
+        self.GROUPS()
         
         # predefined
         if isinstance(groups, str):
@@ -94,7 +98,7 @@ class MobileNetV3(Composable):
                 raise Exception("MobileNetV3: Invalid value for groups")
             groups = list(self.groups[groups])
 
-        inputs = Input(shape=(224, 224, 3))
+        inputs = Input(shape=input_shape)
 
         # The Stem Group
         x = self.stem(inputs, alpha=alpha)
@@ -188,6 +192,7 @@ class MobileNetV3(Composable):
             squeeze = False
         if 'activation' in metaparameters:
             activation = metaparameters['activation']
+            del metaparameters['activation']
         else:
             activation = ReLU6
         del metaparameters['n_filters']
@@ -229,7 +234,8 @@ class MobileNetV3(Composable):
         """ Construct a squeeze block
             x   : input to the squeeze
         """
-        del metaparameters['activation']
+        if 'activation' in metaparameters:
+            del metaparameters['activation']
         
         shortcut = x
         n_channels = x.shape[-1]
@@ -258,7 +264,7 @@ class MobileNetV3(Composable):
         
         x = Reshape((1, 1, n_channels))(x)
 
-        x = self.Conv2D(x, 1280, (1, 1), padding='same', activation=Composable.HS)
+        x = self.Conv2D(x, 1280, (1, 1), padding='same', activation=self.HS)
 
         # final classification
         x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax')
@@ -282,4 +288,4 @@ def example():
     mobilenet.cifar10()
 
 # some bug with activation function
-example()
+# example()

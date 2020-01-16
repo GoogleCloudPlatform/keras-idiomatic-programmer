@@ -287,5 +287,4 @@ def example():
     mobilenet.model.summary()
     mobilenet.cifar10()
 
-# some bug with activation function
 # example()

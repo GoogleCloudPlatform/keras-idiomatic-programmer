@@ -203,15 +203,14 @@ class MobileNetV1(Composable):
 # mobilenet = MobileNetV1()
 
 def example():
-    ''' Example for constructing/training a Mobilenet model on CIFAR-10
+    ''' Example for constructing/training a MobileNet V1 model on CIFAR-10
     '''
-    # Example of constructing a mini-Mobilenet
+    # Example of constructing a mini-MobileNet
     groups = [ { 'n_filters': 128,  'n_blocks': 1 },
                { 'n_filters': 256,  'n_blocks': 1 },
-               { 'n_filters': 512,  'n_blocks': 2 } ]
+               { 'n_filters': 1024,  'n_blocks': 2 } ]
     mobilenet = MobileNetV1(groups, input_shape=(32, 32, 3), n_classes=10)
     mobilenet.model.summary()
     mobilenet.cifar10()
 
-# reports reshape bug during training
-example()
+# example()

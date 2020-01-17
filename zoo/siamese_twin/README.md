@@ -33,7 +33,15 @@
 
 ## Composable
 
+*Example: Instantiate a stock Siamese Twin model*/
+
 ```python
+from siamese_twin_c import SiameseTwin
+
+# Siamese Twin from research paper
 siam = SiameseTwin()
+
+# getter for the tf.keras model
+model = siam.model
 ```
 

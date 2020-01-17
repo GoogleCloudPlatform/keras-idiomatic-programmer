@@ -317,15 +317,14 @@ class Composable(object):
         v_loss = []
         for lr in lr_range:
             # Compile the model for the new learning rate
-            print("LOSS", loss)
             self.compile(loss=loss, optimizer=Adam(lr))
             
             # Train the model
+            print("Learning Rate", lr)
             datagen = ImageDataGenerator()
             self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]), epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             # Evaluate the model
-            print("Learning Rate", lr)
             result = self.model.evaluate(x_test, y_test)
             v_loss.append(result[0])
             
@@ -334,7 +333,7 @@ class Composable(object):
 
         # Find the best starting learning rate based on validation loss
         best = 9999.0
-        for _ in len(lr_range):
+        for _ in range(len(lr_range)):
             if v_loss[_] < best:
                 best = v_loss[_]
                 lr = lr_range[_]

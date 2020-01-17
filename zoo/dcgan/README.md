@@ -8,3 +8,11 @@
 ## Macro-Architecture
 
 <img src='macro.jpg'>
+
+### Generator
+
+<img src='macro-gen.jpg'>
+
+### Discriminator
+
+<img src='macro-dis.jpg'>

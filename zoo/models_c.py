@@ -272,6 +272,11 @@ class Composable(object):
         """
         self.model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
+    # training variables
+    hidden_dropout = None # hidden dropout in classifier
+    w_lr           = 0    # target warmup rate
+    w_epochs       = 0    # number of epochs in warmup
+
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training
             epoch : current epoch iteration
@@ -350,7 +355,11 @@ class Composable(object):
         
         v_loss = []
         for bs in batch_range:
-            print("Batc Size", bs)
+            print("Batch Size", bs)
+
+            # equalize the number of examples per epoch
+            steps = int(batch_range[0] * steps / bs)
+
             self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=bs),
                                      epochs=epochs, steps_per_epoch=steps, verbose=1)
 
@@ -372,6 +381,35 @@ class Composable(object):
 
         # return the best learning rate and batch size
         return lr, bs
+
+    def training_schedule(self, epoch, lr):
+        """
+        """
+        print("ACC", self.model.history.history['acc'], self.model.history.history['val_acc'])
+        if self.model.history.history['acc'] > self.model.history.history['val_acc'] + 3:
+            hidden_dropout.rate = 0.5
+            print("Overfitting, adding 50% dropout")
+        else:
+            hidden_dropout.rate = 0.0
+        return lr
+
+    def training(self, x_train, y_train, epochs=10, batch_size=32):
+        """ Full Training of the Model
+            x_train    : training images
+            y_train    : training labels
+            epochs     : number of epochs
+            batch_size : size of batch
+        """
+
+        # Check for hidden dropout layer in classifier
+        for layer in self.model.layers:
+            if isinstance(layer, Dropout):
+                hidden_dropout = layer
+                break    
+
+        lrate = LearningRateScheduler(self.trainig_scheduler, verbose=1)
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1,
+                       callbacks=[lrate])
 
     def cifar10(self, epochs=10):
         """ Train on CIFAR-10

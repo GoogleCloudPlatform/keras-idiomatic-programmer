@@ -263,7 +263,7 @@ class Composable(object):
         return x
         
 
-    def compile(self, loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001), metrics=['acc']):
+    def compile(self, loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001, decay=1e-5), metrics=['acc']):
         """ Compile the model for training
             loss     : the loss function
             optimizer: the optimizer
@@ -300,6 +300,34 @@ class Composable(object):
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
                        callbacks=[lrate])
 
+    def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250, loss='sparse_categorical_crossentropy',
+                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128]):
+        """ Do a grid search for hyperparameters
+            x_train : training images
+            y_train : training labels
+            epochs  : number of epochs
+            steps   : number of steps per epoch
+            loss    : loss function
+            lr_range: range for searching learning rate
+            batch_range: range for searching batch size
+        """
+        # Save the original weights
+        weights = self.model.get_weights()
+        for lr in lr_range:
+            # Compile the model for the new learning rate
+            self.compile(loss=loss, optimizer=Adam(lr))
+            
+            # Train the model
+            datagen = ImageDataGenerator()
+            self.model.fit_generator(datagen(x_train, y_train, batch_size=batch_range[0]), epochs=epochs, steps_per_epoch=steps, verbose=1)
+
+            # Evaluate the model
+            result = self.model.evaluate(x_test, y_test)
+            print(result)
+            
+            # Reset the weights
+            self.model.set_weights(weights)
+
     def cifar10(self, epochs=10):
         """ Train on CIFAR-10
             epochs : number of epochs for full training
@@ -307,6 +335,24 @@ class Composable(object):
         from tensorflow.keras.datasets import cifar10
         import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+        x_train = (x_train / 255.0).astype(np.float32)
+        x_test  = (x_test  / 255.0).astype(np.float32)
+
+        print("Warmup the model for numerical stability")
+        self.warmup(x_train, y_train)
+
+        print("Full training")
+        self.compile()
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, validation_split=0.1, verbose=1)
+        self.model.evaluate(x_test, y_test)
+
+    def cifar100(self, epochs=20):
+        """ Train on CIFAR-100
+            epochs : number of epochs for full training
+        """
+        from tensorflow.keras.datasets import cifar100
+        import numpy as np
+        (x_train, y_train), (x_test, y_test) = cifar100.load_data()
         x_train = (x_train / 255.0).astype(np.float32)
         x_test  = (x_test  / 255.0).astype(np.float32)
 

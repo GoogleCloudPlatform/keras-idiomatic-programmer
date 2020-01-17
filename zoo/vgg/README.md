@@ -22,6 +22,7 @@
 
 ### Classifier Group
 
+<img src='classifier.jpg'>
 
 ## Composable
 
@@ -40,7 +41,7 @@ vgg = VGG(16, input_shape=(128, 128, 3), n_classes=50)
 model = vgg.model
 ```
 
-*Example: Composable Group*
+*Example: Compose and train a mini-VGG model*
 
 ```python
 ''' Example for constructing/training a VGG model on CIFAR-10

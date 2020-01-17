@@ -314,9 +314,10 @@ class Composable(object):
         """
         # Save the original weights
         weights = self.model.get_weights()
-        loss = []
+        v_loss = []
         for lr in lr_range:
             # Compile the model for the new learning rate
+            print("LOSS", loss)
             self.compile(loss=loss, optimizer=Adam(lr))
             
             # Train the model
@@ -326,7 +327,7 @@ class Composable(object):
             # Evaluate the model
             print("Learning Rate", lr)
             result = self.model.evaluate(x_test, y_test)
-            loss.append(result[0])
+            v_loss.append(result[0])
             
             # Reset the weights
             self.model.set_weights(weights)
@@ -334,8 +335,8 @@ class Composable(object):
         # Find the best starting learning rate based on validation loss
         best = 9999.0
         for _ in len(lr_range):
-            if result[_] < best:
-                best = result[_]
+            if v_loss[_] < best:
+                best = v_loss[_]
                 lr = lr_range[_]
 
         # return the best learning rate

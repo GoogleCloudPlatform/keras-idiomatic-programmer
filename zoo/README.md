@@ -8,20 +8,21 @@ All the models here are coded using design pattern for models. The models are ba
 | Model       | Paper |
 |--------------|-------|
 |*Deep Convolutional Neural Networks*||
-| [`VGG16`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
-| [`VGG19`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
-*Residual Convolutional Neural Networks*<br/>
-| [`ResNet34`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
-| [`ResNet50`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
-| [`ResNet101`](resnet) | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
-| [`ResNet152`](resnet) | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
-| [`ResNet_cifar10`](resnet) | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
-| [`ResNet50_v1.5`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>
-| [`ResNet50_v2.0`](resnet)  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
-| [`ResNet_cifar10_v2.0`](resnet)  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |<br/>
-| `SE-ResNet50`    | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
-| `SE-ResNet101`   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
-| `SE-ResNet152`   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
+| [`VGG16`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |
+| [`VGG19`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |
+|*Residual Convolutional Neural Networks*||
+| [`ResNet34`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
+| [`ResNet50`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
+| [`ResNet101`](resnet) | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
+| [`ResNet152`](resnet) | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
+| [`ResNet_cifar10`](resnet) | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
+| [`ResNet50_v1.5`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
+| [`ResNet50_v2.0`](resnet)  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |
+| [`ResNet_cifar10_v2.0`](resnet)  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |
+| [`SE-ResNet50`](senet)    | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
+| [`SE-ResNet101`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
+| [`SE-ResNet152`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
+| [`SE-ResNeXt`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
 *Wide Convolutional Neural Networks*<br/>
 | `Inception_v1`   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |<br/>
 | `Inception_v2`   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |<br/>

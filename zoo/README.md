@@ -5,8 +5,9 @@ All the models here are coded using design pattern for models. The models are ba
   1. Idiomatic - procedural: for academic/educational audience.
   2. Composable (end in _c.py) - object oriented programming: for production audience.
 
-| Model       | Paper |<br/>
-*Deep Convolutional Neural Networks*<br/>
+| Model       | Paper |
+|--------------|-------|
+|*Deep Convolutional Neural Networks*||
 | [`VGG16`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
 | [`VGG19`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
 *Residual Convolutional Neural Networks*<br/>

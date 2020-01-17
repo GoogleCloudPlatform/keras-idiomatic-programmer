@@ -19,6 +19,7 @@ from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNor
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.callbacks import LearningRateScheduler
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import tensorflow.keras.backend as K
 
 class Composable(object):
@@ -319,7 +320,7 @@ class Composable(object):
             
             # Train the model
             datagen = ImageDataGenerator()
-            self.model.fit_generator(datagen(x_train, y_train, batch_size=batch_range[0]), epochs=epochs, steps_per_epoch=steps, verbose=1)
+            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]), epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             # Evaluate the model
             result = self.model.evaluate(x_test, y_test)
@@ -340,6 +341,9 @@ class Composable(object):
 
         print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)
+
+        print("Hyperparameter search")
+        self.grid_search(x_train, y_train, x_test, y_test)
 
         print("Full training")
         self.compile()

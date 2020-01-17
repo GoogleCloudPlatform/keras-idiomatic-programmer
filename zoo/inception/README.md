@@ -1,8 +1,8 @@
 
 # Inception
 
-[inception_v*.py](inception_v1.py) - academic (idiomatic)<br/>
-[inception_v*_c.py](inception_v1_c.py) - production (composable)
+[inception(v1/v2/v3).py](inception_v1.py) - academic (idiomatic)<br/>
+[inception_(v1/v2/v3)_c.py](inception_v1_c.py) - production (composable)
 
 [Paper V1/V2](https://arxiv.org/pdf/1409.4842.pdf)<br/>
 [Paper V3](https://arxiv.org/pdf/1512.00567.pdf)

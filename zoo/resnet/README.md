@@ -2,7 +2,7 @@
 # ResNet
 
 [resnet(v1/v1.5/v2).py](resnet_v1.py) - academic (idiomatic)<br/>
-[resnet_cifar10(v1/v2).py](resnet_v1_cifar.py) - academic (idiomatic)<br/>
+[resnet_cifar10(v1/v2).py](resnet_v1_cifar10.py) - academic (idiomatic)<br/>
 [resnet(v1/v1.5/v2)_c.py](resnet_v1_c.py) - production (composable)
 
 [Paper](https://arxiv.org/pdf/1512.03385.pdf)

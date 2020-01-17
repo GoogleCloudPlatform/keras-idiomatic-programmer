@@ -55,9 +55,9 @@ All the models here are coded using design pattern for models. The models are ba
 |*Generative Adversarial Networks*||
 | [`DCGAN`](dcgan) | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks, 2016](https://arxiv.org/pdf/1511.06434.pdf) |
 |*Object Dectection*||
-| [`R-CNN`(r-cnn)] ||
-| [`Fast R-CNN`(fast-rcnn)] ||
-| [`Faster R-CNN`(faster-rcnn)] ||
+| [`R-CNN`](r-cnn) |[Rich feature hierarchies for accurate object detection and semantic segmentation, 2014](https://arxiv.org/pdf/1311.2524.pdf)|
+| [`Fast R-CNN`](fast r-cnn) |[Fast R-CNN, 2015](https://arxiv.org/pdf/1504.08083.pdf)|
+| [`Faster R-CNN`](faster r-cnn) |[Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks, 2015](https://arxiv.org/pdf/1506.01497.pdf)|
 
 ## Architecture Representation
 

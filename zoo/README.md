@@ -48,12 +48,16 @@ All the models here are coded using design pattern for models. The models are ba
 | [`SqueezeNet_bypass`](squeezenet) |  [SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size, 2016](https://arxiv.org/pdf/1602.07360.pdf) |
 | [`SqueezeNet_complex`](squeezenet) |  [SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <0.5MB model size, 2016](https://arxiv.org/pdf/1602.07360.pdf) |
 | [`ShuffleNet`](shufflenet) | [ShuffleNet: An Extremely Efficient Convolutional Neural Network for Mobile Devices, 2017](https://arxiv.org/pdf/1707.01083.pdf) |
-|One-Shot Classification Networks*||
-| [`Siamese Twin`](siamese) | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |<br/>
-|AutoEncoders*||
-| `Auto Encoder` | no paper - general principles |
-*Generative Adversarial Networks*<br/>
-| `DCGAN` | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks, 2016](https://arxiv.org/pdf/1511.06434.pdf) |<br/>
+|*One-Shot Classification Networks*||
+| [`Siamese Twin`](siamese_twin) | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |
+|*AutoEncoders*||
+| [`Auto Encoder`](autoencoder) | no paper - general principles |
+|*Generative Adversarial Networks*||
+| [`DCGAN`](dcgan) | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks, 2016](https://arxiv.org/pdf/1511.06434.pdf) |
+|*Object Dectection*||
+| [`R-CNN`(r-cnn)] ||
+| [`Fast R-CNN`(fast-rcnn)] ||
+| [`Faster R-CNN`(faster-rcnn)] ||
 
 ## Architecture Representation
 

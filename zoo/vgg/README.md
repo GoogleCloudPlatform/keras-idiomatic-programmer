@@ -1,8 +1,8 @@
 
 # VGG
 
-    vgg.py   - academic - procedural
-    vgg_c.py - production - OOP
+    vgg.py   - academic (idiomatic)
+    vgg_c.py - production (composable)
 
 [Paper](https://arxiv.org/pdf/1409.1556.pdf)
 

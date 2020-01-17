@@ -19,18 +19,17 @@ All the models here are coded using design pattern for models. The models are ba
 | [`ResNet50_v1.5`](resnet)  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |
 | [`ResNet50_v2.0`](resnet)  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |
 | [`ResNet_cifar10_v2.0`](resnet)  | [Identity Mappings in Deep Residual Networks, 2016](https://arxiv.org/pdf/1603.05027.pdf) |
-| [`SE-ResNet50`](senet)    | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
-| [`SE-ResNet101`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
-| [`SE-ResNet152`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
-| [`SE-ResNeXt`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>
-*Wide Convolutional Neural Networks*<br/>
-| `Inception_v1`   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |<br/>
-| `Inception_v2`   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |<br/>
-| `Inception_v3`   | [Rethinking the Inception Architecture for Computer Vision, 2015](https://arxiv.org/pdf/1512.00567.pdf) |<br/>
-| `ResNeXt50`  | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
-| `ResNeXt101` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
-| `ResNeXt152` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) | <br/>
-| `ResNeXt_cifar10` | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |<br/>
+| [`SE-ResNet50`](senet)    | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |
+| [`SE-ResNet101`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |
+| [`SE-ResNet152`](senet)   | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |
+|*Wide Convolutional Neural Networks*||
+| [`Inception_v1`](inception)   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |
+| [`Inception_v2`](inception)   | [Going Deeper with Convolutions, 2015](https://arxiv.org/pdf/1409.4842.pdf)   |
+| [`Inception_v3`](inception)   | [Rethinking the Inception Architecture for Computer Vision, 2015](https://arxiv.org/pdf/1512.00567.pdf) |
+| [`ResNeXt50`](resnext)  | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |
+| [`ResNeXt101`](resnext) | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |
+| [`ResNeXt152`](resnext) | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |
+| [`ResNeXt_cifar10`](resnext) | [Aggregated Residual Transformations for Deep Neural Networks, 2016](https://arxiv.org/pdf/1611.05431.pdf) |
 | `WRN`        | [Wide Residual Networks, 2016](https://arxiv.org/pdf/1605.07146.pdf) | <br/>
 | `Xception`   | [Xception: Deep Learning with Depthwise Separable Convolutions, 2016](https://arxiv.org/pdf/1610.02357.pdf) |<br/>
 | `SE-ResNeXt50`    | [Squeeze-and-Excitation Networks, 2017](https://arxiv.org/pdf/1709.01507.pdf) |<br/>

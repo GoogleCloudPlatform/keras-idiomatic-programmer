@@ -314,6 +314,7 @@ class Composable(object):
         """
         # Save the original weights
         weights = self.model.get_weights()
+        loss = []
         for lr in lr_range:
             # Compile the model for the new learning rate
             self.compile(loss=loss, optimizer=Adam(lr))
@@ -323,11 +324,22 @@ class Composable(object):
             self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]), epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             # Evaluate the model
+            print("Learning Rate", lr)
             result = self.model.evaluate(x_test, y_test)
-            print(result)
+            loss.append(result[0])
             
             # Reset the weights
             self.model.set_weights(weights)
+
+        # Find the best starting learning rate based on validation loss
+        best = 9999.0
+        for _ in len(lr_range):
+            if result[_] < best:
+                best = result[_]
+                lr = lr_range[_]
+
+        # return the best learning rate
+        return lr
 
     def cifar10(self, epochs=10):
         """ Train on CIFAR-10
@@ -343,10 +355,10 @@ class Composable(object):
         self.warmup(x_train, y_train)
 
         print("Hyperparameter search")
-        self.grid_search(x_train, y_train, x_test, y_test)
+        lr = self.grid_search(x_train, y_train, x_test, y_test)
 
         print("Full training")
-        self.compile()
+        self.compile(optimizer=Adam(lr=lr, decay=1e-5))
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, validation_split=0.1, verbose=1)
         self.model.evaluate(x_test, y_test)
 

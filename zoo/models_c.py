@@ -314,6 +314,11 @@ class Composable(object):
         """
         # Save the original weights
         weights = self.model.get_weights()
+
+        # Create generator for training in steps
+        datagen = ImageDataGenerator()
+
+        # Search learning rate
         v_loss = []
         for lr in lr_range:
             # Compile the model for the new learning rate
@@ -321,8 +326,8 @@ class Composable(object):
             
             # Train the model
             print("Learning Rate", lr)
-            datagen = ImageDataGenerator()
-            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]), epochs=epochs, steps_per_epoch=steps, verbose=1)
+            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]),
+                                     epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             # Evaluate the model
             result = self.model.evaluate(x_test, y_test)
@@ -338,8 +343,35 @@ class Composable(object):
                 best = v_loss[_]
                 lr = lr_range[_]
 
-        # return the best learning rate
-        return lr
+        print("Selected best learning rate:", lr)
+
+        # Compile the model for the new learning rate
+        self.compile(loss=loss, optimizer=Adam(lr))
+        
+        v_loss = []
+        for bs in batch_range:
+            print("Batc Size", bs)
+            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=bs),
+                                     epochs=epochs, steps_per_epoch=steps, verbose=1)
+
+            # Evaluate the model
+            result = self.model.evaluate(x_test, y_test)
+            v_loss.append(result[0])
+            
+            # Reset the weights
+            self.model.set_weights(weights)
+
+        # Find the best batch size based on validation loss
+        best = 9999.0
+        for _ in range(len(batch_range)):
+            if v_loss[_] < best:
+                best = v_loss[_]
+                bs = batch_range[_]
+
+        print("Selected best batch size:", bs)
+
+        # return the best learning rate and batch size
+        return lr, bs
 
     def cifar10(self, epochs=10):
         """ Train on CIFAR-10
@@ -355,7 +387,7 @@ class Composable(object):
         self.warmup(x_train, y_train)
 
         print("Hyperparameter search")
-        lr = self.grid_search(x_train, y_train, x_test, y_test)
+        lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
         print("Full training")
         self.compile(optimizer=Adam(lr=lr, decay=1e-5))

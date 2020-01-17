@@ -1,7 +1,7 @@
 
 # DenseNet
 
-[densenet.py](densenet.py) - academic (idiomatic)
+[densenet.py](densenet.py) - academic (idiomatic)<br/>
 [densenet_c.py](densenet_c.py) - production (composable)
 
 

@@ -7,7 +7,7 @@ All the models here are coded using design pattern for models. The models are ba
 
 | Model       | Paper |<br/>
 *Deep Convolutional Neural Networks*<br/>
-| `VGG16`     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
+| [`VGG16`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
 | `VGG19`     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |<br/>
 *Residual Convolutional Neural Networks*<br/>
 | `ResNet34`  | [Deep Residual Learning for Image Recognition, 2015](https://arxiv.org/pdf/1512.03385.pdf) |<br/>

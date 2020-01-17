@@ -1,8 +1,8 @@
 
 # AutoEncoder
 
-    autoencoder.py - academic (idomatic)
-    autoencoder_c.py - production (composable)
+    [autoencoder.py](autoencoder.py) - academic (idomatic)
+    [autoencoder_c.py](autoencoder_c.py) - production (composable)
 
 
 ## Macro-Architecture

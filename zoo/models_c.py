@@ -276,6 +276,7 @@ class Composable(object):
     hidden_dropout = None # hidden dropout in classifier
     w_lr           = 0    # target warmup rate
     w_epochs       = 0    # number of epochs in warmup
+    t_decay        = 0    # decay rate during full training
 
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training
@@ -388,20 +389,23 @@ class Composable(object):
         if epoch == 0:
             return lr
 
-        print(dir(self.hidden_dropout))
-        if self.model.history.history['acc'][0] > self.model.history.history['val_acc'][0] + 3:
+        if self.model.history.history['acc'][epoch-1] > self.model.history.history['val_acc'][epoch-1] + 3:
             self.hidden_dropout.rate = 0.5
             print("Overfitting, adding 50% dropout")
         else:
-            self.hidden_dropout.rate = 0.0
+            if self.hidden_dropout.rate != 0.0:
+                self.hidden_dropout.rate = 0.0
+                print("Turning off dropout")
         return lr
 
-    def training(self, x_train, y_train, epochs=10, batch_size=32):
+    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=1e-05):
         """ Full Training of the Model
             x_train    : training images
             y_train    : training labels
             epochs     : number of epochs
             batch_size : size of batch
+            lr         : learning rate
+            decay      : learning rate decay
         """
 
         # Check for hidden dropout layer in classifier
@@ -409,6 +413,8 @@ class Composable(object):
             if isinstance(layer, Dropout):
                 self.hidden_dropout = layer
                 break    
+
+        self.compile(optimizer=Adam(lr=lr, decay=decay))
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1,
@@ -431,8 +437,8 @@ class Composable(object):
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
         print("Full training")
-        self.compile(optimizer=Adam(lr=lr, decay=1e-5))
-        self.training(x_train, y_train, epochs=epochs, batch_size=batch_size)
+        self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
+                      lr=lr, decay=1e-5)
         self.model.evaluate(x_test, y_test)
 
     def cifar100(self, epochs=20):

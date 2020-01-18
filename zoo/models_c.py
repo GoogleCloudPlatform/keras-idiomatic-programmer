@@ -388,12 +388,12 @@ class Composable(object):
         if epoch == 0:
             return lr
 
-        print("ACC", self.model.history.history['acc'], self.model.history.history['val_acc'])
-        if self.model.history.history['acc'] > self.model.history.history['val_acc'] + 3:
-            hidden_dropout.rate = 0.5
+        print(dir(self.hidden_dropout))
+        if self.model.history.history['acc'][0] > self.model.history.history['val_acc'][0] + 3:
+            self.hidden_dropout.rate = 0.5
             print("Overfitting, adding 50% dropout")
         else:
-            hidden_dropout.rate = 0.0
+            self.hidden_dropout.rate = 0.0
         return lr
 
     def training(self, x_train, y_train, epochs=10, batch_size=32):
@@ -407,7 +407,7 @@ class Composable(object):
         # Check for hidden dropout layer in classifier
         for layer in self.model.layers:
             if isinstance(layer, Dropout):
-                hidden_dropout = layer
+                self.hidden_dropout = layer
                 break    
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)

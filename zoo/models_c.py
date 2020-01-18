@@ -382,9 +382,12 @@ class Composable(object):
         # return the best learning rate and batch size
         return lr, bs
 
-    def training_schedule(self, epoch, lr):
+    def training_scheduler(self, epoch, lr):
         """
         """
+        if epoch == 0:
+            return lr
+
         print("ACC", self.model.history.history['acc'], self.model.history.history['val_acc'])
         if self.model.history.history['acc'] > self.model.history.history['val_acc'] + 3:
             hidden_dropout.rate = 0.5
@@ -407,7 +410,7 @@ class Composable(object):
                 hidden_dropout = layer
                 break    
 
-        lrate = LearningRateScheduler(self.trainig_scheduler, verbose=1)
+        lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1,
                        callbacks=[lrate])
 
@@ -429,7 +432,7 @@ class Composable(object):
 
         print("Full training")
         self.compile(optimizer=Adam(lr=lr, decay=1e-5))
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, validation_split=0.1, verbose=1)
+        self.training(x_train, y_train, epochs=epochs, batch_size=batch_size)
         self.model.evaluate(x_test, y_test)
 
     def cifar100(self, epochs=20):

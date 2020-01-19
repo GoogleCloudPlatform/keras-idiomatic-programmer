@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import tensorflow as tf
+from tensorflow.keras import Sequential, Model, Input
 from tensorflow.keras import layers
 from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
 from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
@@ -266,9 +267,9 @@ class Composable(object):
 
     class Normalize(layers.Layer):
         """ Custom Layer for Preprocessing Input """
-        def __init__(self):
+        def __init__(self, **parameters):
             """ Constructor """
-            super(Normalize, self).__init__()
+            super(Composable.Normalize, self).__init__(**parameters)
     
         def build(self, input_shape):
             """ Handler for Input Shape """
@@ -399,7 +400,7 @@ class Composable(object):
         print("Selected best learning rate:", lr)
 
         # Compile the model for the new learning rate
-        self.compile(loss=loss, optimizer=Adam(lr))
+        self.compile(optimizer=Adam(lr))
         
         v_loss = []
         # skip the first batch size - since we used it in searching learning rate
@@ -515,7 +516,9 @@ class Composable(object):
         print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)
 
+        print("Hyperparameter search")
+        lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
+
         print("Full training")
-        self.compile()
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, validation_split=0.1, verbose=1)
         self.model.evaluate(x_test, y_test)

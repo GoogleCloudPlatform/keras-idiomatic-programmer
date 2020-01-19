@@ -81,7 +81,8 @@ class ShuffleNet(Composable):
         x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes)
+        # Add hidden dropout to classifier
+        outputs = self.classifier(x, n_classes, dropout=0.0)
         self._model = Model(inputs, outputs)
 
     def stem(self, inputs):

@@ -74,7 +74,8 @@ class DenseNet(Composable):
         x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes)
+        # Add hidden dropout layer
+        outputs = self.classifier(x, n_classes, dropout=0.1)
 
         # Instantiate the model
         self._model = Model(inputs, outputs)

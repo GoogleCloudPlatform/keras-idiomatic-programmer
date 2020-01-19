@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import tensorflow as tf
+from tensorflow.keras import layers
 from tensorflow.keras.layers import ReLU, Dense, Conv2D, Conv2DTranspose
 from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
@@ -262,7 +263,22 @@ class Composable(object):
         """
         x = BatchNormalization(epsilon=1.001e-5, **params)(x)
         return x
-        
+
+    class Normalize(layers.Layer):
+        """ Custom Layer for Preprocessing Input """
+        def __init__(self):
+            """ Constructor """
+            super(Normalize, self).__init__()
+    
+        def build(self, input_shape):
+            """ Handler for Input Shape """
+            self.kernel = None
+    
+        @tf.function
+        def call(self, inputs):
+            """ Handler for layer object is callable """
+            inputs = inputs / 255.0
+            return inputs
 
     def compile(self, loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001, decay=1e-5), metrics=['acc']):
         """ Compile the model for training
@@ -321,6 +337,9 @@ class Composable(object):
         """
         # Compile the model for the new learning rate
         self.compile(optimizer=Adam(lr))
+
+        # Create generator for training in steps
+        datagen = ImageDataGenerator()
          
         # Train the model
         print("Learning Rate", lr)
@@ -347,9 +366,6 @@ class Composable(object):
         """
         # Save the original weights
         weights = self.model.get_weights()
-
-        # Create generator for training in steps
-        datagen = ImageDataGenerator()
 
         # Search learning rate
         v_loss = []

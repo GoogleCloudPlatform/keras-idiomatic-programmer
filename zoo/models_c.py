@@ -335,7 +335,7 @@ class Composable(object):
         # Reset the weights
         self.model.set_weights(weights)
 
-	return result
+        return result
 
     def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250, loss='sparse_categorical_crossentropy',
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128]):
@@ -358,7 +358,7 @@ class Composable(object):
         v_loss = []
         for lr in lr_range:
             # Compile the model for the new learning rate
-            self.compile(loss=loss, optimizer=Adam(lr))
+            self.compile(optimizer=Adam(lr))
             
             # Train the model
             print("Learning Rate", lr)

@@ -80,7 +80,7 @@ class ResNeXt(Composable):
         x = self.learner(x, cardinality=cardinality, groups=groups)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes)
+        outputs = self.classifier(x, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

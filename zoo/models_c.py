@@ -265,21 +265,45 @@ class Composable(object):
         x = BatchNormalization(epsilon=1.001e-5, **params)(x)
         return x
 
+    ###
+    # Pre-stem Layers
+    ###
+
     class Normalize(layers.Layer):
-        """ Custom Layer for Preprocessing Input """
-        def __init__(self, **parameters):
+        """ Custom Layer for Preprocessing Input - Normalization """
+        def __init__(self, max=255.0, **parameters):
             """ Constructor """
             super(Composable.Normalize, self).__init__(**parameters)
     
         def build(self, input_shape):
-            """ Handler for Input Shape """
-            self.kernel = None
+            """ Handler for Build (Functional) or Compile (Sequential) operation """
+            self.kernel = None # no learnable parameters
     
         @tf.function
         def call(self, inputs):
-            """ Handler for layer object is callable """
-            inputs = inputs / 255.0
+            """ Handler for run-time invocation of layer """
+            inputs = inputs / max
             return inputs
+
+    class Standarize(layers.Layer):
+        """ Custom Layer for Preprocessing Input - Standardization """
+        def __init__(self, mean, std, **parameters):
+            """ Constructor """
+            super(Composable.Standardize, self).__init__(**parameters)
+
+        def build(self, input_shape):
+            """ Handler for Build (Functional) or Compile (Sequential) operation """
+            self.kernel = None # no learnable parameters
+
+        @tf.function
+        def call(self, inputs):
+            """ Handler for run-time invocation of layer """
+            inputs = (inputs - mean) / std
+            return inputs
+
+    ###
+    # Training
+    ###
 
     def compile(self, loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001, decay=1e-5), metrics=['acc']):
         """ Compile the model for training

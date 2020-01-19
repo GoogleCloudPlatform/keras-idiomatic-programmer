@@ -78,7 +78,8 @@ class ResNetV2(Composable):
         x = self.learner(x, groups=groups)
 
         # The classifier 
-        outputs = self.classifier(x, n_classes)
+        # Add hidden dropout for training-time regularization
+        outputs = self.classifier(x, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -212,8 +213,7 @@ def example():
                { 'n_filters': 128, 'n_blocks': 2 },
                { 'n_filters': 256, 'n_blocks': 2 }]
     resnet = ResNetV2(groups, input_shape=(32, 32, 3), n_classes=10)
-    resnet.model.compile(loss='sparse_categorical_crossentropy', optimizer='adam', metrics=['acc'])
     resnet.model.summary()
     resnet.cifar10()
 
-# example()
+example()

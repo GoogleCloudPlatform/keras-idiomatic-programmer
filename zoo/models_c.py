@@ -389,6 +389,8 @@ class Composable(object):
         if epoch == 0:
             return lr
 
+        print("EPOCH", self.model.history.history['acc'][epoch-1], self.model.history.history['val_acc'][epoch-1])
+
         if self.model.history.history['acc'][epoch-1] > self.model.history.history['val_acc'][epoch-1] + 3:
             self.hidden_dropout.rate = 0.5
             print("Overfitting, adding 50% dropout")
@@ -396,7 +398,8 @@ class Composable(object):
             if self.hidden_dropout.rate != 0.0:
                 self.hidden_dropout.rate = 0.0
                 print("Turning off dropout")
-        return lr
+
+        return lr - self.t_decay
 
     def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=1e-05):
         """ Full Training of the Model
@@ -414,6 +417,7 @@ class Composable(object):
                 self.hidden_dropout = layer
                 break    
 
+        self.t_decay = decay
         self.compile(optimizer=Adam(lr=lr, decay=decay))
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)

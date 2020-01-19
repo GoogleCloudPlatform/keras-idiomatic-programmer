@@ -307,7 +307,7 @@ class Composable(object):
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
                        callbacks=[lrate])
 
-    def _grid_lr(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size,
+    def _grid_lr(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights,
                  loss='categorical_crossentropy'):
         """
             x_train   : training images
@@ -316,9 +316,10 @@ class Composable(object):
             y_test    : test labels
             lr        : trial learning rate
             batch_size: the batch size (constant)
-            epochs   :
-            steps    :
-            loss     :
+            epochs    : the number of epochs
+            steps     : steps per epoch
+            loss      :
+            weights   :
         """
         # Compile the model for the new learning rate
         self.compile(loss=loss, optimizer=Adam(lr))
@@ -330,7 +331,11 @@ class Composable(object):
 
         # Evaluate the model
         result = self.model.evaluate(x_test, y_test)
-        pass
+         
+        # Reset the weights
+        self.model.set_weights(weights)
+
+	return result
 
     def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250, loss='sparse_categorical_crossentropy',
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128]):

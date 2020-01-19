@@ -307,8 +307,7 @@ class Composable(object):
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
                        callbacks=[lrate])
 
-    def _grid_lr(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights,
-                 loss='categorical_crossentropy'):
+    def _grid_lr(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
         """
             x_train   : training images
             y_train   : training labels
@@ -318,11 +317,10 @@ class Composable(object):
             batch_size: the batch size (constant)
             epochs    : the number of epochs
             steps     : steps per epoch
-            loss      :
-            weights   :
+            weights   : warmup weights
         """
         # Compile the model for the new learning rate
-        self.compile(loss=loss, optimizer=Adam(lr))
+        self.compile(optimizer=Adam(lr))
          
         # Train the model
         print("Learning Rate", lr)
@@ -337,14 +335,13 @@ class Composable(object):
 
         return result
 
-    def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250, loss='sparse_categorical_crossentropy',
+    def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128]):
         """ Do a grid search for hyperparameters
             x_train : training images
             y_train : training labels
             epochs  : number of epochs
             steps   : number of steps per epoch
-            loss    : loss function
             lr_range: range for searching learning rate
             batch_range: range for searching batch size
         """
@@ -357,21 +354,9 @@ class Composable(object):
         # Search learning rate
         v_loss = []
         for lr in lr_range:
-            # Compile the model for the new learning rate
-            self.compile(optimizer=Adam(lr))
-            
-            # Train the model
-            print("Learning Rate", lr)
-            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]),
-                                     epochs=epochs, steps_per_epoch=steps, verbose=1)
-
-            # Evaluate the model
-            result = self.model.evaluate(x_test, y_test)
+            result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
             v_loss.append(result[0])
             
-            # Reset the weights
-            self.model.set_weights(weights)
-
         # Find the best starting learning rate based on validation loss
         best = 9999.0
         for _ in range(len(lr_range)):
@@ -381,23 +366,19 @@ class Composable(object):
 
         # Best was smallest learning rate
         if lr == lr_range[0]:
-            # Compile the model with 1/2 of lowest learning rate
-            self.compile(loss=loss, optimizer=Adam(lr / 2.0))
-            
-            # Train the model
-            print("Learning Rate", lr // 2.0)
-            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_range[0]),
-                                     epochs=epochs, steps_per_epoch=steps, verbose=1)
-
-            # Evaluate the model
-            result = self.model.evaluate(x_test, y_test)
-            
-            # Reset the weights
-            self.model.set_weights(weights)
+            # try 1/2 the lowest learning rate
+            result = _grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
 
             # 1/2 of lr is even better
             if result[0] < v_loss[0]:
                 lr = lr / 2.0
+        elif lr == lr_range(len(lr_range)-1):
+            # try 2X the largest learning rate
+            result = _grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
+
+            # 2X of lr is even better
+            if result[0] < v_loss[0]:
+                lr = lr * 2.0
 		
         print("Selected best learning rate:", lr)
 

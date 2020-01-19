@@ -428,6 +428,7 @@ class Composable(object):
         
         v_loss = []
         # skip the first batch size - since we used it in searching learning rate
+        datagen = ImageDataGenerator()
         for bs in batch_range[1:]:
             print("Batch Size", bs)
 

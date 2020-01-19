@@ -308,7 +308,7 @@ class Composable(object):
                        callbacks=[lrate])
 
     def _grid_lr(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
-        """
+        """ Helper function for grid search
             x_train   : training images
             y_train   : training labels
             x_test    : test images
@@ -367,14 +367,14 @@ class Composable(object):
         # Best was smallest learning rate
         if lr == lr_range[0]:
             # try 1/2 the lowest learning rate
-            result = _grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
+            result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
 
             # 1/2 of lr is even better
             if result[0] < v_loss[0]:
                 lr = lr / 2.0
         elif lr == lr_range(len(lr_range)-1):
             # try 2X the largest learning rate
-            result = _grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
+            result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
 
             # 2X of lr is even better
             if result[0] < v_loss[0]:
@@ -427,15 +427,20 @@ class Composable(object):
 
         # If training accuracy and validation accuracy more than 3% apart
         if self.model.history.history['acc'][epoch-1] > self.model.history.history['val_acc'][epoch-1] + 0.03:
-            print("Overfitting, adding 50% dropout")
-            self.hidden_dropout.rate = 0.5
+            if self.hidden_dropout.rate == 0.0:
+                self.hidden_dropout.rate = 0.5
+            else:
+                self.hidden_dropout.rate *= 1.1
+            print("Overfitting, set dropout to", self.hidden_dropout.rate)
         else:
             if self.hidden_dropout.rate != 0.0:
                 print("Turning off dropout")
                 self.hidden_dropout.rate = 0.0
 
         # Decay the learning rate
-        return lr - self.t_decay
+        lr -= self.t_decay
+        self.t_decay *= 0.9 # decrease the decay
+        return lr
 
     def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=1e-05):
         """ Full Training of the Model

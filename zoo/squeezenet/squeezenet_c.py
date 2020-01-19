@@ -64,7 +64,8 @@ class SqueezeNet(Composable):
         x = self.learner(x, groups=groups, dropout=dropout)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes)
+        # Add hidden dropout to classifier
+        outputs = self.classifier(x, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

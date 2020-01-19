@@ -107,7 +107,8 @@ class MobileNetV3(Composable):
         x = self.learner(x, groups=groups, alpha=alpha)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes)
+        # Add hidden dropout layer
+        outputs = self.classifier(x, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

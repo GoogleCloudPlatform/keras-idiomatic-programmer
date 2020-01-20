@@ -23,6 +23,7 @@ from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.initializers import glorot_uniform, he_normal
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.utils import to_categorical
 import tensorflow.keras.backend as K
 
 import random
@@ -323,7 +324,7 @@ class Composable(object):
                 x_test  = (x_test  / 255.0).astype(np.float32)
         return x_train, x_test
 
-    def standardization(self, x_train, y_train):
+    def standardization(self, x_train, x_test):
         """ Standardize the input
             x_train : training images
             x_test  : test images
@@ -334,11 +335,25 @@ class Composable(object):
         x_test  = ((x_test  - self.mean) / self.std).astype(np.float32)
         return x_train, x_test
 
+    def label_smoothing(self, y_train, n_classes, factor=0.1):
+        """ Convert a matrix of one-hot row-vector labels into smoothed versions. 
+            y_train  : training labels
+            n_classes: number of classes
+            factor   : smoothing factor (between 0 and 1)
+        """
+        if 0 <= factor <= 1:
+            # label smoothing ref: https://www.robots.ox.ac.uk/~vgg/rg/papers/reinception.pdf
+            y_train *= 1 - factor
+            y_train += factor / n_classes
+        else:
+            raise Exception('Invalid label smoothing factor: ' + str(factor))
+        return y_train
+
     ###
     # Training
     ###
 
-    def compile(self, loss='sparse_categorical_crossentropy', optimizer=Adam(lr=0.001, decay=1e-5), metrics=['acc']):
+    def compile(self, loss='categorical_crossentropy', optimizer=Adam(lr=0.001, decay=1e-5), metrics=['acc']):
         """ Compile the model for training
             loss     : the loss function
             optimizer: the optimizer
@@ -352,12 +367,6 @@ class Composable(object):
     w_epochs       = 0    # number of epochs in warmup
     t_decay        = 0    # decay rate during full training
 
-    def init_draws(self, n_draws=5):
-        """
-        """
-        # get a new draw
-        weights = [he_normal(seed=random.randint(0, 1000))(w.shape) if w.ndim > 1 else w for w in self.model.get_weights()]
-
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training
             epoch : current epoch iteration
@@ -367,18 +376,50 @@ class Composable(object):
            return lr
         return epoch * self.w_lr / self.w_epochs
 
-    def warmup(self, x_train, y_train, epochs=5, loss='sparse_categorical_crossentropy', 
-               s_lr=1e-6, e_lr=0.001):
+    def init_draw(self, x_train, y_train, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32):
+        """ Use the lottery ticket principle to find the best weight initialization
+            x_train : training images
+            y_train : training labels
+            ndraws  : number of draws to find the winning lottery ticket
+            epochs  : number of trial epochs
+            steps   :
+            lr      :
+            batch_size:
+        """
+        print("*** Initialize Draw")
+        loss = 9999.0
+        weights = None
+        for _ in range(ndraws):
+            self.model = tf.keras.models.clone_model(self.model)
+            self.compile(optimizer=Adam(lr))
+            w = self.model.get_weights()
+
+            # Create generator for training in steps
+            datagen = ImageDataGenerator()
+
+            print("Lottery", _)
+            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
+                                                  epochs=epochs, steps_per_epoch=steps, verbose=1)
+
+            d_loss = self.model.history.history['loss'][epochs-1]
+            if d_loss < loss:
+                loss = d_loss
+                w = self.model.get_weights()
+
+        # Set the best
+        self.model.set_weights(w)
+
+    def warmup(self, x_train, y_train, epochs=5, s_lr=1e-6, e_lr=0.001):
         """ Warmup for numerical stability
             x_train : training images
             y_train : training labels
             epochs  : number of epochs for warmup
-            loss    : the loss function
             s_lr    : start warmup learning rate
             e_lr    : end warmup learning rate
         """
+        print("*** Warmup")
         # Setup learning rate scheduler
-        self.compile(loss=loss, optimizer=Adam(s_lr), metrics=['acc'])
+        self.compile(optimizer=Adam(s_lr))
         lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
         self.w_epochs = epochs
         self.w_lr     = e_lr
@@ -562,7 +603,11 @@ class Composable(object):
         from tensorflow.keras.datasets import cifar10
         import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        x_train, x_test = self.normalization(x_train, x_test)
+        x_train, x_test = self.standardization(x_train, x_test)
+        y_train = to_categorical(y_train, 10)
+        y_test  = to_categorical(y_test, 10)
+        y_train = self.label_smoothing(y_train, 10, 0.1)
+        self.compile(loss='categorical_crossentropy', metrics=['acc'])
 
         print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)
@@ -583,6 +628,10 @@ class Composable(object):
         import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar100.load_data()
         x_train, x_test = self.normalization(x_train, x_test)
+        y_train = to_categorical(y_train, 10)
+        y_test  = to_categorical(y_test, 10)
+        y_train = self.label_smoothing(y_train, 10, 0.1)
+        self.compile(loss='categorical_crossentropy', metrics=['acc'])
 
         print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)

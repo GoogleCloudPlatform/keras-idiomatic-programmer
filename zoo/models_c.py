@@ -306,6 +306,35 @@ class Composable(object):
             return inputs
 
     ###
+    # Preprocessing
+    ###
+
+    def normalization(self, x_train, x_test, centered=False):
+        """ Normalize the input
+            x_train : training images
+            y_train : test images
+        """
+        if x_train.dtype == np.uint8:
+            if centered:
+                x_train = ((x_train - 1) / 127.5).astype(np.float32)
+                x_test  = ((x_test  - 1) / 127.5).astype(np.float32)
+            else:
+                x_train = (x_train / 255.0).astype(np.float32)
+                x_test  = (x_test  / 255.0).astype(np.float32)
+        return x_train, x_test
+
+    def standardization(self, x_train, y_train):
+        """ Standardize the input
+            x_train : training images
+            x_test  : test images
+        """
+        self.mean = np.mean(x_train)
+        self.std  = np.std(x_train)
+        x_train = ((x_train - self.mean) / self.std).astype(np.float32)
+        x_test  = ((x_test  - self.mean) / self.std).astype(np.float32)
+        return x_train, x_test
+
+    ###
     # Training
     ###
 
@@ -533,8 +562,7 @@ class Composable(object):
         from tensorflow.keras.datasets import cifar10
         import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
-        x_train = (x_train / 255.0).astype(np.float32)
-        x_test  = (x_test  / 255.0).astype(np.float32)
+        x_train, x_test = self.normalization(x_train, x_test)
 
         print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)
@@ -554,8 +582,7 @@ class Composable(object):
         from tensorflow.keras.datasets import cifar100
         import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar100.load_data()
-        x_train = (x_train / 255.0).astype(np.float32)
-        x_test  = (x_test  / 255.0).astype(np.float32)
+        x_train, x_test = self.normalization(x_train, x_test)
 
         print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)

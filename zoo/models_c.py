@@ -20,9 +20,13 @@ from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.initializers import glorot_uniform, he_normal
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import tensorflow.keras.backend as K
+
+import random
+import numpy as np
 
 class Composable(object):
     ''' Composable base (super) class for Models '''
@@ -319,6 +323,12 @@ class Composable(object):
     w_epochs       = 0    # number of epochs in warmup
     t_decay        = 0    # decay rate during full training
 
+    def init_draws(self, n_draws=5):
+        """
+        """
+        # get a new draw
+        weights = [he_normal(seed=random.randint(0, 1000))(w.shape) if w.ndim > 1 else w for w in self.model.get_weights()]
+
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training
             epoch : current epoch iteration
@@ -411,14 +421,23 @@ class Composable(object):
             result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
 
             # 1/2 of lr is even better
-            if result[0] < v_loss[0]:
+            if result[0] < best:
                 lr = lr / 2.0
+            # try halfway between the first and second value
+            else:
+                n_lr = (lr_range[0] + lr_range[1]) / 2.0
+                result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, n_lr, batch_range[0], weights)
+
+                # 1/2 of lr is even better
+                if result[0] < best:
+                    lr = lr / 2.0
+                
         elif lr == lr_range(len(lr_range)-1):
             # try 2X the largest learning rate
             result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
 
             # 2X of lr is even better
-            if result[0] < v_loss[0]:
+            if result[0] < best:
                 lr = lr * 2.0
 		
         print("Selected best learning rate:", lr)

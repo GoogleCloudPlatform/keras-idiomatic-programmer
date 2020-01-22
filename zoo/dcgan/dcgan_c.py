@@ -121,7 +121,7 @@ class DCGAN(Composable):
         
         def classifier(x):
             x = Flatten()(x)
-            outputs = self.Dense(x, 1, activation='sigmoid')
+            outputs = self.Dense(x, 1, activation='sigmoid', use_bias=True)
             return outputs
         
         # Construct the discriminator

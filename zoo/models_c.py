@@ -133,13 +133,13 @@ class Composable(object):
       self.softmax = outputs
       return outputs
 
-    def Dense(self, x, units, activation=None, **hyperparameters):
+    def Dense(self, x, units, activation=None, use_bias=True, **hyperparameters):
         """ Construct Dense Layer
             x           : input to layer
             activation  : activation function
+            use_bias    : whether to use bias
             init_weights: kernel initializer
             reg         : kernel regularizer
-            use_bias    : whether to include the bias
         """
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
@@ -149,12 +149,8 @@ class Composable(object):
             init_weights = hyperparameters['init_weights']
         else:
             init_weights = self.init_weights
-        if 'bias' in hyperparameters:
-            bias = hyperparameters['bias']
-        else:
-            bias = self.bias
             
-        x = Dense(units, activation, use_bias=bias,
+        x = Dense(units, activation, use_bias=use_bias,
                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 

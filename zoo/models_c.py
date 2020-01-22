@@ -34,12 +34,14 @@ class Composable(object):
     init_weights = 'he_normal'	# weight initialization
     reg          = None         # kernel regularizer
     relu         = None         # ReLU max value
+    bias         = True         # whether to use bias in dense/conv layers
 
-    def __init__(self, init_weights=None, reg=None, relu=None):
+    def __init__(self, init_weights=None, reg=None, relu=None, bias=True):
         """ Constructor
             init_weights : kernel initializer
-            relu         :
             reg          : kernel regularizer
+            relu         : clip value for ReLU
+            bias         : whether to use bias
         """
         if init_weights is not None:
             self.init_weights = init_weights
@@ -47,6 +49,8 @@ class Composable(object):
             self.reg = reg
         if relu is not None:
             self.relu = relu
+        if bias is not None:
+            self.bias = bias
 
         # Feature maps encoding at the bottleneck layer in classifier (high dimensionality)
         self._encoding = None
@@ -129,13 +133,13 @@ class Composable(object):
       self.softmax = outputs
       return outputs
 
-    def Dense(self, x, units, activation=None, use_bias=True, **hyperparameters):
+    def Dense(self, x, units, activation=None, **hyperparameters):
         """ Construct Dense Layer
             x           : input to layer
             activation  : activation function
-            use_bias    : whether to include the bias
             init_weights: kernel initializer
             reg         : kernel regularizer
+            use_bias    : whether to include the bias
         """
         if 'reg' in hyperparameters:
             reg = hyperparameters['reg']
@@ -145,12 +149,16 @@ class Composable(object):
             init_weights = hyperparameters['init_weights']
         else:
             init_weights = self.init_weights
+        if 'bias' in hyperparameters:
+            bias = hyperparameters['bias']
+        else:
+            bias = self.bias
             
-        x = Dense(units, activation, use_bias=use_bias,
+        x = Dense(units, activation, use_bias=bias,
                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    def Conv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def Conv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
         """ Construct a Conv2D layer
             x           : input to layer
             n_filters   : number of filters
@@ -170,12 +178,16 @@ class Composable(object):
             init_weights = hyperparameters['init_weights']
         else:
             init_weights = self.init_weights
+        if 'bias' in hyperparameters:
+            bias = hyperparameters['bias']
+        else:
+            bias = self.bias
 
-        x = Conv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
-                   kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Conv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
+                   use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    def Conv2DTranspose(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def Conv2DTranspose(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
         """ Construct a Conv2DTranspose layer
             x           : input to layer
             n_filters   : number of filters
@@ -194,13 +206,17 @@ class Composable(object):
         if 'init_weights' in hyperparameters:
             init_weights = hyperparameters['init_weights']
         else:
-            init_weights = self.init_weights
+            init_weights = self.init_weights 
+        if 'bias' in hyperparameters:
+            bias = hyperparameters['bias']
+        else:
+            bias = self.bias
 
-        x = Conv2DTranspose(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = Conv2DTranspose(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, 
+			    use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    def DepthwiseConv2D(self, x, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def DepthwiseConv2D(self, x, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
         """ Construct a DepthwiseConv2D layer
             x           : input to layer
             kernel_size : kernel (filter) size
@@ -219,12 +235,16 @@ class Composable(object):
             init_weights = hyperparameters['init_weights']
         else:
             init_weights = self.init_weights
+        if 'bias' in hyperparameters:
+            bias = hyperparameters['bias']
+        else:
+            bias = self.bias
 
-        x = DepthwiseConv2D(kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = DepthwiseConv2D(kernel_size, strides=strides, padding=padding, activation=activation, 
+			    use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
         return x
 
-    def SeparableConv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, use_bias=True, **hyperparameters):
+    def SeparableConv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
         """ Construct a SeparableConv2D layer
             x           : input to layer
             n_filters   : number of filters
@@ -244,9 +264,13 @@ class Composable(object):
             init_weights = hyperparameters['init_weights']
         else:
             init_weights = self.init_weights
+        if 'bias' in hyperparameters:
+            bias = hyperparameters['bias']
+        else:
+            bias = self.bias
 
-        x = SeparableConv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, use_bias=use_bias,
-                            kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+        x = SeparableConv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
+                            use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
 
         return x
 
@@ -310,7 +334,7 @@ class Composable(object):
     # Preprocessing
     ###
 
-    def normalization(self, x_train, x_test, centered=False):
+    def normalization(self, x_train, x_test=None, centered=False):
         """ Normalize the input
             x_train : training images
             y_train : test images
@@ -318,10 +342,12 @@ class Composable(object):
         if x_train.dtype == np.uint8:
             if centered:
                 x_train = ((x_train - 1) / 127.5).astype(np.float32)
-                x_test  = ((x_test  - 1) / 127.5).astype(np.float32)
+                if x_test:
+                    x_test  = ((x_test  - 1) / 127.5).astype(np.float32)
             else:
                 x_train = (x_train / 255.0).astype(np.float32)
-                x_test  = (x_test  / 255.0).astype(np.float32)
+                if x_test:
+                    x_test  = (x_test  / 255.0).astype(np.float32)
         return x_train, x_test
 
     def standardization(self, x_train, x_test):

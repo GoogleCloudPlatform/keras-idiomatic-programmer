@@ -51,7 +51,7 @@ class ShuffleNet(Composable):
     init_weights='glorot_uniform'
 
     def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=None):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=False):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
             filters     : filters per group based on partitions
@@ -62,8 +62,9 @@ class ShuffleNet(Composable):
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to use bias in conjunction with batch norm
         '''
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
         if groups is None:
             groups = list(ShuffleNet.groups)
@@ -89,7 +90,7 @@ class ShuffleNet(Composable):
         ''' Construct the Stem Convolution Group 
             inputs : input image (tensor)
         '''
-        x = self.Conv2D(inputs, 24, (3, 3), strides=2, padding='same', use_bias=False)
+        x = self.Conv2D(inputs, 24, (3, 3), strides=2, padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = MaxPooling2D((3, 3), strides=2, padding='same')(x)
@@ -165,8 +166,7 @@ class ShuffleNet(Composable):
         x = self.channel_shuffle(x, n_partitions)
 
         # Depthwise 3x3 Strided Convolution
-        x = self.DepthwiseConv2D(x, (3, 3), strides=2, padding='same', use_bias=False,
-                                 **metaparameters)
+        x = self.DepthwiseConv2D(x, (3, 3), strides=2, padding='same', **metaparameters)
         x = self.BatchNormalization(x)
 
         # pointwise group convolution, with dimensionality restoration
@@ -210,8 +210,7 @@ class ShuffleNet(Composable):
         x = self.channel_shuffle(x, n_partitions)
     
         # Depthwise 3x3 Convolution
-        x = self.DepthwiseConv2D(x, (3, 3), strides=1, padding='same', use_bias=False, 
-                                 **metaparameters)
+        x = self.DepthwiseConv2D(x, (3, 3), strides=1, padding='same', **metaparameters)
         x = BatchNormalization()(x)
     
         # pointwise group convolution, with dimensionality restoration
@@ -244,7 +243,7 @@ class ShuffleNet(Composable):
             group = Lambda(lambda x: x[:, :, :, grp_in_filters * i: grp_in_filters * (i + 1)])(x)
 
             # Perform convolution on channel group
-            conv = self.Conv2D(group, grp_out_filters, (1,1), padding='same', strides=1, use_bias=False, 
+            conv = self.Conv2D(group, grp_out_filters, (1,1), padding='same', strides=1, 
                                **metaparameters)
             # Maintain the point-wise group convolutions in a list
             groups.append(conv)

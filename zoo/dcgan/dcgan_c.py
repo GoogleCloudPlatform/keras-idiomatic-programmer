@@ -31,15 +31,17 @@ from models_c import Composable
 
 class DCGAN(Composable):
     
-    def __init__(self, latent=100, input_shape=(28, 28, 1), reg=None, init_weights='glorot_uniform', relu=None): 
+    def __init__(self, latent=100, input_shape=(28, 28, 1), 
+                 reg=None, init_weights='glorot_uniform', relu=None, bias=True): 
         """ Construct a Deep Convolutional GAN (DC-GAN)
             latent      : dimension of latent space
             input_shape : input shape
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
+            bias        : whether to include bias
         """
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
         
         # Construct the generator
         self.g = self.generator(latent=latent, height=input_shape[0], channels=input_shape[2])
@@ -220,14 +222,6 @@ class DCGAN(Composable):
     
 # Example
 # model = DCGAN()
-'''
-from tensorflow.keras.datasets import mnist
-import numpy as np
-(x_train, _), (_, _) = mnist.load_data()
-x_train = x_train / 127.5 - 1.
-x_train = np.expand_dims(x_train, axis=3)
-model.train(x_train, latent=100, epochs=4000)
-'''
 
 def example():
     # Build/Train a DCGAN for CIFAR-10
@@ -236,9 +230,8 @@ def example():
     gan.model.summary()
 
     from tensorflow.keras.datasets import cifar10
-    import numpy as np
     (x_train, _), (_, _) = cifar10.load_data()
-    x_train = x_train / 127.5 - 1.
-    gan.train(x_train, latent=100, epochs=8000)
+    x_train, _ = gan.normalization(x_train, centered=True)
+    gan.train(x_train, latent=100, epochs=6000)
 
 # example()

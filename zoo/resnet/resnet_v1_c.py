@@ -31,7 +31,7 @@ class ResNetV1(Composable):
     """ Residual Convolutional Neural Network V1
     """
     # Meta-parameter: list of groups: number of filters and number of blocks
-    groups = { 50 : [ { 'n_filters' : 64, 'n_blocks': 3 }, 
+    groups = { 50 : [ { 'n_filters' : 64, 'n_blocks': 3 },
                       { 'n_filters': 128, 'n_blocks': 4 }, 
                       { 'n_filters': 256, 'n_blocks': 6 }, 
                       { 'n_filters': 512, 'n_blocks': 3 } ],            # ResNet50
@@ -45,7 +45,7 @@ class ResNetV1(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
     
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001), relu=None, init_weights='he_normal'):
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
         """ Construct a Residual Convolutional Neural Network V1
 	    n_layers    : number of layers
 	    input_shape : input shape
@@ -53,9 +53,10 @@ class ResNetV1(Composable):
             reg         : kernel regularizer
             relu        : max value for ReLU
             init_weights: kernel initializer
+            bias        : whether to use bias
         """
         # Configure the base (super) class
-        super().__init__(reg=reg, relu=relu, init_weights=init_weights)
+        super().__init__(reg=reg, relu=relu, init_weights=init_weights, bias=bias)
 
         # predefined
         if isinstance(n_layers, int):
@@ -91,7 +92,7 @@ class ResNetV1(Composable):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
@@ -145,17 +146,17 @@ class ResNetV1(Composable):
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
-        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Bottleneck layer
-        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding="same", **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Dimensionality restoration - increase the number of output filters by 4X
-        x = self.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters * 4, (1, 1), strides=(1, 1), **metaparameters)
         x = self.BatchNormalization(x)
 
         # Add the identity link (input) to the output of the residual block
@@ -175,24 +176,24 @@ class ResNetV1(Composable):
             
         # Construct the projection shortcut
         # Increase filters by 4X to match shape when added to output of block
-        shortcut = self.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
+        shortcut = self.Conv2D(x, 4 * n_filters, (1, 1), strides=strides, **metaparameters)
         shortcut = self.BatchNormalization(shortcut)
 
         ## Construct the 1x1, 3x3, 1x1 residual block (fig 3c)
 
         # Dimensionality reduction
         # Feature pooling when strides=(2, 2)
-        x = self.Conv2D(x, n_filters, (1, 1), strides=strides, use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=strides, **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Bottleneck layer
-        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Dimensionality restoration - increase the number of filters by 4X
-        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), **metaparameters)
         x = self.BatchNormalization(x)
 
         # Add the projection shortcut link to the output of the residual block

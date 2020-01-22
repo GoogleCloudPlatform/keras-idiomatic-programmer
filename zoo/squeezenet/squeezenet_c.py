@@ -38,7 +38,7 @@ class SqueezeNet(Composable):
     init_weights = 'glorot_uniform'
 
     def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=None):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=True):
         ''' Construct a SqueezeNet Convolutional Neural Network
             dropout     : percent of dropout
             groups      : number of filters per block in groups
@@ -47,9 +47,10 @@ class SqueezeNet(Composable):
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to use bias in conjunction with batch norm
         '''
         # Configure base (super) model
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
         if groups is None:
             groups = list(SqueezeNet.groups)
@@ -65,7 +66,7 @@ class SqueezeNet(Composable):
 
         # The Classifier
         # Add hidden dropout to classifier
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

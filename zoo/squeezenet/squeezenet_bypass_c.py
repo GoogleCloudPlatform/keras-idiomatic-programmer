@@ -41,7 +41,7 @@ class SqueezeNetBypass(Composable):
     init_weights = 'glorot_uniform'
 
     def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=None):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=True):
         ''' Construct a SqueezeNet Bypass Convolution Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to model
@@ -49,9 +49,10 @@ class SqueezeNetBypass(Composable):
             init_weights: kernel initialization
             reg         : kernel regularization
             relu        : max value to relu
+            bias        : whether to use bias in conjunction with batch norm
         '''
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
         if groups is None:
             groups = list(SqueezeNetBypass.groups)

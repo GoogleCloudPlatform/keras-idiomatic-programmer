@@ -242,8 +242,8 @@ class MobileNetV3(Composable):
         n_channels = x.shape[-1]
 
         x = GlobalAveragePooling2D()(x)
-        x = self.Dense(x, n_channels, activation=self.ReLU, use_bias=True, **metaparameters)
-        x = self.Dense(x, n_channels, activation=self.HS, use_bias=True, **metaparameters)
+        x = self.Dense(x, n_channels, activation=self.ReLU, use_bias=False, **metaparameters)
+        x = self.Dense(x, n_channels, activation=self.HS, use_bias=False, **metaparameters)
         x = Reshape((1, 1, n_channels))(x)
         x = Multiply()([shortcut, x])
         return x

@@ -39,7 +39,7 @@ class WRN(Composable):
     dropout = 0
 
     def __init__(self, groups=None, depth=16, k=8, dropout=0, input_shape=(32, 32, 3), n_classes=10,
-                 init_weights='he_normal', reg=None, relu=None):
+                 init_weights='he_normal', reg=None, relu=None, bias=False):
         """ Construct a Wids Residual (Convolutional Neural) Network 
             depth       : number of layers
             k           : width factor
@@ -49,9 +49,10 @@ class WRN(Composable):
             init_weights: kernel initialization
             reg         : kernel regularization
             relu        : max value for ReLU
+            bias        : whether use bias in conjunction with batch norm
         """
         # Configure base (super) class
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
 
         if groups is None:
             groups = list(self.groups)
@@ -76,7 +77,7 @@ class WRN(Composable):
             inputs : the input vector
         """
         # Convolutional layer 
-        x = self.Conv2D(inputs, 16, (3, 3), strides=(1, 1), padding='same', use_bias=False)
+        x = self.Conv2D(inputs, 16, (3, 3), strides=(1, 1), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
@@ -137,7 +138,7 @@ class WRN(Composable):
     
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', **metaparameters)
 
         # dropout only in identity link (not projection)
         if dropout > 0:
@@ -145,7 +146,7 @@ class WRN(Composable):
 
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', **metaparameters)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])
@@ -166,17 +167,17 @@ class WRN(Composable):
    
         # Save input vector (feature maps) for the identity link
         shortcut = self.BatchNormalization(x)
-        shortcut = self.Conv2D(shortcut, n_filters *k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
+        shortcut = self.Conv2D(shortcut, n_filters *k, (3, 3), strides=strides, padding='same', **metaparameters)
    
         ## Construct the 3x3, 3x3 convolution block
    
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, n_filters * k, (3, 3), strides=strides, padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=strides, padding='same', **metaparameters)
 
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, n_filters * k, (3, 3), strides=(1, 1), padding='same', **metaparameters)
 
         # Add the identity link (input) to the output of the residual block
         x = Add()([shortcut, x])

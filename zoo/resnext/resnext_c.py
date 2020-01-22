@@ -48,7 +48,7 @@ class ResNeXt(Composable):
     cardinality = 32
 
     def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000,
-                 reg=l2(0.001), init_weights='he_normal', relu=None):
+                 reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
         """ Construct a Residual Next Convolution Neural Network
             n_layers    : number of layers.
             cardinality : width of group convolution
@@ -57,9 +57,10 @@ class ResNeXt(Composable):
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
+            bias        : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
         
         # predefined
         if isinstance(n_layers, int):
@@ -89,7 +90,7 @@ class ResNeXt(Composable):
         """ Construct the Stem Convolution Group
             inputs : input vector
         """
-        x = self.Conv2D(inputs, 64, (7, 7), strides=(2, 2), padding='same', use_bias=False)
+        x = self.Conv2D(inputs, 64, (7, 7), strides=(2, 2), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = MaxPooling2D(pool_size=(3, 3), strides=(2, 2), padding='same')(x)
@@ -148,7 +149,7 @@ class ResNeXt(Composable):
         shortcut = x
 
         # Dimensionality Reduction
-        x = self.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
@@ -157,7 +158,7 @@ class ResNeXt(Composable):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(self.Conv2D(group, filters_card, (3, 3), strides=(1, 1), padding='same', use_bias=False,
+            groups.append(self.Conv2D(group, filters_card, (3, 3), strides=(1, 1), padding='same', 
                                       **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
@@ -166,7 +167,7 @@ class ResNeXt(Composable):
         x = self.ReLU(x)
 
         # Dimensionality restoration
-        x = self.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block
@@ -195,7 +196,7 @@ class ResNeXt(Composable):
         shortcut = self.BatchNormalization(shortcut)
 
         # Dimensionality Reduction
-        x = self.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, filters_in, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
@@ -204,7 +205,7 @@ class ResNeXt(Composable):
         groups = []
         for i in range(cardinality):
             group = Lambda(lambda z: z[:, :, :, i * filters_card:i * filters_card + filters_card])(x)
-            groups.append(self.Conv2D(group, filters_card, (3, 3), strides=strides, padding='same', use_bias=False,
+            groups.append(self.Conv2D(group, filters_card, (3, 3), strides=strides, padding='same', 
                                       **metaparameters))
 
         # Concatenate the outputs of the cardinality layer together (merge)
@@ -213,7 +214,7 @@ class ResNeXt(Composable):
         x = self.ReLU(x)
 
         # Dimensionality restoration
-        x = self.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, filters_out, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
 
         # Identity Link: Add the shortcut (input) to the output of the block

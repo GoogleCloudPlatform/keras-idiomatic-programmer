@@ -45,7 +45,8 @@ class ResNetV1_5(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
     
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
+    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, 
+                 reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
         """ Construct a Residual Convolutional Neural Network V1.5
             n_layers    : number of layers
             input_shape : input shape

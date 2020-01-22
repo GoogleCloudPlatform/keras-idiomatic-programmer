@@ -124,7 +124,7 @@ class Composable(object):
           x = Dropout(dropout)(x)
 
       # Final Dense Outputting Layer for the outputs
-      x = self.Dense(x, n_classes, **metaparameters)
+      x = self.Dense(x, n_classes, use_bias=True, **metaparameters)
       
       # Save the pre-activation probabilities layer
       self.probabilities = x

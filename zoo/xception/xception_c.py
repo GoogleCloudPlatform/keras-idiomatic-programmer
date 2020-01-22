@@ -37,7 +37,7 @@ class Xception(Composable):
     init_weights = 'glorot_uniform'
 
     def __init__(self, entry=None, middle=None, input_shape=(229, 229, 3), n_classes=1000,
-                 init_weights=init_weights, reg=None, relu=None):
+                 init_weights=init_weights, reg=None, relu=None, bias=True):
         """ Construct an Xception Convolution Neural Network
             entry       : number of blocks/filters for entry module
             middle      : number of blocks/filters for middle module
@@ -46,8 +46,9 @@ class Xception(Composable):
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to use bias in conjunction with batch norm
         """
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
         if entry is None:
             entry = self.entry

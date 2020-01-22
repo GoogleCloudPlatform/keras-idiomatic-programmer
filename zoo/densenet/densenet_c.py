@@ -41,7 +41,7 @@ class DenseNet(Composable):
     n_filters = 32
 
     def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000,
-                 reg=l2(0.001), init_weights='he_normal', relu=None):
+                 reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
         """ Construct a Densely Connected Convolution Neural Network
             n_layers    : number of layers
             n_filters   : number of filters (growth rate)
@@ -51,9 +51,10 @@ class DenseNet(Composable):
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
+            bias        : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu)
+        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
 
         # predefined
         if isinstance(n_layers, int):
@@ -90,7 +91,7 @@ class DenseNet(Composable):
     
         # First large convolution for abstract features for input 224 x 224 and output 112 x 112
         # Stem convolution uses 2 * k (growth rate) number of filters
-        x = self.Conv2D(x, 2 * n_filters, (7, 7), strides=(2, 2), use_bias=False)
+        x = self.Conv2D(x, 2 * n_filters, (7, 7), strides=(2, 2))
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
@@ -157,14 +158,13 @@ class DenseNet(Composable):
         # Dimensionality expansion, expand filters by 4 (DenseNet-B)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                        **metaparameters)
+        x = self.Conv2D(x, 4 * n_filters, (1, 1), strides=(1, 1), **metaparameters) 
     
         # Bottleneck convolution
         # 3x3 convolution with padding=same to preserve same shape of feature maps
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same', use_bias=False, 
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same',
                         **metaparameters)
 
         # Concatenate the input (identity) with the output of the residual block
@@ -191,8 +191,7 @@ class DenseNet(Composable):
 
         # Use 1x1 linear projection convolution
         x = self.BatchNormalization(x)
-        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), use_bias=False, 
-                        **metaparameters)
+        x = self.Conv2D(x, n_filters, (1, 1), strides=(1, 1), **metaparameters)
 
         # Use mean value (average) instead of max value sampling when pooling reduce by 75%
         x = AveragePooling2D((2, 2), strides=(2, 2))(x)

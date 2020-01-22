@@ -197,7 +197,7 @@ class InceptionV2(Composable):
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = Flatten()(x)
-        x = self.Dense(x, 1024, activation=self.ReLU, use_bias=True, **metaparameters)
+        x = self.Dense(x, 1024, activation=self.ReLU, **metaparameters)
         x = Dropout(0.7)(x)
         output = self.Dense(x, n_classes, activation='softmax', **metaparameters)
         return output

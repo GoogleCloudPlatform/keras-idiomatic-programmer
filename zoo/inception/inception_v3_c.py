@@ -385,7 +385,7 @@ class InceptionV3(Composable):
         # filter will be 5x5 for V3
         x = self.Conv2D(x, 768, x.shape[1:3].as_list(), strides=(1, 1), **metaparameters)
         x = Flatten()(x)
-        output = self.Dense(x, n_classes, activation='softmax', use_bias=True, **metaparameters)
+        output = self.Dense(x, n_classes, activation='softmax', **metaparameters)
         return output
 
     def classifier(self, x, n_classes, dropout=0.4):

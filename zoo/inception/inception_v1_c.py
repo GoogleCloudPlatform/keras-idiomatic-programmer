@@ -187,7 +187,7 @@ class InceptionV1(Composable):
         x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.ReLU(x)
         x = Flatten()(x)
-        x = self.Dense(x, 1024, activation=self.ReLU, use_bias=True, **metaparameters)
+        x = self.Dense(x, 1024, activation=self.ReLU, **metaparameters)
         x = self.ReLU(x)
         x = Dropout(0.7)(x)
         output = self.Dense(x, n_classes, activation='softmax', **metaparameters)

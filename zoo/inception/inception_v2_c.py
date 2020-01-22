@@ -30,7 +30,7 @@ class InceptionV2(Composable):
     init_weights='glorot_uniform'
 
     def __init__(self, dropout=0.4, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=None, relu=None):
+                 init_weights='glorot_uniform', reg=None, relu=None, bias=False):
         """ Construct an Inception Convolutional Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to the neural network
@@ -38,7 +38,11 @@ class InceptionV2(Composable):
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to use bias
         """
+        # Configure base (super) class
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+
 	# Meta-parameter: dropout percentage
         dropout = 0.4
 
@@ -65,7 +69,7 @@ class InceptionV2(Composable):
         x = ZeroPadding2D(padding=(3, 3))(inputs)
     
         # First Convolutional layer which uses a large (coarse) filter 
-        x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 64, (7, 7), strides=(2, 2), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
@@ -74,11 +78,11 @@ class InceptionV2(Composable):
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
         # Second Convolutional layer which uses a mid-size filter
-        x = self.Conv2D(x, 64, (1, 1), strides=(1, 1), padding='same', use_bias=False)
+        x = self.Conv2D(x, 64, (1, 1), strides=(1, 1), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = ZeroPadding2D(padding=(1, 1))(x)
-        x = self.Conv2D(x, 192, (3, 3), strides=(1, 1), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 192, (3, 3), strides=(1, 1), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
@@ -148,34 +152,34 @@ class InceptionV2(Composable):
             fpool: filters for pooling branch
         """
         # 1x1 branch
-        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', **metaparameters)
         b1x1 = self.BatchNormalization(b1x1)
         b1x1 = self.ReLU(b1x1)
 
         # 3x3 branch
         # 3x3 reduction
-        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
         b3x3 = ZeroPadding2D((1,1))(b3x3)
-        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='valid', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
 
         # 5x5 branch
         # 5x5 reduction
-        b5x5 = self.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b5x5 = self.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', **metaparameters)
         b5x5 = self.BatchNormalization(b5x5)
         b5x5 = self.ReLU(b5x5)
         b5x5 = ZeroPadding2D((1,1))(b5x5)
-        b5x5 = self.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='valid', use_bias=False, **metaparameters)
+        b5x5 = self.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='valid', **metaparameters)
         b5x5 = self.BatchNormalization(b5x5)
         b5x5 = self.ReLU(b5x5)
 
         # Pooling branch
         bpool = MaxPooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', **metaparameters)
         bpool = self.BatchNormalization(bpool)
         bpool = self.ReLU(bpool)
 
@@ -189,11 +193,11 @@ class InceptionV2(Composable):
             n_classes: number of output classes
         """
         x = AveragePooling2D((5, 5), strides=(3, 3))(x)
-        x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         x = Flatten()(x)
-        x = self.Dense(x, 1024, activation=Composable.ReLU, **metaparameters)
+        x = self.Dense(x, 1024, activation=self.ReLU, use_bias=True, **metaparameters)
         x = Dropout(0.7)(x)
         output = self.Dense(x, n_classes, activation='softmax', **metaparameters)
         return output

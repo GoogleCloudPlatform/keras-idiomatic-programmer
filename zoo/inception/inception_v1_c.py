@@ -30,7 +30,7 @@ class InceptionV1(Composable):
     init_weights='glorot_uniform'
 
     def __init__(self, dropout=0.4, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=None, relu=None):
+                 init_weights='glorot_uniform', reg=None, relu=None, bias=True):
         """ Construct an Inception Convolutional Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to the neural network
@@ -38,9 +38,10 @@ class InceptionV1(Composable):
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
 	# Meta-parameter: dropout percentage
         dropout = 0.4
@@ -186,7 +187,7 @@ class InceptionV1(Composable):
         x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.ReLU(x)
         x = Flatten()(x)
-        x = self.Dense(x, 1024, activation=Composable.ReLU, **metaparameters)
+        x = self.Dense(x, 1024, activation=self.ReLU, use_bias=True, **metaparameters)
         x = self.ReLU(x)
         x = Dropout(0.7)(x)
         output = self.Dense(x, n_classes, activation='softmax', **metaparameters)

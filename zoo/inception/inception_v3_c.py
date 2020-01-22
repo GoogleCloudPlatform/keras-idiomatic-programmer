@@ -30,7 +30,7 @@ class InceptionV3(Composable):
     init_weights='glorot_uniform'
 
     def __init__(self, dropout=0.4, input_shape=(229, 229, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=None, relu=None):
+                 init_weights='glorot_uniform', reg=None, relu=None, bias=False):
         """ Construct an Inception V3 convolutional neural network
             dropout     : percentage of dropout rate
             input_shape : the input to the model
@@ -38,9 +38,10 @@ class InceptionV3(Composable):
             init_weights: kernel initiaklizer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
 
         # The input tensor (299x299 in V3 vs 224x224 in V1/V2)
         inputs = Input(shape=input_shape)
@@ -63,14 +64,14 @@ class InceptionV3(Composable):
         """
         # Coarse filter of V1 (7x7) factorized into 3 3x3.
         # First 3x3 convolution is strided
-        x = self.Conv2D(inputs, 32, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
+        x = self.Conv2D(inputs, 32, (3, 3), strides=(2, 2), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-        x = self.Conv2D(x, 32, (3, 3), strides=(1, 1), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 32, (3, 3), strides=(1, 1), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         # Third 3x3, filters are doubled and padding added
-        x = self.Conv2D(x, 64, (3, 3), strides=(1, 1), padding='same', use_bias=False)
+        x = self.Conv2D(x, 64, (3, 3), strides=(1, 1), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
@@ -78,11 +79,11 @@ class InceptionV3(Composable):
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
         # 3x3 reduction
-        x = self.Conv2D(x, 80, (1, 1), strides=(1, 1), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 80, (1, 1), strides=(1, 1), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         # Dimensionality expansion
-        x = self.Conv2D(x, 192, (3, 3), strides=(1, 1), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 192, (3, 3), strides=(1, 1), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
@@ -123,35 +124,35 @@ class InceptionV3(Composable):
             fpool: filters for pooling branch
         """           
         # 1x1 branch
-        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', **metaparameters)
         b1x1 = self.BatchNormalization(b1x1)
         b1x1 = self.ReLU(b1x1)
 
         # double 3x3 branch
         # 3x3 reduction
-        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
-        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='same', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
-        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=1, padding='same', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
 
         # 5x5 branch
         # 5x5 reduction
-        b5x5 = self.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b5x5 = self.Conv2D(x, f5x5[0], (1, 1), strides=1, padding='same', **metaparameters)
         b5x5 = self.BatchNormalization(b5x5)
         b5x5 = self.ReLU(b5x5)
-        b5x5 = self.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b5x5 = self.Conv2D(b5x5, f5x5[1], (3, 3), strides=1, padding='same', **metaparameters)
         b5x5 = self.BatchNormalization(b5x5)
         b5x5 = self.ReLU(b5x5)
 
         # Pooling branch
         bpool = AveragePooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', **metaparameters)
         bpool = self.BatchNormalization(bpool)
         bpool = self.ReLU(bpool)
 
@@ -168,46 +169,46 @@ class InceptionV3(Composable):
             fpool  : filters for pooling branch
         """     
         # 1x1 branch
-        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', **metaparameters)
         b1x1 = self.BatchNormalization(b1x1)
         b1x1 = self.ReLU(b1x1)
     
         # 7x7 branch
         # 7x7 reduction
-        b7x7 = self.Conv2D(x, f7x7[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(x, f7x7[0], (1, 1), strides=1, padding='same', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
         # factorized 7x7
-        b7x7 = self.Conv2D(b7x7, f7x7[1], (1, 7), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(b7x7, f7x7[1], (1, 7), strides=1, padding='same', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
-        b7x7 = self.Conv2D(b7x7, f7x7[2], (7, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(b7x7, f7x7[2], (7, 1), strides=1, padding='same', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
 
         # double 7x7 branch
         # 7x7 reduction
-        b7x7dbl = self.Conv2D(x, f7x7dbl[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7dbl = self.Conv2D(x, f7x7dbl[0], (1, 1), strides=1, padding='same', **metaparameters)
         b7x7dbl = self.BatchNormalization(b7x7dbl)
         b7x7dbl = self.ReLU(b7x7dbl)
         # factorized 7x7
-        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[1], (1, 7), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[1], (1, 7), strides=1, padding='same', **metaparameters)
         b7x7dbl = self.BatchNormalization(b7x7dbl)
         b7x7dbl = self.ReLU(b7x7dbl)
-        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[2], (7, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[2], (7, 1), strides=1, padding='same', **metaparameters)
         b7x7dbl = self.BatchNormalization(b7x7dbl)
         b7x7dbl = self.ReLU(b7x7dbl)
-        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[3], (1, 7), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[3], (1, 7), strides=1, padding='same', **metaparameters)
         b7x7dbl = self.BatchNormalization(b7x7dbl)
         b7x7dbl = self.ReLU(b7x7dbl)
-        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[4], (7, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7dbl = self.Conv2D(b7x7dbl, f7x7dbl[4], (7, 1), strides=1, padding='same', **metaparameters)
         b7x7dbl = self.BatchNormalization(b7x7dbl)
         b7x7dbl = self.ReLU(b7x7dbl)
 
         # Pooling branch
         bpool = AveragePooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', **metaparameters)
         bpool = self.BatchNormalization(bpool)
         bpool = self.ReLU(bpool)
 
@@ -224,20 +225,20 @@ class InceptionV3(Composable):
             fpool  : filters for pooling branch
         """
         # 1x1 branch
-        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b1x1 = self.Conv2D(x, f1x1[0], (1, 1), strides=1, padding='same', **metaparameters)
         b1x1 = self.BatchNormalization(b1x1)
         b1x1 = self.ReLU(b1x1)
     
         # 3x3 branch
         # 3x3 reduction
-        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
         # Split
-        b3x3_1 = self.Conv2D(b3x3, f3x3[0], (1, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3_1 = self.Conv2D(b3x3, f3x3[0], (1, 3), strides=1, padding='same', **metaparameters)
         b3x3_1 = self.BatchNormalization(b3x3_1)
         b3x3_1 = self.ReLU(b3x3_1)
-        b3x3_2 = self.Conv2D(b3x3, f3x3[1], (3, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3_2 = self.Conv2D(b3x3, f3x3[1], (3, 1), strides=1, padding='same', **metaparameters)
         b3x3_2 = self.BatchNormalization(b3x3_2)
         b3x3_2 = self.ReLU(b3x3_2)
         # Merge
@@ -245,17 +246,17 @@ class InceptionV3(Composable):
     
         # double 3x3 branch
         # 3x3 reduction
-        b3x3dbl = self.Conv2D(x, f3x3dbl[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3dbl = self.Conv2D(x, f3x3dbl[0], (1, 1), strides=1, padding='same', **metaparameters)
         b3x3dbl = self.BatchNormalization(b3x3dbl)
         b3x3dbl = self.ReLU(b3x3dbl)
-        b3x3dbl = self.Conv2D(b3x3dbl, f3x3dbl[1], (3, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3dbl = self.Conv2D(b3x3dbl, f3x3dbl[1], (3, 3), strides=1, padding='same', **metaparameters)
         b3x3dbl = self.BatchNormalization(b3x3dbl)
         b3x3dbl = self.ReLU(b3x3dbl)
         # Split
-        b3x3dbl_1 = self.Conv2D(b3x3dbl, f3x3dbl[2], (1, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3dbl_1 = self.Conv2D(b3x3dbl, f3x3dbl[2], (1, 3), strides=1, padding='same', **metaparameters)
         b3x3dbl_1 = self.BatchNormalization(b3x3dbl_1)
         b3x3dbl_1 = self.ReLU(b3x3dbl_1)
-        b3x3dbl_2 = self.Conv2D(b3x3dbl, f3x3dbl[3], (3, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3dbl_2 = self.Conv2D(b3x3dbl, f3x3dbl[3], (3, 1), strides=1, padding='same', **metaparameters)
         b3x3dbl_2 = self.BatchNormalization(b3x3dbl_2)
         b3x3dbl_2 = self.ReLU(b3x3dbl_2)
         # Merge
@@ -264,7 +265,7 @@ class InceptionV3(Composable):
         # Pooling branch
         bpool = AveragePooling2D((3, 3), strides=1, padding='same')(x)
         # 1x1 projection
-        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        bpool = self.Conv2D(bpool, fpool[0], (1, 1), strides=1, padding='same', **metaparameters)
         bpool = self.BatchNormalization(bpool)
         bpool = self.ReLU(bpool)
 
@@ -280,20 +281,20 @@ class InceptionV3(Composable):
         """         
         # 3x3 branch
         # grid reduction
-        b3x3 = self.Conv2D(x, f3x3, (3, 3), strides=2, padding='valid', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(x, f3x3, (3, 3), strides=2, padding='valid', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
 
         # double 3x3 branch
         # 3x3 reduction
-        b3x3dbl = self.Conv2D(x, f3x3dbl[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3dbl = self.Conv2D(x, f3x3dbl[0], (1, 1), strides=1, padding='same', **metaparameters)
         b3x3dbl = self.BatchNormalization(b3x3dbl)
         b3x3dbl = self.ReLU(b3x3dbl)
-        b3x3dbl = self.Conv2D(b3x3dbl, f3x3dbl[1], (3, 3), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3dbl = self.Conv2D(b3x3dbl, f3x3dbl[1], (3, 3), strides=1, padding='same', **metaparameters)
         b3x3dbl = self.BatchNormalization(b3x3dbl)
         b3x3dbl = self.ReLU(b3x3dbl)
         # grid reduction
-        b3x3dbl = self.Conv2D(b3x3dbl, f3x3dbl[1], (3, 3), strides=2, padding='valid', use_bias=False, **metaparameters)
+        b3x3dbl = self.Conv2D(b3x3dbl, f3x3dbl[1], (3, 3), strides=2, padding='valid', **metaparameters)
         b3x3dbl = self.BatchNormalization(b3x3dbl)
         b3x3dbl = self.ReLU(b3x3dbl)
 
@@ -312,27 +313,27 @@ class InceptionV3(Composable):
         """         
         # 3x3 branch
         # 3x3 reduction
-        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(x, f3x3[0], (1, 1), strides=1, padding='same', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
         # grid reduction
-        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=2, padding='valid', use_bias=False, **metaparameters)
+        b3x3 = self.Conv2D(b3x3, f3x3[1], (3, 3), strides=2, padding='valid', **metaparameters)
         b3x3 = self.BatchNormalization(b3x3)
         b3x3 = self.ReLU(b3x3)
 
         # 7x7 (factorized as 1x7, 7x1) + 3x3 branch
         # 7x7 reduction
-        b7x7 = self.Conv2D(x, f7x7[0], (1, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(x, f7x7[0], (1, 1), strides=1, padding='same', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
-        b7x7 = self.Conv2D(b7x7, f7x7[1], (1, 7), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(b7x7, f7x7[1], (1, 7), strides=1, padding='same', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
-        b7x7 = self.Conv2D(b7x7, f7x7[2], (7, 1), strides=1, padding='same', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(b7x7, f7x7[2], (7, 1), strides=1, padding='same', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
         # grid reduction
-        b7x7 = self.Conv2D(b7x7, f7x7[3], (3, 3), strides=2, padding='valid', use_bias=False, **metaparameters)
+        b7x7 = self.Conv2D(b7x7, f7x7[3], (3, 3), strides=2, padding='valid', **metaparameters)
         b7x7 = self.BatchNormalization(b7x7)
         b7x7 = self.ReLU(b7x7)
 
@@ -378,13 +379,13 @@ class InceptionV3(Composable):
             n_classes: number of output classes
         """           
         x = AveragePooling2D((5, 5), strides=(3, 3))(x)
-        x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.Conv2D(x, 128, (1, 1), strides=(1, 1), **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         # filter will be 5x5 for V3
-        x = self.Conv2D(x, 768, x.shape[1:3].as_list(), strides=(1, 1), use_bias=False, **metaparameters)
+        x = self.Conv2D(x, 768, x.shape[1:3].as_list(), strides=(1, 1), **metaparameters)
         x = Flatten()(x)
-        output = self.Dense(x, n_classes, activation='softmax', **metaparameters)
+        output = self.Dense(x, n_classes, activation='softmax', use_bias=True, **metaparameters)
         return output
 
     def classifier(self, x, n_classes, dropout=0.4):
@@ -410,6 +411,7 @@ class InceptionV3(Composable):
 
 # Example
 # inception = InceptionV3()
+
 def example():
     ''' Example for constructing/training a Inception V3 model on CIFAR-10
     '''

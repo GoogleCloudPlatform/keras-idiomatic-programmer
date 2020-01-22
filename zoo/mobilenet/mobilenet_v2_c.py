@@ -50,7 +50,7 @@ class MobileNetV2(Composable):
     relu = 6.0
 
     def __init__(self, groups=None, alpha=1, expansion=6, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
         """ Construct a Mobile Convolution Neural Network V2
             groups      : number of filters and blocks per group
             alpha       : width multiplier
@@ -60,9 +60,10 @@ class MobileNetV2(Composable):
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
+            bias        : whether to use a bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
         if groups is None:
              groups = list(self.groups)
@@ -95,7 +96,7 @@ class MobileNetV2(Composable):
     
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-        x = self.Conv2D(x, n_filters, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
+        x = self.Conv2D(x, n_filters, (3, 3), strides=(2, 2), padding='valid', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         return x
@@ -122,7 +123,7 @@ class MobileNetV2(Composable):
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
-        x = self.Conv2D(x, 1280, (1, 1), use_bias=False)
+        x = self.Conv2D(x, 1280, (1, 1), **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         return x
@@ -174,8 +175,7 @@ class MobileNetV2(Composable):
         # Dimensionality Expansion (non-first block)
         if expansion > 1:
             # 1x1 linear convolution
-            x = self.Conv2D(x, expansion * n_channels, (1, 1), padding='same', use_bias=False, 
-                            **metaparameters)
+            x = self.Conv2D(x, expansion * n_channels, (1, 1), padding='same', **metaparameters)
             x = self.BatchNormalization(x)
             x = self.ReLU(x)
 
@@ -187,14 +187,12 @@ class MobileNetV2(Composable):
             padding = 'same'
 
         # Depthwise Convolution
-        x = self.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False,
-                                 **metaparameters)
+        x = self.DepthwiseConv2D(x, (3, 3), strides, padding=padding, **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Linear Pointwise Convolution
-        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                        **metaparameters)
+        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
     
         # Number of input filters matches the number of output filters

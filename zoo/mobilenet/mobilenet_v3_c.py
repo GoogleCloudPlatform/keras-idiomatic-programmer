@@ -76,7 +76,7 @@ class MobileNetV3(Composable):
     relu = 6.0
 
     def __init__(self, groups, alpha=1, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
         """ Construct a Mobile Convolution Neural Network V3
             groups      : number of filters and blocks per group
             alpha       : width multiplier
@@ -85,9 +85,10 @@ class MobileNetV3(Composable):
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
+            bias        : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
 
         # Variable Binding
         self.GROUPS()
@@ -108,7 +109,7 @@ class MobileNetV3(Composable):
 
         # The Classifier 
         # Add hidden dropout layer
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        outputs = self.classifier(x, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -125,7 +126,7 @@ class MobileNetV3(Composable):
         n_filters = max(8, (int(32 * alpha) + 4) // 8 * 8)
     
         # Convolutional block
-        x = self.Conv2D(inputs, n_filters, (3, 3), strides=(2, 2), padding='same', use_bias=False)
+        x = self.Conv2D(inputs, n_filters, (3, 3), strides=(2, 2), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.HS(x)
         return x
@@ -146,8 +147,7 @@ class MobileNetV3(Composable):
 
         # Last block is a 1x1 linear convolutional layer,
         # expanding the number of filters to 1280.
-        x = self.Conv2D(x, last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', use_bias=False,
-                        **metaparameters)
+        x = self.Conv2D(x, last['n_filters'] * alpha, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = last['activation'](x)
         return x
@@ -209,12 +209,12 @@ class MobileNetV3(Composable):
     
         # Dimensionality Expansion
         # 1x1 linear convolution
-        x = self.Conv2D(x, expansion, (1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, expansion, (1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = activation(x)
 
         # Depthwise Convolution
-        x = self.DepthwiseConv2D(x, (3, 3), strides, padding='same', use_bias=False, **metaparameters)
+        x = self.DepthwiseConv2D(x, (3, 3), strides, padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = activation(x)
 
@@ -223,7 +223,7 @@ class MobileNetV3(Composable):
             x = self.squeeze(x, **metaparameters)
 
         # Linear Pointwise Convolution
-        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, **metaparameters)
+        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
     
         # Number of input filters matches the number of output filters
@@ -242,8 +242,8 @@ class MobileNetV3(Composable):
         n_channels = x.shape[-1]
 
         x = GlobalAveragePooling2D()(x)
-        x = self.Dense(x, n_channels, activation=self.ReLU, **metaparameters)
-        x = self.Dense(x, n_channels, activation=self.HS, **metaparameters)
+        x = self.Dense(x, n_channels, activation=self.ReLU, use_bias=True, **metaparameters)
+        x = self.Dense(x, n_channels, activation=self.HS, use_bias=True, **metaparameters)
         x = Reshape((1, 1, n_channels))(x)
         x = Multiply()([shortcut, x])
         return x
@@ -265,10 +265,10 @@ class MobileNetV3(Composable):
         
         x = Reshape((1, 1, n_channels))(x)
 
-        x = self.Conv2D(x, 1280, (1, 1), padding='same', activation=self.HS)
+        x = self.Conv2D(x, 1280, (1, 1), padding='same', activation=self.HS, use_bias=True)
 
         # final classification
-        x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax')
+        x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax', use_bias=True)
         # Flatten the feature maps into 1D feature maps (?, N)
         outputs = Reshape((n_classes,))(x)
 

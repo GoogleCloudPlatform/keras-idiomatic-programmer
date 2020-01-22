@@ -46,7 +46,7 @@ class MobileNetV1(Composable):
     relu = 6.0
 
     def __init__(self, groups=None, alpha=1, pho=1, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0):
+                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
         """ Construct a Mobile Convolution Neural Network
             alpha       : width multipler
             pho         : resolution multiplier
@@ -55,9 +55,10 @@ class MobileNetV1(Composable):
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
+            bias        : whether to include bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=6.0)
+        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
         
         if groups is None:
              groups = list(self.groups)
@@ -92,7 +93,7 @@ class MobileNetV1(Composable):
 
         # Convolutional block
         x = ZeroPadding2D(padding=((0, 1), (0, 1)))(inputs)
-        x = self.Conv2D(x, 32 * alpha, (3, 3), strides=(2, 2), padding='valid', use_bias=False)
+        x = self.Conv2D(x, 32 * alpha, (3, 3), strides=(2, 2), padding='valid')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
@@ -152,14 +153,12 @@ class MobileNetV1(Composable):
             padding = 'same'
 
         # Depthwise Convolution
-        x = self.DepthwiseConv2D(x, (3, 3), strides, padding=padding, use_bias=False, 
-                                 **metaparameters)
+        x = self.DepthwiseConv2D(x, (3, 3), strides, padding=padding, **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
         # Pointwise Convolution
-        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', use_bias=False, 
-                        **metaparameters)
+        x = self.Conv2D(x, filters, (1, 1), strides=(1, 1), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         return x
@@ -191,7 +190,7 @@ class MobileNetV1(Composable):
         x = Dropout(dropout)(x)
 
         # Use convolution for classifying (emulates a fully connected layer)
-        x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax')
+        x = self.Conv2D(x, n_classes, (1, 1), padding='same', activation='softmax', **metaparameters)
         # Reshape the resulting output to 1D vector of number of classes
         outputs = Reshape((n_classes, ))(x)
 

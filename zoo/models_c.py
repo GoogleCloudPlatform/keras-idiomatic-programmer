@@ -389,15 +389,6 @@ class Composable(object):
     w_epochs       = 0    # number of epochs in warmup
     t_decay        = 0    # decay rate during full training
 
-    def warmup_scheduler(self, epoch, lr):
-        """ learning rate schedular for warmup training
-            epoch : current epoch iteration
-            lr    : current learning rate
-        """
-        if epoch == 0:
-           return lr
-        return epoch * self.w_lr / self.w_epochs
-
     def init_draw(self, x_train, y_train, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32):
         """ Use the lottery ticket principle to find the best weight initialization
             x_train : training images
@@ -431,6 +422,15 @@ class Composable(object):
         # Set the best
         self.model.set_weights(w)
 
+    def warmup_scheduler(self, epoch, lr):
+        """ learning rate schedular for warmup training
+            epoch : current epoch iteration
+            lr    : current learning rate
+        """
+        if epoch == 0:
+           return lr
+        return epoch * self.w_lr / self.w_epochs
+
     def warmup(self, x_train, y_train, epochs=5, s_lr=1e-6, e_lr=0.001):
         """ Warmup for numerical stability
             x_train : training images
@@ -444,14 +444,14 @@ class Composable(object):
         self.compile(optimizer=Adam(s_lr))
         lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
         self.w_epochs = epochs
-        self.w_lr     = e_lr
+        self.w_lr     = e_lr - s_lr
 
         # Train the model
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
                        callbacks=[lrate])
 
-    def _grid_lr(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
-        """ Helper function for grid search
+    def _tune(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
+        """ Helper function for hyperparameter tuning
             x_train   : training images
             y_train   : training labels
             x_test    : test images
@@ -497,7 +497,7 @@ class Composable(object):
         # Search learning rate
         v_loss = []
         for lr in lr_range:
-            result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
             v_loss.append(result[0])
             
         # Find the best starting learning rate based on validation loss
@@ -510,7 +510,7 @@ class Composable(object):
         # Best was smallest learning rate
         if lr == lr_range[0]:
             # try 1/2 the lowest learning rate
-            result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
 
             # 1/2 of lr is even better
             if result[0] < best:
@@ -518,7 +518,7 @@ class Composable(object):
             # try halfway between the first and second value
             else:
                 n_lr = (lr_range[0] + lr_range[1]) / 2.0
-                result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, n_lr, batch_range[0], weights)
+                result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, n_lr, batch_range[0], weights)
 
                 # 1/2 of lr is even better
                 if result[0] < best:
@@ -526,7 +526,7 @@ class Composable(object):
                 
         elif lr == lr_range(len(lr_range)-1):
             # try 2X the largest learning rate
-            result = self._grid_lr(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
 
             # 2X of lr is even better
             if result[0] < best:

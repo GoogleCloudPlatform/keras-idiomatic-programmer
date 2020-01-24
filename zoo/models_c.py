@@ -387,7 +387,9 @@ class Composable(object):
     hidden_dropout = None # hidden dropout in classifier
     w_lr           = 0    # target warmup rate
     w_epochs       = 0    # number of epochs in warmup
-    t_decay        = 0    # decay rate during full training
+    t_decay        = 0    # weight decay rate during full training
+    e_steps        = 0    # number of steps (batches) in an epoch
+    t_steps        = 0    # total number of steps in training job
 
     def init_draw(self, x_train, y_train, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32):
         """ Use the lottery ticket principle to find the best weight initialization
@@ -569,6 +571,13 @@ class Composable(object):
         # return the best learning rate and batch size
         return lr, bs
 
+    def cosine_decay(self, epoch, lr, alpha=0.0):
+        """ Cosine Decay
+        """
+        cosine_decay = 0.5 * (1 + np.cos(np.pi * (self.e_steps * epoch) / self.t_steps))
+        decayed = (1 - alpha) * cosine_decay + alpha
+        return lr * decayed
+
     def training_scheduler(self, epoch, lr):
         """ Learning Rate scheduler for full-training
             epoch : epoch number
@@ -591,18 +600,21 @@ class Composable(object):
                 self.hidden_dropout.rate = 0.0
 
         # Decay the learning rate
-        lr -= self.t_decay
-        self.t_decay *= 0.9 # decrease the decay
+        if self.t_decay > 0:
+            lr -= self.t_decay
+            self.t_decay *= 0.9 # decrease the decay
+        else:
+            lr = self.cosine_decay(epoch, lr)
         return lr
 
-    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=1e-05):
+    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=0):
         """ Full Training of the Model
             x_train    : training images
             y_train    : training labels
             epochs     : number of epochs
             batch_size : size of batch
             lr         : learning rate
-            decay      : learning rate decay
+            decay      : step-wise learning rate decay
         """
 
         # Check for hidden dropout layer in classifier
@@ -612,6 +624,8 @@ class Composable(object):
                 break    
 
         self.t_decay = decay
+        self.e_steps = x_train.shape[0] // batch_size
+        self.t_steps = self.e_steps * epochs
         self.compile(optimizer=Adam(lr=lr, decay=decay))
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
@@ -639,7 +653,7 @@ class Composable(object):
 
         print("Full training")
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
-                      lr=lr, decay=1e-5)
+                      lr=lr, decay=0)
         self.model.evaluate(x_test, y_test)
 
     def cifar100(self, epochs=20):
@@ -662,5 +676,6 @@ class Composable(object):
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
         print("Full training")
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, validation_split=0.1, verbose=1)
+        self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
+                      lr=lr, decay=0)
         self.model.evaluate(x_test, y_test)

@@ -31,14 +31,9 @@ class WRN(Composable):
     """ Construct a Wide Residual Convolution Network """
     # Meta-parameter: number of filters per group
     groups = [ { 'n_filters': 16 }, { 'n_filters' : 32 }, { 'n_filters' : 64 } ]
-    # Meta-parameter: the number of layers
-    depth = 16
-    # Meta-parameter: the width factor
-    k = 8
-    # Meta-parameter: dropout
-    dropout = 0
 
-    def __init__(self, groups=None, depth=16, k=8, dropout=0, input_shape=(32, 32, 3), n_classes=10,
+    def __init__(self, groups=None, depth=16, k=8, dropout=0, 
+                 input_shape=(32, 32, 3), n_classes=10, include_top=True,
                  init_weights='he_normal', reg=None, relu=None, bias=False):
         """ Construct a Wids Residual (Convolutional Neural) Network 
             depth       : number of layers
@@ -46,6 +41,7 @@ class WRN(Composable):
             groups      : number of filters per group
             input_shape : input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             init_weights: kernel initialization
             reg         : kernel regularization
             relu        : max value for ReLU
@@ -64,10 +60,12 @@ class WRN(Composable):
         x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, groups=groups, depth=depth, k=k, dropout=dropout)
+        outputs = self.learner(x, groups=groups, depth=depth, k=k, dropout=dropout)
 
         # The classifier 
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            # Add hidden dropout
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

@@ -32,9 +32,6 @@ class ShuffleNet(Composable):
     # meta-parameter: number of shuffle blocks per shuffle group
     groups  = [ { 'n_blocks' : 4 }, { 'n_blocks' : 8 }, { 'n_blocks' : 4 } ]
 
-    # meta-parameter: The number of groups to partition the filters (channels)
-    n_partitions=2
-
     # meta-parameter: number of groups to partition feature maps (key), and
     # corresponding number of output filters (value)
     filters = {
@@ -45,12 +42,8 @@ class ShuffleNet(Composable):
             8: [{ 'n_filters' : 384 }, { 'n_filters' : 768 }, { 'n_filters' : 1536 }]
     }
 
-    # meta-parameter: the dimensionality reduction on entry to a shuffle block
-    reduction = 0.25
-    
-    init_weights='glorot_uniform'
-
-    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=False):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
@@ -59,6 +52,7 @@ class ShuffleNet(Composable):
             reduction   : dimensionality reduction on entry to a shuffle block
             input_shape : the input shape to the model
             n_classes   : number of output classes
+            include_top : whether to include classifier
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
@@ -79,11 +73,13 @@ class ShuffleNet(Composable):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction)
+        outputs = self.learner(x, groups=groups, n_partitions=n_partitions, filters=filters, reduction=reduction)
 
         # The Classifier
-        # Add hidden dropout to classifier
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            # Add hidden dropout to classifier
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
+
         self._model = Model(inputs, outputs)
 
     def stem(self, inputs):
@@ -140,14 +136,6 @@ class ShuffleNet(Composable):
         reduction    = metaparameters['reduction']
         del metaparameters['n_filters']
         del metaparameters['n_partitions']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = self.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = self.init_weights
             
         # projection shortcut
         shortcut = x
@@ -190,14 +178,6 @@ class ShuffleNet(Composable):
         reduction    = metaparameters['reduction']
         del metaparameters['n_filters']
         del metaparameters['n_partitions']
-        if 'reg' in metaparameters:
-            reg = metaparameters['reg']
-        else:
-            reg = self.reg
-        if 'init_weights' in metaparameters:
-            init_weights = metaparameters['init_weights']
-        else:
-            init_weights = self.init_weights
             
         # identity shortcut
         shortcut = x

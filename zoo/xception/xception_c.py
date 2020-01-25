@@ -34,15 +34,15 @@ class Xception(Composable):
               { 'n_filters' : 728 }, { 'n_filters' : 728 }, { 'n_filters' : 728 }, 
               { 'n_filters' : 728 }, { 'n_filters' : 728 } ]
 
-    init_weights = 'glorot_uniform'
-
-    def __init__(self, entry=None, middle=None, input_shape=(229, 229, 3), n_classes=1000,
-                 init_weights=init_weights, reg=None, relu=None, bias=True):
+    def __init__(self, entry=None, middle=None, 
+                 input_shape=(229, 229, 3), n_classes=1000, include_top=True,
+                 init_weights='glorot_uniform', reg=None, relu=None, bias=True):
         """ Construct an Xception Convolution Neural Network
             entry       : number of blocks/filters for entry module
             middle      : number of blocks/filters for middle module
             input_shape : the input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
@@ -65,7 +65,7 @@ class Xception(Composable):
         x = self.middleFlow(x, blocks=middle)
 
 	# Create the exit section 
-        outputs = self.exitFlow(x, n_classes)
+        outputs = self.exitFlow(x, n_classes, include_top)
 
 	# Instantiate the model
         self._model = Model(inputs, outputs)
@@ -116,10 +116,11 @@ class Xception(Composable):
             x = self.residual_block(x, **block, **metaparameters)
         return x
 
-    def exitFlow(self, x, n_classes, **metaparameters):
+    def exitFlow(self, x, n_classes, include_top, **metaparameters):
         """ Create the exit flow section
-            x         : input to the exit flow section
-            n_classes : number of output classes
+            x          : input to the exit flow section
+            n_classes  : number of output classes
+            include_top: whether to include classifier
         """     
         # Remember the input
         shortcut = x
@@ -157,7 +158,8 @@ class Xception(Composable):
         x = self.ReLU(x)
 
         # Create classifier section
-        x = self.classifier(x, n_classes, **metaparameters)
+        if include_top:
+            x = self.classifier(x, n_classes, **metaparameters)
 
         return x
 

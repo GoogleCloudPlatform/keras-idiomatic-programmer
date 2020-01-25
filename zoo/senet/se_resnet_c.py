@@ -42,19 +42,19 @@ class SEResNet(Composable):
                       { 'n_filters': 256, 'n_blocks': 36 },
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # SE-ResNet152
 	      }
-    # Meta-parameter: Amount of filter reduction in squeeze operation
-    ratio = 16
     
-    def __init__(self, n_layers, ratio=16, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, n_layers, ratio=16, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
         """ Construct a Residual Convolutional Neural Network V1
             n_layers    : number of layers
             input_shape : input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
-            bias        : whether to use bias
+            bias        : whether to use bias for batchnorm
         """
         super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
         
@@ -74,10 +74,12 @@ class SEResNet(Composable):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, ratio=ratio)
+        outputs = self.learner(x, groups=groups, ratio=ratio)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            # Add hidden dropout
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -135,10 +137,7 @@ class SEResNet(Composable):
             x     : input to the block
             ratio : amount of filter reduction during squeeze
         """  
-        if 'ratio' in metaparameters:
-            ratio = metaparameters['ratio']
-        else:
-            ratio = self.ratio
+        ratio = metaparameters['ratio']
             
         # Remember the input
         shortcut = x

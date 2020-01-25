@@ -40,7 +40,8 @@ class DenseNet(Composable):
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
     n_filters = 32
 
-    def __init__(self, n_layers, n_filters=32, reduction=0.5, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, n_layers, n_filters=32, reduction=0.5, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
         """ Construct a Densely Connected Convolution Neural Network
             n_layers    : number of layers
@@ -48,6 +49,7 @@ class DenseNet(Composable):
             reduction   : anount to reduce feature maps by (compression factor)
             input_shape : input shape
             n_classes   : number of output classes
+            include_top : whether to include the classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
@@ -72,11 +74,12 @@ class DenseNet(Composable):
         x = self.stem(inputs, n_filters)
 
         # The Learner
-        x = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups)
+        outputs = self.learner(x, n_filters=n_filters, reduction=reduction, groups=groups)
 
         # The Classifier 
-        # Add hidden dropout layer
-        outputs = self.classifier(x, n_classes, dropout=0.1)
+        if include_top:
+            # Add hidden dropout layer
+            outputs = self.classifier(outputs, n_classes, dropout=0.1)
 
         # Instantiate the model
         self._model = Model(inputs, outputs)

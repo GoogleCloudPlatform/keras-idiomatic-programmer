@@ -29,12 +29,14 @@ class InceptionV3(Composable):
     """ Construct an Inception V3 convolutional neural network """
     init_weights='glorot_uniform'
 
-    def __init__(self, dropout=0.4, input_shape=(229, 229, 3), n_classes=1000,
+    def __init__(self, dropout=0.4, 
+                 input_shape=(229, 229, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=None, relu=None, bias=False):
         """ Construct an Inception V3 convolutional neural network
             dropout     : percentage of dropout rate
             input_shape : the input to the model
             n_classes   : number of output classes
+            include_top : whether to include the classifier
             init_weights: kernel initiaklizer
             reg         : kernel regularizer
             relu        : max value for ReLU
@@ -50,10 +52,11 @@ class InceptionV3(Composable):
         x = self.stem(inputs)
 
         # The learner
-        x, aux = self.learner(x, 1000)
+        outputs, aux = self.learner(x, n_classes)
 
         # The classifier
-        outputs = self.classifier(x, n_classes, dropout)
+        if include_top:
+            outputs = self.classifier(outputs, n_classes, dropout)
 
         # Instantiate the Model
         self._model = Model(inputs, [outputs] + aux)

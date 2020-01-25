@@ -27,14 +27,15 @@ from models_c import Composable
 
 class InceptionV2(Composable):
     """ Construct an Inception Convolutional Neural Network """
-    init_weights='glorot_uniform'
 
-    def __init__(self, dropout=0.4, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, dropout=0.4, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=None, relu=None, bias=False):
         """ Construct an Inception Convolutional Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to the neural network
             n_classes   : number of output classes
+            include_top : whether to include the classifier
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
@@ -43,9 +44,6 @@ class InceptionV2(Composable):
         # Configure base (super) class
         super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
 
-	# Meta-parameter: dropout percentage
-        dropout = 0.4
-
 	# The input tensor
         inputs = Input(shape=input_shape)
 
@@ -53,10 +51,11 @@ class InceptionV2(Composable):
         x = self.stem(inputs)
 
         # The learner
-        x, aux = self.learner(x, n_classes)
+        outputs, aux = self.learner(x, n_classes)
 
-        # The classifier f
-        outputs = self.classifier(x, n_classes, dropout)
+        # The classifier
+        if include_top:
+            outputs = self.classifier(outputs, n_classes, dropout)
 
         # Instantiate the Model
         self._model = Model(inputs, [outputs] + aux)

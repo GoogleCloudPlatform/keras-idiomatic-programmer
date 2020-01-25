@@ -35,23 +35,15 @@ class MobileNetV1(Composable):
                { 'n_filters': 512,  'n_blocks': 6 },
                { 'n_filters': 1024, 'n_blocks': 2 } ]
 
-    # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
-    alpha      = 1   
-    # Meta-parameter: resolution multiplier (0 .. 1) for reducing input size
-    pho        = 1
-    # Meta-parameter: dropout rate
-    dropout    = 0.5
-
-    init_weights = 'glorot_uniform'
-    relu = 6.0
-
-    def __init__(self, groups=None, alpha=1, pho=1, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups=None, alpha=1, pho=1, dropout=0.5, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
         """ Construct a Mobile Convolution Neural Network
             alpha       : width multipler
             pho         : resolution multiplier
             input_shape : the input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             init_weights: kernel initializer
             reg         : kernel regularizer
             relu        : max value for ReLU
@@ -76,10 +68,11 @@ class MobileNetV1(Composable):
         x = self.stem(inputs, alpha=alpha)    
 
         # The Learner
-        x = self.learner(x, groups=groups, alpha=alpha)
+        outputs = self.learner(x, groups=groups, alpha=alpha)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, alpha=alpha, dropout=dropout)
+        if include_top:
+            outputs = self.classifier(outputs, n_classes, alpha=alpha, dropout=dropout)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

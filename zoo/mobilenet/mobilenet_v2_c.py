@@ -41,15 +41,8 @@ class MobileNetV2(Composable):
                { 'n_filters' : 320,  'n_blocks' : 1 },
                { 'n_filters' : 1280, 'n_blocks' : 1 } ]
 
-    # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
-    alpha = 1
-    # Meta-parameter: multiplier to expand the number of filters
-    expansion = 6
-
-    init_weights = 'glorot_uniform'
-    relu = 6.0
-
-    def __init__(self, groups=None, alpha=1, expansion=6, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups=None, alpha=1, expansion=6, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
         """ Construct a Mobile Convolution Neural Network V2
             groups      : number of filters and blocks per group
@@ -57,6 +50,7 @@ class MobileNetV2(Composable):
             expansion   : multiplier to expand the number of filters
             input_shape : the input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
@@ -74,11 +68,12 @@ class MobileNetV2(Composable):
         x = self.stem(inputs, alpha=alpha)
 
         # The Learner
-        x = self.learner(x, groups=groups, alpha=alpha, expansion=expansion)
+        outputs = self.learner(x, groups=groups, alpha=alpha, expansion=expansion)
 
         # The Classifier 
         # Add hidden dropout layer
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

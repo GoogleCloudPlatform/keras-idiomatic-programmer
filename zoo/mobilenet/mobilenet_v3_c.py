@@ -68,20 +68,15 @@ class MobileNetV3(Composable):
                          ]
                       }
 
-    # Meta-parameter: width multiplier (0 .. 1) for reducing number of filters.
-    alpha = 1
-    # Meta-parameter: kernel regularization
-
-    init_weights = 'glorot_uniform'
-    relu = 6.0
-
-    def __init__(self, groups, alpha=1, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups, alpha=1, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
         """ Construct a Mobile Convolution Neural Network V3
             groups      : number of filters and blocks per group
             alpha       : width multiplier
             input_shape : the input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
@@ -105,11 +100,11 @@ class MobileNetV3(Composable):
         x = self.stem(inputs, alpha=alpha)
 
         # The Learner
-        x = self.learner(x, groups=groups, alpha=alpha)
+        outputs = self.learner(x, groups=groups, alpha=alpha)
 
         # The Classifier 
-        # Add hidden dropout layer
-        outputs = self.classifier(x, n_classes)
+        if include_top:
+            outputs = self.classifier(outputs, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

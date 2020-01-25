@@ -38,14 +38,14 @@ class SqueezeNetBypass(Composable):
                  { 'n_filters' : 64, 'bypass': False } ],
                [ { 'n_filters' : 64, 'bypass': True } ] ]
 
-    init_weights = 'glorot_uniform'
-
-    def __init__(self, groups=None, dropout=0.5, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, groups=None, dropout=0.5, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=True):
         ''' Construct a SqueezeNet Bypass Convolution Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to model
             n_classes   : number of output classes
+            include_top : whether to include classifier
             init_weights: kernel initialization
             reg         : kernel regularization
             relu        : max value to relu
@@ -64,10 +64,11 @@ class SqueezeNetBypass(Composable):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, groups=groups, dropout=dropout)
+        outputs = self.learner(x, groups=groups, dropout=dropout)
 
         # The Classifier
-        outputs = self.classifier(x, n_classes)
+        if include_top:
+            outputs = self.classifier(outputs, n_classes)
 
         self._model = Model(inputs, outputs)
 
@@ -87,10 +88,7 @@ class SqueezeNetBypass(Composable):
             dropout: percent of droput
         '''
         groups  = metaparameters['groups']
-        if 'dropout' in metaparameters:
-            dropout = metaparameters['dropout']
-        else:
-            dropout = SqueezeNetBypass.dropout
+        dropout = metaparameters['dropout']
 
         last = groups.pop()
 

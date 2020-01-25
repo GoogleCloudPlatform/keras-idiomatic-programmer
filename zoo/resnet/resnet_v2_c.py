@@ -47,16 +47,18 @@ class ResNetV2(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
 
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, 
+    def __init__(self, n_layers, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
         """ Construct a Residual Convolutional Neural Network V2
             n_layers    : number of layers
             input_shape : input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
-            bias        : whether to include a bias in the dense/conv layers
+            bias        : whether to include a bias with batchnorm
         """
         # Configure base (super) class
         super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
@@ -77,11 +79,12 @@ class ResNetV2(Composable):
         x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, groups=groups)
+        outputs = self.learner(x, groups=groups)
 
         # The classifier 
-        # Add hidden dropout for training-time regularization
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            # Add hidden dropout for training-time regularization
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -218,4 +221,4 @@ def example():
     resnet.model.summary()
     resnet.cifar10()
 
-# example()
+example()

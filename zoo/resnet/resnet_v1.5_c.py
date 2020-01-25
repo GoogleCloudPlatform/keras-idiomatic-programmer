@@ -45,16 +45,18 @@ class ResNetV1_5(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
     
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000, 
+    def __init__(self, n_layers, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
         """ Construct a Residual Convolutional Neural Network V1.5
             n_layers    : number of layers
             input_shape : input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             relu        : max value for ReLU
             init_weights: kernel initializer
-            bias        : whether to use bias
+            bias        : whether to use bias with batchnorm
         """
         # Configure base (super) class
         super().__init__(reg=reg, relu=relu, init_weights=init_weights, bias=bias)
@@ -75,11 +77,12 @@ class ResNetV1_5(Composable):
         x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, groups=groups)
+        outputs = self.learner(x, groups=groups)
 
         # The classifier 
-        # Add hidden dropout for training-time regularization
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            # Add hidden dropout for training-time regularization
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

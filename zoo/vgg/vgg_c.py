@@ -40,14 +40,14 @@ class VGG(Composable):
                       { 'n_layers': 4, 'n_filters': 512 },
                       { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
-    init_weights = 'glorot_uniform'
-
-    def __init__(self, n_layers, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, n_layers, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=None, init_weights='glorot_uniform', relu=None, bias=True):
         """ Construct a VGG model
             n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
             n_classes:  : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
@@ -72,10 +72,11 @@ class VGG(Composable):
         x = self.stem(inputs)
 
         # The learner
-        x = self.learner(x, blocks=blocks)
+        outputs = self.learner(x, blocks=blocks)
 
         # The classifier
-        outputs = self.classifier(x, n_classes)
+        if include_top:
+            outputs = self.classifier(outputs, n_classes)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)

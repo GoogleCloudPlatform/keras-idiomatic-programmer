@@ -44,20 +44,19 @@ class ResNeXt(Composable):
                       { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ] 	 # ResNeXt152
              }
     
-    # Meta-parameter: width of group convolution
-    cardinality = 32
-
-    def __init__(self, n_layers, cardinality=32, input_shape=(224, 224, 3), n_classes=1000,
+    def __init__(self, n_layers, cardinality=32, 
+                 input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
         """ Construct a Residual Next Convolution Neural Network
             n_layers    : number of layers.
             cardinality : width of group convolution
             input_shape : the input shape
             n_classes   : number of output classes
+            include_top : whether to include classifier
             reg         : kernel regularizer
             init_weights: kernel initializer
             relu        : max value for ReLU
-            bias        : whether to use bias
+            bias        : whether to use bias with batchnorm
         """
         # Configure base (super) class
         super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
@@ -78,10 +77,12 @@ class ResNeXt(Composable):
         x = self.stem(inputs)
 
         # The Learner
-        x = self.learner(x, cardinality=cardinality, groups=groups)
+        outputs = self.learner(x, cardinality=cardinality, groups=groups)
 
         # The Classifier 
-        outputs = self.classifier(x, n_classes, dropout=0.0)
+        if include_top:
+            # Add hidden dropout
+            outputs = self.classifier(outputs, n_classes, dropout=0.0)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
@@ -100,15 +101,17 @@ class ResNeXt(Composable):
         """ Construct the Learner
             x          : input to the learner
             groups     : list of groups: filters in, filters out, number of blocks
+            cardinality: width of group convolution
         """
-        groups = metaparameters['groups']
+        cardinality = metaparameters['cardinality']
+        groups      = metaparameters['groups']
 
         # First ResNeXt Group (not-strided)
-        x = self.group(x, strides=(1, 1), **groups.pop(0))
+        x = self.group(x, strides=(1, 1), **groups.pop(0), cardinality=cardinality)
 
         # Remaining ResNeXt groups
         for group in groups:
-            x = self.group(x, **group)
+            x = self.group(x, **group, cardinality=cardinality)
         return x
 
     def group(self, x, strides=(2, 2), **metaparameters):
@@ -140,10 +143,7 @@ class ResNeXt(Composable):
         """
         filters_in  = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
-        if 'cardinality' in metaparameters:
-            cardinality = metaparameters['cardinality']
-        else:
-            cardinality = self.cardinality
+        cardinality = metaparameters['cardinality']
             
         # Remember the input
         shortcut = x
@@ -185,10 +185,7 @@ class ResNeXt(Composable):
         """
         filters_in = metaparameters['filters_in']
         filters_out = metaparameters['filters_out']
-        if 'cardinality' in metaparameters:
-            cardinality = metaparameters['cardinality']
-        else:
-            cardinality = self.cardinality
+        cardinality = metaparameters['cardinality']
     
         # Construct the projection shortcut
         # Increase filters by 2X to match shape when added to output of block
@@ -238,4 +235,3 @@ def example():
     resnext.cifar10()
 
 # example()
-

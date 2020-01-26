@@ -133,6 +133,13 @@ class Composable(object):
       self.softmax = outputs
       return outputs
 
+    def top(self, layer):
+        """ Add layer to the top of the neural network
+            layer : layer to add
+        """
+        outputs = layer(self._model.outputs)
+        self._model = Model(self._model.inputs, outputs)
+
     def Dense(self, x, units, activation=None, use_bias=True, **hyperparameters):
         """ Construct Dense Layer
             x           : input to layer

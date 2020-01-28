@@ -16,8 +16,8 @@ The repository is organized by:
 | [`books`](books)           | PDF softcopy of books - preview versions |
 | [`workshops`](workshops)   | workshops (presentation slides and code labs) - CC-BY 4.0 license (2019) |
 | [`notebooks`](notebooks)   | notebooks for production-grade solutions |
-| `zoo`         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
-| `community labs`| Labs for community participation in research |
+| [`zoo`](zoo)         | tf.keras model zoo (coded in idiomatic and composable design pattern) - Apache 2.0 license |
+| [`community labs`](community labs)| Labs for community participation in research |
 
 ## Reviewers and Contributors
 

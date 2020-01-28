@@ -53,7 +53,7 @@ William Barret<br/>
 
 [Hobson Lane](https://www.linkedin.com/in/hobsonlane)<br/>
 [Enoch Tetteh](https://www.linkedin.com/in/enoch-tetteh-80450211a)<br/>
-[Bill Liu](https://www.linkedin.com/in/billliu1202)
+[Bill Liu](https://www.linkedin.com/in/billliu1202)<br/>
 [Miklos Toth](https://www.linkedin.com/in/miklostoth/)
 
 ## Disclaimer

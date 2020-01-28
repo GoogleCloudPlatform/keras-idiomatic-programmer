@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# ResNet20, 56, 110, 164, 1001 version 1 for CIFAR-10
+# ResNet20, 32, 44, 56, 110 version 1 for CIFAR-10
 # Paper: https://arxiv.org/pdf/1512.03385.pdf
 
 import tensorflow as tf
@@ -42,7 +42,10 @@ class ResNetCifarV1(Composable):
                       { 'n_filters': 64, 'n_blocks': 9}],
                110: [ { 'n_filters': 16, 'n_blocks': 18},
                       { 'n_filters': 32, 'n_blocks': 18},
-                      { 'n_filters': 64, 'n_blocks': 18}] }
+                      { 'n_filters': 64, 'n_blocks': 18}],
+               164: [ { 'n_filters': 16, 'n_blocks': 27},
+                      { 'n_filters': 32, 'n_blocks': 27},
+                      { 'n_filters': 64, 'n_blocks': 27}]}
 
     def __init__(self, n_layers,
                  input_shape=(32, 32, 3), n_classes=10, include_top=True,
@@ -62,7 +65,7 @@ class ResNetCifarV1(Composable):
 
         # depth
         if isinstance(n_layers, int):
-            if n_layers not in [20, 32, 44, 56, 110]:
+            if n_layers not in [20, 32, 44, 56, 110, 164]:
                 raise Exception("ResNet CIFAR: invalid value for n_layers")
             groups = list(self.groups[n_layers])
         else:

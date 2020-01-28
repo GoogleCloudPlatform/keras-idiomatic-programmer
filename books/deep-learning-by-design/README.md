@@ -1,9 +1,14 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://i.creativecommons.org/l/by/4.0/80x15.png)](LICENSE)
 
-|-----------|------------|
+This repository is origanized as follows:
+
 |File       | Description|
 |-----------|------------|
-| `Preview` ||
-| `Workshop 1` ||
+| `Preview` | Section 1 (chapters 1, 2 and 3) made freely available in PDF|
+| `Workshop 1` |Workshop content bundle for chapter 1|
+| `Workshop 2` |Workshop content bundle for chapter 2|
+| `Workshop 3` |Workshop content bundle for chapter 3|
 
 
 

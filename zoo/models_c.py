@@ -27,6 +27,7 @@ from tensorflow.keras.utils import to_categorical
 import tensorflow.keras.backend as K
 
 import random
+import math
 import numpy as np
 
 class Composable(object):
@@ -589,12 +590,17 @@ class Composable(object):
     def time_decay(self, epoch, lr):
         """ Time-based Decay
         """
-        return lr * (1. / (1. + self.t_decay * epoch))
+        return lr * (1. / (1. + self.e_decay * epoch))
 
     def step_decay(self, epoch, lr):
         """ Step-based decay
         """
-        return self.i_lr * decay**(epoch)
+        return self.i_lr * e_decay**(epoch)
+
+    def exp_decay(self, epoch, lr):
+        """ Exponential Decay
+        """
+        return self.i_lr * math.exp(-self.e_decay * epoch)
 
     def cosine_decay(self, epoch, lr, alpha=0.0):
         """ Cosine Decay

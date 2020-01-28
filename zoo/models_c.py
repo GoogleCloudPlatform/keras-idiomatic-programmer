@@ -592,9 +592,9 @@ class Composable(object):
         return lr * (1. / (1. + self.t_decay * epoch))
 
     def step_decay(self, epoch, lr):
+        """ Step-based decay
         """
-        """
-        pass
+        return self.i_lr * decay**(epoch)
 
     def cosine_decay(self, epoch, lr, alpha=0.0):
         """ Cosine Decay
@@ -625,7 +625,7 @@ class Composable(object):
                 self.hidden_dropout.rate = 0.0
 
         # Decay the learning rate
-        if self.w_decay > 0:
+        if self.e_decay > 0:
             lr = self.time_decay(epoch, lr)
         else:
             lr = self.cosine_decay(epoch, lr)

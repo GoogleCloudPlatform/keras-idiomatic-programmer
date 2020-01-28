@@ -26,7 +26,7 @@ sys.path.append('../')
 from models_c import Composable
 
 class ResNetCifarV1(Composable):
-    """ Residual Convolutional Neural Network V1
+    """ Residual Convolutional Neural Network V1 for CIFAR-10
     """
     groups = { 20 : [ { 'n_filters': 16, 'n_blocks': 3},
                       { 'n_filters': 32, 'n_blocks': 3},
@@ -121,6 +121,8 @@ class ResNetCifarV1(Composable):
         """
         if proj:
             x = self.projection_block(x, n_filters)
+        else:
+            x = self.identity_block(x, n_filters)
 
         # Identity residual blocks
         for _ in range(n_blocks-1):
@@ -134,6 +136,8 @@ class ResNetCifarV1(Composable):
         """
         # Save input vector (feature maps) for the identity link
         shortcut = x
+
+        # Two 3x3 post-activation convolutuional layers
     
         x = self.Conv2D(x, n_filters, (3, 3), strides=(1, 1), padding='same')
         x = self.BatchNormalization(x)

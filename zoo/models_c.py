@@ -20,7 +20,7 @@ from tensorflow.keras.layers import DepthwiseConv2D, SeparableConv2D, Dropout
 from tensorflow.keras.layers import GlobalAveragePooling2D, Activation, BatchNormalization
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras.optimizers import Adam, SGD
-from tensorflow.keras.initializers import glorot_uniform, he_normal
+from tensorflow.compat.v1.keras.initializers import glorot_uniform, he_normal
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
@@ -139,6 +139,11 @@ class Composable(object):
         """
         outputs = layer(self._model.outputs)
         self._model = Model(self._model.inputs, outputs)
+
+    def summary(self):
+        """ Call underlying summary method
+        """
+        self._model.summary()
 
     def Dense(self, x, units, activation=None, use_bias=True, **hyperparameters):
         """ Construct Dense Layer
@@ -394,7 +399,8 @@ class Composable(object):
     hidden_dropout = None # hidden dropout in classifier
     w_lr           = 0    # target warmup rate
     w_epochs       = 0    # number of epochs in warmup
-    t_decay        = 0    # weight decay rate during full training
+    i_lr           = 0    # initial warmup rate during full training
+    e_decay        = 0    # weight decay rate during full training
     e_steps        = 0    # number of steps (batches) in an epoch
     t_steps        = 0    # total number of steps in training job
 
@@ -419,8 +425,8 @@ class Composable(object):
             # Create generator for training in steps
             datagen = ImageDataGenerator()
 
-            print("Lottery", _)
-            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
+            print("*** Lottery", _)
+            self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
                                                   epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             d_loss = self.model.history.history['loss'][epochs-1]
@@ -448,7 +454,7 @@ class Composable(object):
             s_lr    : start warmup learning rate
             e_lr    : end warmup learning rate
         """
-        print("*** Warmup")
+        print("*** Warmup (for numerical stability)")
         # Setup learning rate scheduler
         self.compile(optimizer=Adam(s_lr))
         lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
@@ -478,12 +484,12 @@ class Composable(object):
         datagen = ImageDataGenerator()
          
         # Train the model
-        print("Learning Rate", lr)
-        self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=batch_size),
+        print("*** Learning Rate", lr)
+        self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
                                  epochs=epochs, steps_per_epoch=steps, verbose=1)
 
         # Evaluate the model
-        result = self.model.evaluate(x_test, y_test)
+        result = self.evaluate(x_test, y_test)
          
         # Reset the weights
         self.model.set_weights(weights)
@@ -500,6 +506,8 @@ class Composable(object):
             lr_range: range for searching learning rate
             batch_range: range for searching batch size
         """
+        print("*** Hyperparameter Search")
+
         # Save the original weights
         weights = self.model.get_weights()
 
@@ -541,7 +549,7 @@ class Composable(object):
             if result[0] < best:
                 lr = lr * 2.0
 		
-        print("Selected best learning rate:", lr)
+        print("*** Selected best learning rate:", lr)
 
         # Compile the model for the new learning rate
         self.compile(optimizer=Adam(lr))
@@ -550,16 +558,16 @@ class Composable(object):
         # skip the first batch size - since we used it in searching learning rate
         datagen = ImageDataGenerator()
         for bs in batch_range[1:]:
-            print("Batch Size", bs)
+            print("*** Batch Size", bs)
 
             # equalize the number of examples per epoch
             steps = int(batch_range[0] * steps / bs)
 
-            self.model.fit_generator(datagen.flow(x_train, y_train, batch_size=bs),
+            self.model.fit(datagen.flow(x_train, y_train, batch_size=bs),
                                      epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             # Evaluate the model
-            result = self.model.evaluate(x_test, y_test)
+            result = self.evaluate(x_test, y_test)
             v_loss.append(result[0])
             
             # Reset the weights
@@ -573,10 +581,20 @@ class Composable(object):
                 best = v_loss[_]
                 bs = batch_range[_]
 
-        print("Selected best batch size:", bs)
+        print("*** Selected best batch size:", bs)
 
         # return the best learning rate and batch size
         return lr, bs
+
+    def time_decay(self, epoch, lr):
+        """ Time-based Decay
+        """
+        return lr * (1. / (1. + self.t_decay * epoch))
+
+    def step_decay(self, epoch, lr):
+        """
+        """
+        pass
 
     def cosine_decay(self, epoch, lr, alpha=0.0):
         """ Cosine Decay
@@ -600,16 +618,15 @@ class Composable(object):
                 self.hidden_dropout.rate = 0.5
             else:
                 self.hidden_dropout.rate *= 1.1
-            print("Overfitting, set dropout to", self.hidden_dropout.rate)
+            print("*** Overfitting, set dropout to", self.hidden_dropout.rate)
         else:
             if self.hidden_dropout.rate != 0.0:
-                print("Turning off dropout")
+                print("*** Turning off dropout")
                 self.hidden_dropout.rate = 0.0
 
         # Decay the learning rate
-        if self.t_decay > 0:
-            lr -= self.t_decay
-            self.t_decay *= 0.9 # decrease the decay
+        if self.w_decay > 0:
+            lr = self.time_decay(epoch, lr)
         else:
             lr = self.cosine_decay(epoch, lr)
         return lr
@@ -624,13 +641,16 @@ class Composable(object):
             decay      : step-wise learning rate decay
         """
 
+        print("*** Full Training")
+
         # Check for hidden dropout layer in classifier
         for layer in self.model.layers:
             if isinstance(layer, Dropout):
                 self.hidden_dropout = layer
                 break    
 
-        self.t_decay = decay
+        self.i_lr    = lr
+        self.e_decay = decay
         self.e_steps = x_train.shape[0] // batch_size
         self.t_steps = self.e_steps * epochs
         self.compile(optimizer=Adam(lr=lr, decay=decay))
@@ -638,6 +658,11 @@ class Composable(object):
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1,
                        callbacks=[lrate])
+
+    def evaluate(self, x_test, y_test):
+        """ Call underlying evaluate() method
+        """
+        return self._model.evaluate(x_test, y_test)
 
     def cifar10(self, epochs=10):
         """ Train on CIFAR-10
@@ -652,16 +677,13 @@ class Composable(object):
         y_train = self.label_smoothing(y_train, 10, 0.1)
         self.compile(loss='categorical_crossentropy', metrics=['acc'])
 
-        print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)
 
-        print("Hyperparameter search")
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
-        print("Full training")
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
                       lr=lr, decay=0)
-        self.model.evaluate(x_test, y_test)
+        self.evaluate(x_test, y_test)
 
     def cifar100(self, epochs=20):
         """ Train on CIFAR-100
@@ -676,13 +698,10 @@ class Composable(object):
         y_train = self.label_smoothing(y_train, 10, 0.1)
         self.compile(loss='categorical_crossentropy', metrics=['acc'])
 
-        print("Warmup the model for numerical stability")
         self.warmup(x_train, y_train)
 
-        print("Hyperparameter search")
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
-        print("Full training")
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
                       lr=lr, decay=0)
-        self.model.evaluate(x_test, y_test)
+        self.evaluate(x_test, y_test)

@@ -621,17 +621,19 @@ class Composable(object):
         if epoch == 0:
             return lr
 
-        # If training accuracy and validation accuracy more than 3% apart
-        if self.model.history.history['acc'][epoch-1] > self.model.history.history['val_acc'][epoch-1] + 0.03:
-            if self.hidden_dropout.rate == 0.0:
-                self.hidden_dropout.rate = 0.5
-            elif self.hidden_dropout.rate < 0.75:
-                self.hidden_dropout.rate *= 1.1
-            print("*** Overfitting, set dropout to", self.hidden_dropout.rate)
-        else:
-            if self.hidden_dropout.rate != 0.0:
-                print("*** Turning off dropout")
-                self.hidden_dropout.rate = 0.0
+        # Hidden dropout unit in classifier
+        if self.hidden_dropout is not None:
+            # If training accuracy and validation accuracy more than 3% apart
+            if self.model.history.history['acc'][epoch-1] > self.model.history.history['val_acc'][epoch-1] + 0.03:
+                if self.hidden_dropout.rate == 0.0:
+                    self.hidden_dropout.rate = 0.5
+                elif self.hidden_dropout.rate < 0.75:
+                    self.hidden_dropout.rate *= 1.1
+                print("*** Overfitting, set dropout to", self.hidden_dropout.rate)
+            else:
+                if self.hidden_dropout.rate != 0.0:
+                    print("*** Turning off dropout")
+                    self.hidden_dropout.rate = 0.0
 
         if self.e_decay[0] is None:
             return lr

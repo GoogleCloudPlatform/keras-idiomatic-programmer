@@ -624,7 +624,7 @@ class Composable(object):
         if self.model.history.history['acc'][epoch-1] > self.model.history.history['val_acc'][epoch-1] + 0.03:
             if self.hidden_dropout.rate == 0.0:
                 self.hidden_dropout.rate = 0.5
-            else if self.hidden_dropout.rate < 0.75:
+            elif self.hidden_dropout.rate < 0.75:
                 self.hidden_dropout.rate *= 1.1
             print("*** Overfitting, set dropout to", self.hidden_dropout.rate)
         else:

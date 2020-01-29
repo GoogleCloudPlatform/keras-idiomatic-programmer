@@ -26,11 +26,12 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
 import tensorflow_datasets as tfds
 import tensorflow.keras.backend as K
+import numpy as np
+from sklearn.model_selection import train_test_split
 
 import random
 import math
-import numpy as np
-from sklearn.model_selection import train_test_split
+import sys
 
 class Composable(object):
     ''' Composable base (super) class for Models '''
@@ -353,11 +354,11 @@ class Composable(object):
         if x_train.dtype == np.uint8:
             if centered:
                 x_train = ((x_train - 1) / 127.5).astype(np.float32)
-                if x_test:
+                if x_test is not None:
                     x_test  = ((x_test  - 1) / 127.5).astype(np.float32)
             else:
                 x_train = (x_train / 255.0).astype(np.float32)
-                if x_test:
+                if x_test is not None:
                     x_test  = (x_test  / 255.0).astype(np.float32)
         return x_train, x_test
 
@@ -418,7 +419,7 @@ class Composable(object):
             batch_size:
         """
         print("*** Initialize Draw")
-        loss = 9999.0
+        loss = sys.float_info.max
         weights = None
         for _ in range(ndraws):
             self.model = tf.keras.models.clone_model(self.model)
@@ -521,7 +522,7 @@ class Composable(object):
             v_loss.append(result[0])
             
         # Find the best starting learning rate based on validation loss
-        best = 9999.0
+        best = sys.float_info.max
         for _ in range(len(lr_range)):
             if v_loss[_] < best:
                 best = v_loss[_]
@@ -577,7 +578,7 @@ class Composable(object):
             self.model.set_weights(weights)
 
         # Find the best batch size based on validation loss
-        best = 9999.0
+        best = sys.float_info.max
         bs = batch_range[0]
         for _ in range(len(batch_range)-1):
             if v_loss[_] < best:
@@ -592,17 +593,17 @@ class Composable(object):
     def time_decay(self, epoch, lr):
         """ Time-based Decay
         """
-        return lr * (1. / (1. + self.e_decay * epoch))
+        return lr * (1. / (1. + self.e_decay[1] * epoch))
 
     def step_decay(self, epoch, lr):
         """ Step-based decay
         """
-        return self.i_lr * e_decay**(epoch)
+        return self.i_lr * self.e_decay[1]**(epoch)
 
     def exp_decay(self, epoch, lr):
         """ Exponential Decay
         """
-        return self.i_lr * math.exp(-self.e_decay * epoch)
+        return self.i_lr * math.exp(-self.e_decay[1] * epoch)
 
     def cosine_decay(self, epoch, lr, alpha=0.0):
         """ Cosine Decay
@@ -632,14 +633,21 @@ class Composable(object):
                 print("*** Turning off dropout")
                 self.hidden_dropout.rate = 0.0
 
+        if self.e_decay[0] is None:
+            return lr
+
         # Decay the learning rate
-        if self.e_decay > 0:
+        if self.e_decay[0] == 'time':
             lr = self.time_decay(epoch, lr)
+        elif self.e_decay[0] == 'step':
+            lr = self.step_decay(epoch, lr)
+        elif self.e_decay[0] == 'exp':
+            lr = self.exp_decay(epoch, lr)
         else:
             lr = self.cosine_decay(epoch, lr)
         return lr
 
-    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=0):
+    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=(None, 0)):
         """ Full Training of the Model
             x_train    : training images
             y_train    : training labels
@@ -657,11 +665,20 @@ class Composable(object):
                 self.hidden_dropout = layer
                 break    
 
+        if decay is None or 0:
+            decay = (None, 0)
+        elif isinstance(decay, float):
+            decay = ('time', decay)
+        elif not isinstance(decay, tuple):
+            raise Exception("Training: decay must be (time, value)")
+        elif decay[0] not in [None, 'time', 'step', 'exp', 'cosine']:
+            raise Exception("Training: invalid method for decay")
+
         self.i_lr    = lr
         self.e_decay = decay
         self.e_steps = x_train.shape[0] // batch_size
         self.t_steps = self.e_steps * epochs
-        self.compile(optimizer=Adam(lr=lr, decay=decay))
+        self.compile(optimizer=Adam(lr=lr, decay=decay[1]))
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1,
@@ -672,7 +689,7 @@ class Composable(object):
         """
         return self._model.evaluate(x_test, y_test)
 
-    def cifar10(self, epochs=10):
+    def cifar10(self, epochs=10, decay=('cosine', 0)):
         """ Train on CIFAR-10
             epochs : number of epochs for full training
         """
@@ -682,6 +699,8 @@ class Composable(object):
         y_train = to_categorical(y_train, 10)
         y_test  = to_categorical(y_test, 10)
         y_train = self.label_smoothing(y_train, 10, 0.1)
+
+        # compile the model
         self.compile(loss='categorical_crossentropy', metrics=['acc'])
 
         self.warmup(x_train, y_train)
@@ -689,18 +708,18 @@ class Composable(object):
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
-                      lr=lr, decay=0)
+                      lr=lr, decay=decay)
         self.evaluate(x_test, y_test)
 
-    def cifar100(self, epochs=20):
+    def cifar100(self, epochs=20, decay=('cosine', 0)):
         """ Train on CIFAR-100
             epochs : number of epochs for full training
         """
         from tensorflow.keras.datasets import cifar100
         (x_train, y_train), (x_test, y_test) = cifar100.load_data()
         x_train, x_test = self.normalization(x_train, x_test)
-        y_train = to_categorical(y_train, 10)
-        y_test  = to_categorical(y_test, 10)
+        y_train = to_categorical(y_train, 100)
+        y_test  = to_categorical(y_test, 100)
         y_train = self.label_smoothing(y_train, 10, 0.1)
         self.compile(loss='categorical_crossentropy', metrics=['acc'])
 
@@ -709,15 +728,14 @@ class Composable(object):
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
-                      lr=lr, decay=0)
+                      lr=lr, decay=decay)
         self.evaluate(x_test, y_test)
 
-
-    def coil100(self, epochs=20):
+    def coil100(self, epochs=20, decay=('cosine', 0)):
         """
         """
         # Get TF.dataset generator for COIL100
-        train, info = tfds.load('coil100', split='train', with_info=True, as_supervised=True)
+        train, info = tfds.load('coil100', split='train', shuffle_files=True, with_info=True, as_supervised=True)
         n_classes = info.features['label'].num_classes
         n_images = info.splits['train'].num_examples
         input_shape = info.features['image'].shape
@@ -728,7 +746,7 @@ class Composable(object):
             pass
     
         images = np.asarray(images)
-        images = (images / 255.0).astype(np.float32)
+        images, _ = self.standardization(images, None)
         labels = to_categorical(np.asarray(labels), n_classes)
 
         # split the dataset into train/test
@@ -741,6 +759,6 @@ class Composable(object):
         lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
 
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
-                      lr=lr, decay=0)
+                      lr=lr, decay=decay)
         self.evaluate(x_test, y_test)
 

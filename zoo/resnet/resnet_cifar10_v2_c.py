@@ -18,7 +18,7 @@
 import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Add, Dense
-from tensorflow.keras.layers import AveragePooling2D, Flatten
+from tensorflow.keras.layers import AveragePooling2D, Flatten, Dropout, Activation
 from tensorflow.keras.regularizers import l2
 
 import sys
@@ -194,9 +194,27 @@ class ResNetCifarV2(Composable):
         # Flatten into 1D vector
         x = Flatten()(x)
 
+        # Add hidden dropout
+        self.encoding = x
+        x = Dropout(0.0)(x)
+        self.embedding = x
+
         # Final Dense Outputting Layer 
-        outputs = self.Dense(x, n_classes, activation='softmax')
+        outputs = self.Dense(x, n_classes)
+        self.probabilities = outputs
+        outputs = Activation('softmax')(outputs)
+        self.softmax = outputs
         return outputs
 
 # Example
 # cifar = ResNetCifarV2(20)
+
+def example():
+    ''' Example for constructing/training a ResNet V2 model on CIFAR-10
+    '''
+    # Example of constructing a mini-ResNet
+    resnet = ResNetCifarV2(20, input_shape=(32, 32, 3), n_classes=10)
+    resnet.model.summary()
+    resnet.cifar10(decay=('time', 1e-4))
+
+# example()

@@ -18,7 +18,7 @@
 import tensorflow as tf
 from tensorflow.keras import Model, Input
 from tensorflow.keras.layers import Conv2D, BatchNormalization, ReLU, Add, Dense
-from tensorflow.keras.layers import AveragePooling2D, Flatten, Dropout
+from tensorflow.keras.layers import AveragePooling2D, Flatten, Dropout, Activation
 from tensorflow.keras.regularizers import l2
 
 import sys
@@ -183,13 +183,18 @@ class ResNetCifarV1(Composable):
         x = AveragePooling2D(pool_size=8)(x)
     
         # Flatten into 1D vector
+        self.encoding = x
         x = Flatten()(x)
+        self.embedding = x
 
         # Add hidden dropout unit
         x = Dropout(0.0)(x)
 
         # Final Dense Outputting Layer 
-        outputs = self.Dense(x, n_classes, activation='softmax')
+        outputs = self.Dense(x, n_classes)
+        self.probabilities = outputs
+        outputs = Activation('softmax')(outputs)
+        self.softmax = outputs
         return outputs
 
 # Example

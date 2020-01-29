@@ -24,11 +24,13 @@ from tensorflow.compat.v1.keras.initializers import glorot_uniform, he_normal
 from tensorflow.keras.callbacks import LearningRateScheduler
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.utils import to_categorical
+import tensorflow_datasets as tfds
 import tensorflow.keras.backend as K
 
 import random
 import math
 import numpy as np
+from sklearn.model_selection import train_test_split
 
 class Composable(object):
     ''' Composable base (super) class for Models '''
@@ -542,7 +544,7 @@ class Composable(object):
                 if result[0] < best:
                     lr = lr / 2.0
                 
-        elif lr == lr_range(len(lr_range)-1):
+        elif lr == lr_range[len(lr_range)-1]:
             # try 2X the largest learning rate
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
 
@@ -675,7 +677,6 @@ class Composable(object):
             epochs : number of epochs for full training
         """
         from tensorflow.keras.datasets import cifar10
-        import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar10.load_data()
         x_train, x_test = self.standardization(x_train, x_test)
         y_train = to_categorical(y_train, 10)
@@ -696,7 +697,6 @@ class Composable(object):
             epochs : number of epochs for full training
         """
         from tensorflow.keras.datasets import cifar100
-        import numpy as np
         (x_train, y_train), (x_test, y_test) = cifar100.load_data()
         x_train, x_test = self.normalization(x_train, x_test)
         y_train = to_categorical(y_train, 10)
@@ -711,3 +711,36 @@ class Composable(object):
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
                       lr=lr, decay=0)
         self.evaluate(x_test, y_test)
+
+
+    def coil100(self, epochs=20):
+        """
+        """
+        # Get TF.dataset generator for COIL100
+        train, info = tfds.load('coil100', split='train', with_info=True, as_supervised=True)
+        n_classes = info.features['label'].num_classes
+        n_images = info.splits['train'].num_examples
+        input_shape = info.features['image'].shape
+
+        # Get the dataset into memory
+        train = train.shuffle(n_images).batch(n_images)
+        for images, labels in train.take(1):
+            pass
+    
+        images = np.asarray(images)
+        images = (images / 255.0).astype(np.float32)
+        labels = to_categorical(np.asarray(labels), n_classes)
+
+        # split the dataset into train/test
+        x_train, x_test, y_train, y_test = train_test_split(images, labels, test_size=0.2)
+
+        self.compile(loss='categorical_crossentropy', metrics=['acc'])
+
+        self.warmup(x_train, y_train)
+
+        lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
+
+        self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
+                      lr=lr, decay=0)
+        self.evaluate(x_test, y_test)
+

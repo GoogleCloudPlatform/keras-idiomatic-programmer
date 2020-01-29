@@ -104,6 +104,7 @@ class Composable(object):
           x         : input to the classifier
           n_classes : number of output classes
           pooling   : type of feature map pooling
+          dropout   : hidden dropout unit
       """
       if 'pooling' in metaparameters:
           pooling = metaparameters['pooling']

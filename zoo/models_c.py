@@ -99,6 +99,42 @@ class Composable(object):
     def probabilities(self, layer):
         self._probabilities = layer
 
+    def prestem(self, inputs, **metaparameters):
+      """ Construct a Pre-stem for Stem Group
+          inputs : input to the pre-stem
+          norm   : include normalization layer
+      """
+      x = inputs
+      if 'norm' in metaparameters:
+          norm = metaparameters['norm']
+          if norm:
+              x = self.Normalize(inputs)
+      return x
+
+    def stem(self, inputs, kernel_size=(7, 7), **metaparameters):
+      """ Construct the Stem Group
+          inputs     : input to the stem
+          kernel_size: kernel (filter) size
+          pooling    : pooling option
+      """
+      if 'pooling' in metaparameters:
+          pooling = metaparameters['pooling']
+      else:
+          pooling = None
+
+      x = self.Conv2D(inputs, kernel_size, strides=(1, 1), padding='same')
+      x = self.BatchNormalization(x)
+      x = self.ReLU(x)
+
+      if pooling == 'max':
+          x = MaxPooling2D((2, 2), strides=2)(x)
+      elif pooling == 'feature':
+          # feature pooling
+          x = self.Conv2D(x, kernel_size, strides=(2, 2), padding='same')
+          x = self.BatchNormalization(x)
+          x = self.ReLU(x)
+      return x
+
     def classifier(self, x, n_classes, **metaparameters):
       """ Construct the Classifier Group 
           x         : input to the classifier
@@ -316,6 +352,7 @@ class Composable(object):
         def __init__(self, max=255.0, **parameters):
             """ Constructor """
             super(Composable.Normalize, self).__init__(**parameters)
+            self.max = max
     
         def build(self, input_shape):
             """ Handler for Build (Functional) or Compile (Sequential) operation """
@@ -324,7 +361,7 @@ class Composable(object):
         @tf.function
         def call(self, inputs):
             """ Handler for run-time invocation of layer """
-            inputs = inputs / max
+            inputs = inputs / self.max
             return inputs
 
     class Standarize(layers.Layer):
@@ -332,6 +369,8 @@ class Composable(object):
         def __init__(self, mean, std, **parameters):
             """ Constructor """
             super(Composable.Standardize, self).__init__(**parameters)
+            self.mean = mean
+            self.std  = std
 
         def build(self, input_shape):
             """ Handler for Build (Functional) or Compile (Sequential) operation """
@@ -340,7 +379,7 @@ class Composable(object):
         @tf.function
         def call(self, inputs):
             """ Handler for run-time invocation of layer """
-            inputs = (inputs - mean) / std
+            inputs = (inputs - self.mean) / self.std
             return inputs
 
     ###
@@ -363,7 +402,7 @@ class Composable(object):
                     x_test  = (x_test  / 255.0).astype(np.float32)
         return x_train, x_test
 
-    def standardization(self, x_train, x_test):
+    def standardization(self, x_train, x_test=None):
         """ Standardize the input
             x_train : training images
             x_test  : test images
@@ -371,7 +410,8 @@ class Composable(object):
         self.mean = np.mean(x_train)
         self.std  = np.std(x_train)
         x_train = ((x_train - self.mean) / self.std).astype(np.float32)
-        x_test  = ((x_test  - self.mean) / self.std).astype(np.float32)
+        if x_test is not None:
+            x_test  = ((x_test  - self.mean) / self.std).astype(np.float32)
         return x_train, x_test
 
     def label_smoothing(self, y_train, n_classes, factor=0.1):
@@ -449,6 +489,11 @@ class Composable(object):
         """
         if epoch == 0:
            return lr
+        if epoch == 2:
+            # loss is diverging
+            if self.model.history.history['loss'][1] > self.model.history.history['loss'][0]:
+                print("*** Loss is divergining, Reducing Warmnup Rate")
+                self.w_lr /= 10
         return epoch * self.w_lr / self.w_epochs
 
     def warmup(self, x_train, y_train, epochs=5, s_lr=1e-6, e_lr=0.001):

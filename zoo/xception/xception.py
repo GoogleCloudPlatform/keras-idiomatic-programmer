@@ -90,6 +90,7 @@ def exitFlow(x, n_classes):
     # Dimensionality reduction - reduce number of filters
     x = SeparableConv2D(728, (3, 3), padding='same')(x)
     x = BatchNormalization()(x)
+    x = ReLU()(x)
 
     # Second Depthwise Separable Convolution
     # Dimensionality restoration

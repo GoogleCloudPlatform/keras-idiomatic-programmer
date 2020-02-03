@@ -134,6 +134,7 @@ class Xception(Composable):
         # Dimensionality reduction - reduce number of filters
         x = self.SeparableConv2D(x, 728, (3, 3), padding='same', **metaparameters)
         x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # Second Depthwise Separable Convolution
         # Dimensionality restoration

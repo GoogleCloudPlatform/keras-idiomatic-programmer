@@ -80,7 +80,7 @@ def squeeze_excite_block(x, ratio=16):
     filters = x.shape[-1]
 
     # Squeeze (dimensionality reduction)
-    # Do global average pooling across the filters, which will the output a 1D vector
+    # Do global average pooling across the filters, which will output a 1D vector
     x = GlobalAveragePooling2D()(x)
     
     # Reshape into 1x1 feature maps (1x1xC)

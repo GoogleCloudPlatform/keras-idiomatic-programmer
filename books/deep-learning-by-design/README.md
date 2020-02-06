@@ -9,6 +9,7 @@ This repository is origanized as follows:
 | `Workshop 1` |Workshop content bundle for chapter 1|
 | `Workshop 2` |Workshop content bundle for chapter 2|
 | `Workshop 3` |Workshop content bundle for chapter 3|
+| `Workshop 4` |Workshop content bundle for chapter 4|
 
 
 

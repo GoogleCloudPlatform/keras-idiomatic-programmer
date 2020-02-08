@@ -8,13 +8,15 @@ This repository is origanized as follows:
 |File       | Description|
 |-----------|------------|
 | `Primer` | Section 1 (chapters I, II and II) made freely available in PDF|
-| `Workshops` |Workshop content bundles for the Primer|
+| [`Workshops`](workshops) |Workshop content bundles for the Primer|
 
 ## Topics
-Preface
+
+### Preface
 	The Machine Learning Steps
 	Classical vs. Narrow AI
-Novice
+
+### Novice
 	Chapter I - Deep Neural Networks
 		I.I. Input Layer
 		I.II. Deep Neural Networks (DNN)

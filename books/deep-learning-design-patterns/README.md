@@ -73,13 +73,13 @@ This repository is origanized as follows:
 		6.4. Learning Rate Scheduler
 		6.5. Regularization
         Chapter 7 - Transfer Learning
-              	7.1. Overview
+		7.1. Overview
 		7.2. Fine-Tuning
 		7.3. Full-Tuning
 	Chapter 8 - Training Pipeline
-                8.1. Data Formats & Storage
+		8.1. Data Formats & Storage
  		8.2. Dataset Curation
-                8.3. Data Preprocessing
+		8.3. Data Preprocessing
 		8.4. Label Smoothing
  		8.5. Model Feeding
                 8.6. Training Schedulers

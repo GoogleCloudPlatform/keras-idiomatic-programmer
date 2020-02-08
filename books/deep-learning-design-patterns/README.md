@@ -57,7 +57,7 @@ This repository is origanized as follows:
 		2.4. ResNeXt
 		2.5. Wide Residual Network (WRN)
 	Chapter 3 - Alternative ConnectivityPatterns
-                3.1. Densely Connected CNN (DenseNet)
+		3.1. Densely Connected CNN (DenseNet)
  		3.2. SE-Net
 		3.3. Xception
 	Chapter 4 - Mobile Convolutional Neural Networks
@@ -68,10 +68,10 @@ This repository is origanized as follows:
 		5.1. <TODO>
 	Chapter 6 - Hyperparameter Tuning
 		6.1. Warmup (Numerical Stability)
-                6.2. Grid Search
-                6.3. Random Search
-                6.4. Learning Rate Scheduler
-                6.5. Regularization
+		6.2. Grid Search
+		6.3. Random Search
+		6.4. Learning Rate Scheduler
+		6.5. Regularization
         Chapter 7 - Transfer Learning
               	7.1. Overview
 		7.2. Fine-Tuning

@@ -53,8 +53,8 @@ This repository is origanized as follows:
  	Chapter 2 -  Wide Convolutional Neural Networks
 		2.1. Inception V1
  		2.2. Inception V2
-                2.3. Inception V3
-                2.4. ResNeXt
+		2.3. Inception V3
+		2.4. ResNeXt
 		2.5. Wide Residual Network (WRN)
 	Chapter 3 - Alternative ConnectivityPatterns
                 3.1. Densely Connected CNN (DenseNet)

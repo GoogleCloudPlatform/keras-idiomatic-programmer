@@ -16,7 +16,7 @@ This repository is origanized as follows:
 	The Machine Learning Steps
 	Classical vs. Narrow AI
 
-### Novice
+### Novice (Primer)
 	Chapter I - Deep Neural Networks
 		I.I. Input Layer
 		I.II. Deep Neural Networks (DNN)

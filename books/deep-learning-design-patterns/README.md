@@ -82,8 +82,8 @@ This repository is origanized as follows:
 		8.3. Data Preprocessing
 		8.4. Label Smoothing
  		8.5. Model Feeding
-                8.6. Training Schedulers
-                8.7. Model Evaluations
+		8.6. Training Schedulers
+		8.7. Model Evaluations
 	Chapter 9 - Data Augmentation
 		9.1. Crop / Flip / Rotate
 		9.2. Augmentation Pipeline

@@ -4,4 +4,4 @@ This section is for books on Deep Learning that I am authoring for publication t
 
 | Book       | Description  |
 | ---------- | ------------ |
-| [`Deep Learning by Design`](deep-learning-by-design) | |
+| [`Deep Learning Design Patterns`](deep-learning-design-patterns) | |

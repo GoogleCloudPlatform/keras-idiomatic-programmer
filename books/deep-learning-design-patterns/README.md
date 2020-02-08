@@ -44,6 +44,49 @@ This repository is origanized as follows:
 		III.VII. Raw (Disk) Datasets
 		III.VIII. Model Save/Restore
 
+### Junior
+	Chapter 1  - Models by Design (Patterns)
+		1.1. Procedural Design Pattern
+		1.2. Stem Component
+		1.3. Learner Component
+		1.4. Classifier Component
+ 	Chapter 2 -  Wide Convolutional Neural Networks
+		2.1. Inception V1
+ 		2.2. Inception V2
+                2.3. Inception V3
+                2.4. ResNeXt
+		2.5. Wide Residual Network (WRN)
+	Chapter 3 - Alternative ConnectivityPatterns
+                3.1. Densely Connected CNN (DenseNet)
+ 		3.2. SE-Net
+		3.3. Xception
+	Chapter 4 - Mobile Convolutional Neural Networks
+		4.1. MobileNet
+		4.2 SqueezeNet
+		4.3. ShuffleNet
+	Chapter 5 - AutoEncoders
+		5.1. <TODO>
+	Chapter 6 - Hyperparameter Tuning
+		6.1. Warmup (Numerical Stability)
+                6.2. Grid Search
+                6.3. Random Search
+                6.4. Learning Rate Scheduler
+                6.5. Regularization
+        Chapter 7 - Transfer Learning
+              	7.1. Overview
+		7.2. Fine-Tuning
+		7.3. Full-Tuning
+	Chapter 8 - Training Pipeline
+                8.1. Data Formats & Storage
+ 		8.2. Dataset Curation
+                8.3. Data Preprocessing
+		8.4. Label Smoothing
+ 		8.5. Model Feeding
+                8.6. Training Schedulers
+                8.7. Model Evaluations
+	Chapter 9 - Data Augmentation
+		9.1. Crop / Flip / Rotate
+		9.2. Augmentation Pipeline
 
 
 

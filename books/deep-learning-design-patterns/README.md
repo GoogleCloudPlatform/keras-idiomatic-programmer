@@ -8,7 +8,7 @@ This repository is origanized as follows:
 |File       | Description|
 |-----------|------------|
 | `Primer` | Section 1 (chapters I, II and II) made freely available in PDF|
-| [`Workshops`](workshops) |Workshop content bundles for each chapter in the book (FREE)|
+| [`Workshops`](Workshops) |Workshop content bundles for each chapter in the book (FREE)|
 
 ### About the book.
 

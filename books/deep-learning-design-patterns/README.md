@@ -8,33 +8,25 @@ This repository is origanized as follows:
 |File       | Description|
 |-----------|------------|
 | `Primer` | Section 1 (chapters I, II and II) made freely available in PDF|
-| [`Workshops`](workshops) |Workshop content bundles for the Primer|
+| [`Workshops`](workshops) |Workshop content bundles for each chapter in the book (FREE)|
 
-### Tell us about the book.
-What is the technology or idea that you’re writing about? 
-Coding computer vision models using design patterns that are AutoML friendly -- bring 
-            your own model to automl and guide the search space.
+### About the book.
 
-Teaches junior to advanced techniques for coding models in Tensorflow 2.0 with Keras 
-            Functional API.
+*What is the technology or idea that you’re writing about?*
 
-Readers will learn concepts of design patterns (object oriented programming) and how 
-            design patterns speed up model design and understandability to users.
+Coding computer vision models using design patterns that are AutoML friendly -- bring your own model to automl and guide the search space.
 
-           Starting with section 3 (Intermediate) the composable design pattern will be used to 
-           demonstrate Automatic Learning concepts and how using the design pattern one can 
-           incorporate automatic learning concepts at a level higher of abstraction and guide the 
-           search space.
+Teaches junior to advanced techniques for coding models in Tensorflow 2.0 with Keras Functional API.
 
-### Why is it important now?
+Readers will learn concepts of design patterns (object oriented programming) and how design patterns speed up model design and understandability to users.
 
- I find as my role at Google interfacing with Enterprise clients, that decision makers are 
-             looking to move their data science/ML teams to automatic learning, such that their 
-             talents/skills can be redirected to more challenging tasks.
+Starting with section 2 (Intermediate) the composable design pattern will be used to demonstrate Automatic Learning concepts and how using the design pattern one can incorporate automatic learning concepts at a level higher of abstraction and guide the search space.
 
-To make that transition, they need automatic learning to be demystified and not a black 
-            box, where ML practitioners and ML ops can guide the search space and effectively 
-            evaluate the models for production-scale use.
+*Why is it important now?*
+
+ I find as my role at Google interfacing with Enterprise clients, that decision makers are looking to move their data science/ML teams to automatic learning, such that their talents/skills can be redirected to more challenging tasks.
+
+To make that transition, they need automatic learning to be demystified and not a black box, where ML practitioners and ML ops can guide the search space and effectivelyevaluate the models for production-scale use.
 
 
 ## Topics

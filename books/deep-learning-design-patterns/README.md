@@ -133,3 +133,23 @@ To make that transition, they need automatic learning to be demystified and not 
 		13.5. A/B Testing
 		13.6. Continuous Evaluation
 		13.7. Distribution Skew / Data Drift
+
+### Advanced
+
+	Chapter 14  - Model Amalgamation
+		14.1. <TODO>
+	Chapter 15 - Automatic Macro-Architecture Search
+		15.1. Dynamic Group/Block configuration
+		15.2. Guiding the Search Space
+	Chapter 16 - Knowledge Distillation (Student/Teacher)
+		16.1. Student/Teacher Networks
+		16.2. Label Distillation
+		16.3. Weight Transfusion
+	Chapter 17 - Semi/Weakly Supervised Learning
+		17.1. Pseudo Labeling / Noisy Data
+		17.2. Synthetic Data
+		17.3. Optical Flow
+	Chapter 18 - Self Supervised Learning
+		18.1. Pre-text Training (Learn Essential Features)
+		18.2. Adversarial Training (Robustness)
+		18.3. Data Weighting (Reinforcement Learning)

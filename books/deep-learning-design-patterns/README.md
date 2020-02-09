@@ -108,4 +108,28 @@ To make that transition, they need automatic learning to be demystified and not 
 		9.2. Augmentation Pipeline
 
 
+### Intermediate
 
+	Chapter 10  - AutoML by Design (Patterns)
+		10.1. Metaparameters
+		10.2. Embeddings
+		10.3. Macro-Architecture
+		10.4. Model Configuration
+		10.5. Dynamic Regularization
+	Chapter 11 - Multi-Task Models
+		11.1. Object Detection - (Region Based)
+		11.2. Object Detection - (Pyramid Based)
+		11.3. Object Detection - (Single Shot)
+		11.4. Generative Adversarial Networks (GAN)
+		11.5. Style Transfer
+            Chapter 12 - Automatic Hyperparameter Search
+		12.1. Bayesian Optimization
+		12.2. Data Augmentation Strategies
+	Chapter 13 - Production Foundation (Training at Scale)
+		13.1. Data Schema
+		13.2. Data Validation
+		13.3. Model Versioning
+		13.4. Model Deployment
+		13.5. A/B Testing
+		13.6. Continuous Evaluation
+		13.7. Distribution Skew / Data Drift

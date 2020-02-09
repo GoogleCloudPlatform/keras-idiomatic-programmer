@@ -26,7 +26,7 @@ Starting with section 2 (Intermediate) the composable design pattern will be use
 
  I find as my role at Google interfacing with Enterprise clients, that decision makers are looking to move their data science/ML teams to automatic learning, such that their talents/skills can be redirected to more challenging tasks.
 
-To make that transition, they need automatic learning to be demystified and not a black box, where ML practitioners and ML ops can guide the search space and effectivelyevaluate the models for production-scale use.
+To make that transition, they need automatic learning to be demystified and not a black box, where ML practitioners and ML ops can guide the search space and effectively evaluate the models for production-scale use.
 
 
 ## Topics

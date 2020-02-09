@@ -2,8 +2,7 @@
 
 This section on the workshop bundles for the Deep Learning Design Patterns Primer. 
 Each workshop covers one chapter and consists of a presentation that summarizes the chapter along with one or more 
-lab exercises. The intended audience is junior -- recent undergraduate or coding school grad in datascience, or ML practictioner with
-under 18 months of experience.
+lab exercises. The intended audience is junior -- Deep Learning engineer with under 12 months on-the-job experience, or recent graduate in datascience.
 
 |File       | Description|
 |-----------|------------|

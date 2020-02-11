@@ -83,6 +83,7 @@ To make that transition, they need automatic learning to be demystified and not 
 		4.1. MobileNet
 		4.2 SqueezeNet
 		4.3. ShuffleNet
+		4.4. Quantization
 	Chapter 5 - AutoEncoders
 		5.1. <TODO>
 	Chapter 6 - Hyperparameter Tuning

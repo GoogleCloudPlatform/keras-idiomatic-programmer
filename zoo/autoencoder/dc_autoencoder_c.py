@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# AutoEncoder - Pooling with Dense Layers/Hidden Units
+# AutoEncoder
 
 import tensorflow as tf
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Dense, ReLU, BatchNormalization, Reshape, Flatten
+from tensorflow.keras.layers import Conv2D, Conv2DTranspose, ReLU, BatchNormalization
 
 import sys
 sys.path.append('../')
@@ -25,7 +25,7 @@ from models_c import Composable
 class AutoEncoder(Composable):
     ''' Construct an AutoEncoder '''
     # metaparameter: number of filters per layer
-    layers = [ {'n_nodes': 256 }, { 'n_nodes': 128 }, { 'n_nodes': 64 } ]
+    layers = [ {'n_filters': 64 }, { 'n_filters': 32 }, { 'n_filters': 16 } ]
 
     def __init__(self, layers=None, input_shape=(32, 32, 3),
                  init_weights='he_normal', reg=None, relu=None, bias=True):
@@ -57,51 +57,45 @@ class AutoEncoder(Composable):
     def encoder(self, x, **metaparameters):
         ''' Construct the Encoder 
             x     : input to the encoder
-            layers: number of nodes per layer
+            layers: number of filters per layer
         '''
         layers = metaparameters['layers']
 
-        # Flatten the input image
-        x = Flatten()(x)
-
-        # Progressive Unit Pooling
+        # Progressive Feature Pooling
         for layer in layers:
-            n_nodes = layer['n_nodes']
-            x = self.Dense(x, n_nodes)
+            n_filters = layer['n_filters']
+            x = self.Conv2D(x, n_filters, (3, 3), strides=2, padding='same')
             x = self.BatchNormalization(x)
             x = self.ReLU(x)
 
         # The Encoding
         return x
 
-    def decoder(self, x, **metaparameters):
+    def decoder(self, x, init_weights=None, **metaparameters):
         ''' Construct the Decoder
             x     : input to the decoder
-            layers: number of nodes per layer
+            layers: filters per layer
         '''
         layers = metaparameters['layers']
 
-        # Progressive Unit Unpooling
+        # Progressive Feature Unpooling
         for _ in range(len(layers)-1, 0, -1):
-            n_nodes = layers[_]['n_nodes']
-            x = self.Dense(x, n_nodes)
+            n_filters = layers[_]['n_filters']
+            x = self.Conv2DTranspose(x, n_filters, (3, 3), strides=2, padding='same')
             x = self.BatchNormalization(x)
             x = self.ReLU(x)
 
         # Last unpooling and match shape to input
-        units = self.input_shape[0] * self.input_shape[1] * self.input_shape[2]
-        print("INPUT", self.input_shape, "UNITS", units)
-        x = self.Dense(x, units, activation='sigmoid')
-
-        # Reshape back into an image
-        x = Reshape(self.input_shape)(x)
+        x = self.Conv2DTranspose(x, 3, (3, 3), strides=2, padding='same')
+        x = self.BatchNormalization(x)
+        x = self.ReLU(x)
 
         # The decoded image
         return x
 
     def compile(self, optimizer='adam'):
-        ''' Compile the model ''' 
-        self._model.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+        ''' Compile the model using Mean Square Error loss '''
+        self._model.compile(loss='mse', optimizer=optimizer, metrics=['accuracy'])
 
     def extract(self):
         ''' Extract the pretrained encoder
@@ -129,23 +123,21 @@ class AutoEncoder(Composable):
 # e = autoencoder.extract()
 
 def example():
-    ''' Example for constructing/training an AutoEncoder model on MNIST
+    ''' Example for constructing/training an AutoEncoder  model on CIFAR-10
     '''
     # Example of constructing an AutoEncoder
-    ae = AutoEncoder(input_shape=(28, 28, 1))
+    ae = AutoEncoder(input_shape=(32, 32, 3))
     ae.model.summary()
 
-    from tensorflow.keras.datasets import mnist
+    from tensorflow.keras.datasets import cifar10
     import numpy as np
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
     x_train = (x_train / 255.0).astype(np.float32)
     x_test  = (x_test  / 255.0).astype(np.float32)
-    x_train = np.expand_dims(x_train, axis=-1)
-    x_test  = np.expand_dims(x_test, axis=-1)
 
     ae.compile()
     ae.model.fit(x_train, x_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)
     ae.model.evaluate(x_test, x_test)
 
 
-example()
+# example()

@@ -131,35 +131,41 @@ To make that transition, they need automatic learning to be demystified and not 
 		12.3. Object Detection - (Single Shot)
 		12.4. Generative Adversarial Networks (GAN)
 		12.5. Style Transfer
-        Chapter 13 - Automatic Hyperparameter Search
-		13.1. Bayesian Optimization
-		13.2. Data Augmentation Strategies
-	Chapter 14 - Production Foundation (Training at Scale)
-		14.1. Data Schema
-		14.2. Data Validation
-		14.3. Model Versioning
-		14.4. Model Deployment
-		14.5. A/B Testing
-		14.6. Continuous Evaluation
-		14.7. Distribution Skew / Data Drift
+	Chapter 13 - Network Architecture Search
+		13.1. NasNet
+		13.2. MNasNet
+		13.3. MobileNet V3
+	Chapter 14 - Automatic Hyperparameter Search
+		14.1. Bayesian Optimization
+		14.2. Data Augmentation Strategies
+	Chapter 15 - Production Foundation (Training at Scale)
+		15.1. Data Schema
+		15.2. Data Validation
+		15.3. Model Versioning
+		15.4. Model Deployment
+		15.5. A/B Testing
+		15.6. Continuous Evaluation
+		15.7. Distribution Skew / Data Drift
 
 ### Advanced
 
-	Chapter 15  - Model Amalgamation
-		15.1. Inter-Model Connectivity
-		15.2. <TODO>
-	Chapter 15 - Automatic Macro-Architecture Search
-		15.1. Dynamic Group/Block configuration
-		15.2. Guiding the Search Space
-	Chapter 16 - Knowledge Distillation (Student/Teacher)
-		16.1. Student/Teacher Networks
-		16.2. Label Distillation
-		16.3. Weight Transfusion
-	Chapter 17 - Semi/Weakly Supervised Learning
-		17.1. Pseudo Labeling / Noisy Data
-		17.2. Synthetic Data
-		17.3. Optical Flow
-	Chapter 18 - Self Supervised Learning
-		18.1. Pre-text Training (Learn Essential Features)
-		18.2. Adversarial Training (Robustness)
-		18.3. Data Weighting (Reinforcement Learning)
+	Chapter 16  - Model Amalgamation
+		16.1. Inter-Model Connectivity
+		16.2. Factory Pattern
+		16.3. Abstract Factory Pattern
+		16.4. Intelligent Automation
+	Chapter 17 - Automatic Macro-Architecture Search
+		17.1. Dynamic Group/Block configuration
+		17.2. Guiding the Search Space
+	Chapter 18 - Knowledge Distillation (Student/Teacher)
+		18.1. Student/Teacher Networks
+		18.2. Label Distillation
+		18.3. Weight Transfusion
+	Chapter 19 - Semi/Weakly Supervised Learning
+		19.1. Pseudo Labeling / Noisy Data
+		19.2. Synthetic Data
+		19.3. Optical Flow
+	Chapter 20 - Self Supervised Learning
+		20.1. Pre-text Training (Learn Essential Features)
+		20.2. Adversarial Training (Robustness)
+		20.3. Data Weighting (Reinforcement Learning)

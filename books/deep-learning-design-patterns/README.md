@@ -87,62 +87,67 @@ To make that transition, they need automatic learning to be demystified and not 
 		5.1. MobileNet
 		5.2 SqueezeNet
 		5.3. ShuffleNet
-		4.4. Quantization
+		5.4. Quantization
 	Chapter 5 - AutoEncoders
-		5.1. <TODO>
-	Chapter 6 - Hyperparameter Tuning
-		6.1. Warmup (Numerical Stability)
-		6.2. Grid Search
-		6.3. Random Search
-		6.4. Learning Rate Scheduler
-		6.5. Regularization
-        Chapter 7 - Transfer Learning
-		7.1. Overview
-		7.2. Fine-Tuning
-		7.3. Full-Tuning
-	Chapter 8 - Training Pipeline
-		8.1. Data Formats & Storage
- 		8.2. Dataset Curation
-		8.3. Data Preprocessing
-		8.4. Label Smoothing
- 		8.5. Model Feeding
-		8.6. Training Schedulers
-		8.7. Model Evaluations
-	Chapter 9 - Data Augmentation
-		9.1. Crop / Flip / Rotate
-		9.2. Augmentation Pipeline
+		6.1. AutoEncoder
+		6.2. Convolutional AutoEncoder
+		6.3. Sparse AutoEncoder
+		6.4. Denoising AutoEncoder
+		6.5. Pre-text Tasks
+	Chapter 7 - Hyperparameter Tuning
+		7.1. Warmup (Numerical Stability)
+		7.2. Grid Search
+		7.3. Random Search
+		7.4. Learning Rate Scheduler
+		7.5. Regularization
+        Chapter 8 - Transfer Learning
+		8.1. Overview
+		8.2. Fine-Tuning
+		8.3. Full-Tuning
+	Chapter 9 - Training Pipeline
+		9.1. Data Formats & Storage
+ 		9.2. Dataset Curation
+		9.3. Data Preprocessing
+		9.4. Label Smoothing
+ 		9.5. Model Feeding
+		9.6. Training Schedulers
+		9.7. Model Evaluations
+	Chapter 10 - Data Augmentation
+		10.1. Crop / Flip / Rotate
+		10.2. Augmentation Pipeline
 
 
 ### Intermediate
 
-	Chapter 10  - AutoML by Design (Patterns)
-		10.1. Metaparameters
-		10.2. Embeddings
-		10.3. Macro-Architecture
-		10.4. Model Configuration
-		10.5. Dynamic Regularization
-	Chapter 11 - Multi-Task Models
-		11.1. Object Detection - (Region Based)
-		11.2. Object Detection - (Pyramid Based)
-		11.3. Object Detection - (Single Shot)
-		11.4. Generative Adversarial Networks (GAN)
-		11.5. Style Transfer
-            Chapter 12 - Automatic Hyperparameter Search
-		12.1. Bayesian Optimization
-		12.2. Data Augmentation Strategies
-	Chapter 13 - Production Foundation (Training at Scale)
-		13.1. Data Schema
-		13.2. Data Validation
-		13.3. Model Versioning
-		13.4. Model Deployment
-		13.5. A/B Testing
-		13.6. Continuous Evaluation
-		13.7. Distribution Skew / Data Drift
+	Chapter 11  - AutoML by Design (Patterns)
+		11.1. Metaparameters
+		11.2. Embeddings
+		11.3. Macro-Architecture
+		11.4. Model Configuration
+		11.5. Dynamic Regularization
+	Chapter 12 - Multi-Task Models
+		12.1. Object Detection - (Region Based)
+		12.2. Object Detection - (Pyramid Based)
+		12.3. Object Detection - (Single Shot)
+		12.4. Generative Adversarial Networks (GAN)
+		12.5. Style Transfer
+        Chapter 13 - Automatic Hyperparameter Search
+		13.1. Bayesian Optimization
+		13.2. Data Augmentation Strategies
+	Chapter 14 - Production Foundation (Training at Scale)
+		14.1. Data Schema
+		14.2. Data Validation
+		14.3. Model Versioning
+		14.4. Model Deployment
+		14.5. A/B Testing
+		14.6. Continuous Evaluation
+		14.7. Distribution Skew / Data Drift
 
 ### Advanced
 
-	Chapter 14  - Model Amalgamation
-		14.1. <TODO>
+	Chapter 15  - Model Amalgamation
+		15.1. Inter-Model Connectivity
+		15.2. <TODO>
 	Chapter 15 - Automatic Macro-Architecture Search
 		15.1. Dynamic Group/Block configuration
 		15.2. Guiding the Search Space

@@ -64,25 +64,29 @@ To make that transition, they need automatic learning to be demystified and not 
 		III.VIII. Model Save/Restore
 
 ### Junior
-	Chapter 1  - Models by Design (Patterns)
-		1.1. Procedural Design Pattern
-		1.2. Stem Component
-		1.3. Learner Component
-		1.4. Classifier Component
- 	Chapter 2 -  Wide Convolutional Neural Networks
-		2.1. Inception V1
- 		2.2. Inception V2
+	Chapter 1 - Introduction
+		1.1 How I Teach
+		1.2. What You Will Take Away
+		1.3. The Machine Learning Steps
+	Chapter 2  - Procedural Design Pattern
+		2.1. Procedural Design Pattern
+		2.2. Stem Component
+		2.3. Learner Component
+		2.4. Classifier Component
+ 	Chapter 3 -  Wide Convolutional Neural Networks
+		3.1. Inception V1
+ 		3.2. Inception V2
 		2.3. Inception V3
-		2.4. ResNeXt
-		2.5. Wide Residual Network (WRN)
-	Chapter 3 - Alternative ConnectivityPatterns
-		3.1. Densely Connected CNN (DenseNet)
- 		3.2. SE-Net
-		3.3. Xception
-	Chapter 4 - Mobile Convolutional Neural Networks
-		4.1. MobileNet
-		4.2 SqueezeNet
-		4.3. ShuffleNet
+		3.4. ResNeXt
+		3.5. Wide Residual Network (WRN)
+	Chapter 4 - Alternative ConnectivityPatterns
+		4.1. Densely Connected CNN (DenseNet)
+ 		4.2. SE-Net
+		4.3. Xception
+	Chapter 5 - Mobile Convolutional Neural Networks
+		5.1. MobileNet
+		5.2 SqueezeNet
+		5.3. ShuffleNet
 		4.4. Quantization
 	Chapter 5 - AutoEncoders
 		5.1. <TODO>

@@ -368,8 +368,8 @@ class Composable(Layers):
 
         # first round of trials, find best near-optimal
         for _ in range(trials):
-            lr = learning_rates[randint(0, len(lr_range)-1)]
-            bs = batch_sizes[randint(0, len(bs_range)-1)]
+            lr = lr_range[randint(0, len(lr_range)-1)]
+            bs = batch_range[randint(0, len(bs_range)-1)]
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
     
             # get the model and hyperparameters with the best validation accuracy
@@ -382,8 +382,8 @@ class Composable(Layers):
         learning_rates = [ best[1] / 2, best[1] * 2]
         batch_sizes = [best[2] / 2, best[2] * 2]
         for _ in range(trials):
-            lr = learning_rates[randint(0, 1)]
-            bs = batch_sizes[randint(0, 1)]
+            lr = lr_range[randint(0, 1)]
+            bs = batch_range[randint(0, 1)]
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights)
     
             val_acc = result.history['val_acc'][epochs-1]
@@ -510,7 +510,7 @@ class Composable(Layers):
 
         self.warmup(x_train, y_train)
 
-        lr, batch_size = self.grid_search(x_train, y_train, x_test, y_test)
+        lr, batch_size = self.random_search(x_train, y_train, x_test, y_test)
 
         self.training(x_train, y_train, epochs=epochs, batch_size=batch_size,
                       lr=lr, decay=decay)

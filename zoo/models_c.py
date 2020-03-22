@@ -321,7 +321,7 @@ class Composable(Layers, Preprocess):
         # first round of trials, find best near-optimal
         for _ in range(trials):
             lr = lr_range[random.randint(0, len(lr_range)-1)]
-            bs = batch_range[random.randint(0, len(bs_range)-1)]
+            bs = batch_range[random.randint(0, len(batch_range)-1)]
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
     
             # get the model and hyperparameters with the best validation accuracy

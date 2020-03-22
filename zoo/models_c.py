@@ -34,8 +34,9 @@ import math
 import sys
 
 from layers_c import Layers
+from preprocess_c import Preprocess
 
-class Composable(Layers):
+class Composable(Layers, Preprocess):
     ''' Composable base (super) class for Models '''
 
     def __init__(self, init_weights=None, reg=None, relu=None, bias=True):
@@ -46,6 +47,7 @@ class Composable(Layers):
             bias         : whether to use bias
         """
         Layers.__init__(self, init_weights, reg, relu, bias)
+        Preprocess.__init__()
 
         # Feature maps encoding at the bottleneck layer in classifier (high dimensionality)
         self._encoding = None
@@ -89,56 +91,6 @@ class Composable(Layers):
     @probabilities.setter
     def probabilities(self, layer):
         self._probabilities = layer
-
-
-
-
-
-    ###
-    # Preprocessing
-    ###
-
-    def normalization(self, x_train, x_test=None, centered=False):
-        """ Normalize the input
-            x_train : training images
-            y_train : test images
-        """
-        if x_train.dtype == np.uint8:
-            if centered:
-                x_train = ((x_train - 1) / 127.5).astype(np.float32)
-                if x_test is not None:
-                    x_test  = ((x_test  - 1) / 127.5).astype(np.float32)
-            else:
-                x_train = (x_train / 255.0).astype(np.float32)
-                if x_test is not None:
-                    x_test  = (x_test  / 255.0).astype(np.float32)
-        return x_train, x_test
-
-    def standardization(self, x_train, x_test=None):
-        """ Standardize the input
-            x_train : training images
-            x_test  : test images
-        """
-        self.mean = np.mean(x_train)
-        self.std  = np.std(x_train)
-        x_train = ((x_train - self.mean) / self.std).astype(np.float32)
-        if x_test is not None:
-            x_test  = ((x_test  - self.mean) / self.std).astype(np.float32)
-        return x_train, x_test
-
-    def label_smoothing(self, y_train, n_classes, factor=0.1):
-        """ Convert a matrix of one-hot row-vector labels into smoothed versions. 
-            y_train  : training labels
-            n_classes: number of classes
-            factor   : smoothing factor (between 0 and 1)
-        """
-        if 0 <= factor <= 1:
-            # label smoothing ref: https://www.robots.ox.ac.uk/~vgg/rg/papers/reinception.pdf
-            y_train *= 1 - factor
-            y_train += factor / n_classes
-        else:
-            raise Exception('Invalid label smoothing factor: ' + str(factor))
-        return y_train
 
     ###
     # Training

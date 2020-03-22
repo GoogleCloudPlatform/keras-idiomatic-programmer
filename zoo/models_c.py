@@ -556,7 +556,7 @@ class Composable(object):
             lr_range: range for searching learning rate
             batch_range: range for searching batch size
         """
-        print("*** Hyperparameter Search")
+        print("*** Hyperparameter Grid Search")
 
         # Save the original weights
         weights = self.model.get_weights()
@@ -635,6 +635,51 @@ class Composable(object):
 
         # return the best learning rate and batch size
         return lr, bs
+
+    def random_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
+                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128], trials=5):
+        """ Do a grid search for hyperparameters
+            x_train : training images
+            y_train : training labels
+            epochs  : number of epochs
+            steps   : number of steps per epoch
+            lr_range: range for searching learning rate
+            batch_range: range for searching batch size
+            trials  : maximum number of trials
+        """
+        print("*** Hyperparameter Random Search")
+
+        # Save the original weights
+        weights = self.model.get_weights()
+
+        best = (0, 0, 0)
+
+        # first round of trials, find best near-optimal
+        for _ in range(trials):
+            lr = learning_rates[randint(0, len(lr_range)-1)]
+            bs = batch_sizes[randint(0, len(bs_range)-1)]
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
+    
+            # get the model and hyperparameters with the best validation accuracy
+            # we call this a near-optima point
+            val_acc = result.history['val_acc'][epochs-1]
+            if val_acc > best[0]:
+                best = (val_acc, lr, bs)
+
+        # narrow search space to within vicinity of the best near-optima
+        learning_rates = [ best[1] / 2, best[1] * 2]
+        batch_sizes = [best[2] / 2, best[2] * 2]
+        for _ in range(trials):
+            lr = learning_rates[randint(0, 1)]
+            bs = batch_sizes[randint(0, 1)]
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights)
+    
+            val_acc = result.history['val_acc'][epochs-1]
+            if val_acc > best[0]:
+                best = (val_acc, lr, bs)
+
+        return best[1], best[2]
+        
 
     def time_decay(self, epoch, lr):
         """ Time-based Decay

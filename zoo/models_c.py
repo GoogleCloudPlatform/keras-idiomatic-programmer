@@ -326,7 +326,7 @@ class Composable(Layers, Preprocess):
     
             # get the model and hyperparameters with the best validation accuracy
             # we call this a near-optima point
-            val_acc = result.history['val_acc'][epochs-1]
+            val_acc = result[1]
             if val_acc > best[0]:
                 best = (val_acc, lr, bs)
 
@@ -338,7 +338,7 @@ class Composable(Layers, Preprocess):
             bs = batch_range[random.randint(0, 1)]
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights)
     
-            val_acc = result.history['val_acc'][epochs-1]
+            val_acc = result[1]
             if val_acc > best[0]:
                 best = (val_acc, lr, bs)
 

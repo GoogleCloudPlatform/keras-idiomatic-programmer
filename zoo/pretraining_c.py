@@ -36,7 +36,7 @@ import sys
 class Pretraining(object):
     ''' Pretraining base (super) class for Composable Models '''
 
-    def __init__(self)
+    def __init__(self):
         """ Constructor
         """
         pass

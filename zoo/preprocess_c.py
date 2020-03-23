@@ -36,7 +36,7 @@ import sys
 class Preprocess:
     ''' Preprocess base (super) class for Composable Models '''
 
-    def __init__():
+    def __init__(self):
         """ Constructor
         """
         pass

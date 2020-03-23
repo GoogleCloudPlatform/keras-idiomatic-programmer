@@ -35,8 +35,9 @@ import sys
 
 from layers_c import Layers
 from preprocess_c import Preprocess
+from pretraining_c import Pretraining
 
-class Composable(Layers, Preprocess):
+class Composable(Layers, Preprocess, Pretraining):
     ''' Composable base (super) class for Models '''
 
     def __init__(self, init_weights=None, reg=None, relu=None, bias=True):
@@ -47,7 +48,8 @@ class Composable(Layers, Preprocess):
             bias         : whether to use bias
         """
         Layers.__init__(self, init_weights, reg, relu, bias)
-        Preprocess.__init__()
+        Preprocess.__init__(self)
+        Pretraining.__init__(self)
 
         # Feature maps encoding at the bottleneck layer in classifier (high dimensionality)
         self._encoding = None
@@ -106,78 +108,10 @@ class Composable(Layers, Preprocess):
 
     # training variables
     hidden_dropout = None # hidden dropout in classifier
-    w_lr           = 0    # target warmup rate
-    w_epochs       = 0    # number of epochs in warmup
-    i_lr           = 0    # initial warmup rate during full training
+    i_lr           = 0    # initial rate during full training
     e_decay        = 0    # weight decay rate during full training
     e_steps        = 0    # number of steps (batches) in an epoch
     t_steps        = 0    # total number of steps in training job
-
-    def init_draw(self, x_train, y_train, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32):
-        """ Use the lottery ticket principle to find the best weight initialization
-            x_train : training images
-            y_train : training labels
-            ndraws  : number of draws to find the winning lottery ticket
-            epochs  : number of trial epochs
-            steps   :
-            lr      :
-            batch_size:
-        """
-        print("*** Initialize Draw")
-        loss = sys.float_info.max
-        weights = None
-        for _ in range(ndraws):
-            self.model = tf.keras.models.clone_model(self.model)
-            self.compile(optimizer=Adam(lr))
-            w = self.model.get_weights()
-
-            # Create generator for training in steps
-            datagen = ImageDataGenerator()
-
-            print("*** Lottery", _)
-            self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
-                                                  epochs=epochs, steps_per_epoch=steps, verbose=1)
-
-            d_loss = self.model.history.history['loss'][epochs-1]
-            if d_loss < loss:
-                loss = d_loss
-                w = self.model.get_weights()
-
-        # Set the best
-        self.model.set_weights(w)
-
-    def warmup_scheduler(self, epoch, lr):
-        """ learning rate schedular for warmup training
-            epoch : current epoch iteration
-            lr    : current learning rate
-        """
-        if epoch == 0:
-           return lr
-        if epoch == 2:
-            # loss is diverging
-            if self.model.history.history['loss'][1] > self.model.history.history['loss'][0]:
-                print("*** Loss is diverging, Reducing Warmnup Rate")
-                self.w_lr /= 10
-        return epoch * self.w_lr / self.w_epochs
-
-    def warmup(self, x_train, y_train, epochs=5, s_lr=1e-6, e_lr=0.001):
-        """ Warmup for numerical stability
-            x_train : training images
-            y_train : training labels
-            epochs  : number of epochs for warmup
-            s_lr    : start warmup learning rate
-            e_lr    : end warmup learning rate
-        """
-        print("*** Warmup (for numerical stability)")
-        # Setup learning rate scheduler
-        self.compile(optimizer=Adam(s_lr))
-        lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
-        self.w_epochs = epochs
-        self.w_lr     = e_lr - s_lr
-
-        # Train the model
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
-                       callbacks=[lrate])
 
     def _tune(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
         """ Helper function for hyperparameter tuning

@@ -36,8 +36,9 @@ import sys
 from layers_c import Layers
 from preprocess_c import Preprocess
 from pretraining_c import Pretraining
+from hypertune_c import HyperTune
 
-class Composable(Layers, Preprocess, Pretraining):
+class Composable(Layers, Preprocess, Pretraining, HyperTune):
     ''' Composable base (super) class for Models '''
 
     def __init__(self, init_weights=None, reg=None, relu=None, bias=True):
@@ -50,6 +51,7 @@ class Composable(Layers, Preprocess, Pretraining):
         Layers.__init__(self, init_weights, reg, relu, bias)
         Preprocess.__init__(self)
         Pretraining.__init__(self)
+        HyperTune.__init__(self)
 
         # Feature maps encoding at the bottleneck layer in classifier (high dimensionality)
         self._encoding = None
@@ -112,172 +114,6 @@ class Composable(Layers, Preprocess, Pretraining):
     e_decay        = 0    # weight decay rate during full training
     e_steps        = 0    # number of steps (batches) in an epoch
     t_steps        = 0    # total number of steps in training job
-
-    def _tune(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
-        """ Helper function for hyperparameter tuning
-            x_train   : training images
-            y_train   : training labels
-            x_test    : test images
-            y_test    : test labels
-            lr        : trial learning rate
-            batch_size: the batch size (constant)
-            epochs    : the number of epochs
-            steps     : steps per epoch
-            weights   : warmup weights
-        """
-        # Compile the model for the new learning rate
-        self.compile(optimizer=Adam(lr))
-
-        # Create generator for training in steps
-        datagen = ImageDataGenerator()
-         
-        # Train the model
-        print("*** Learning Rate", lr)
-        self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
-                                 epochs=epochs, steps_per_epoch=steps, verbose=1)
-
-        # Evaluate the model
-        result = self.evaluate(x_test, y_test)
-         
-        # Reset the weights
-        self.model.set_weights(weights)
-
-        return result
-
-    def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
-                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128]):
-        """ Do a grid search for hyperparameters
-            x_train : training images
-            y_train : training labels
-            epochs  : number of epochs
-            steps   : number of steps per epoch
-            lr_range: range for searching learning rate
-            batch_range: range for searching batch size
-        """
-        print("*** Hyperparameter Grid Search")
-
-        # Save the original weights
-        weights = self.model.get_weights()
-
-        # Search learning rate
-        v_loss = []
-        for lr in lr_range:
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
-            v_loss.append(result[0])
-            
-        # Find the best starting learning rate based on validation loss
-        best = sys.float_info.max
-        for _ in range(len(lr_range)):
-            if v_loss[_] < best:
-                best = v_loss[_]
-                lr = lr_range[_]
-
-        # Best was smallest learning rate
-        if lr == lr_range[0]:
-            # try 1/2 the lowest learning rate
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
-
-            # 1/2 of lr is even better
-            if result[0] < best:
-                lr = lr / 2.0
-            # try halfway between the first and second value
-            else:
-                n_lr = (lr_range[0] + lr_range[1]) / 2.0
-                result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, n_lr, batch_range[0], weights)
-
-                # 1/2 of lr is even better
-                if result[0] < best:
-                    lr = lr / 2.0
-                
-        elif lr == lr_range[len(lr_range)-1]:
-            # try 2X the largest learning rate
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
-
-            # 2X of lr is even better
-            if result[0] < best:
-                lr = lr * 2.0
-		
-        print("*** Selected best learning rate:", lr)
-
-        # Compile the model for the new learning rate
-        self.compile(optimizer=Adam(lr))
-        
-        v_loss = []
-        # skip the first batch size - since we used it in searching learning rate
-        datagen = ImageDataGenerator()
-        for bs in batch_range[1:]:
-            print("*** Batch Size", bs)
-
-            # equalize the number of examples per epoch
-            steps = int(batch_range[0] * steps / bs)
-
-            self.model.fit(datagen.flow(x_train, y_train, batch_size=bs),
-                                     epochs=epochs, steps_per_epoch=steps, verbose=1)
-
-            # Evaluate the model
-            result = self.evaluate(x_test, y_test)
-            v_loss.append(result[0])
-            
-            # Reset the weights
-            self.model.set_weights(weights)
-
-        # Find the best batch size based on validation loss
-        best = sys.float_info.max
-        bs = batch_range[0]
-        for _ in range(len(batch_range)-1):
-            if v_loss[_] < best:
-                best = v_loss[_]
-                bs = batch_range[_]
-
-        print("*** Selected best batch size:", bs)
-
-        # return the best learning rate and batch size
-        return lr, bs
-
-    def random_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
-                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128], trials=5):
-        """ Do a grid search for hyperparameters
-            x_train : training images
-            y_train : training labels
-            epochs  : number of epochs
-            steps   : number of steps per epoch
-            lr_range: range for searching learning rate
-            batch_range: range for searching batch size
-            trials  : maximum number of trials
-        """
-        print("*** Hyperparameter Random Search")
-
-        # Save the original weights
-        weights = self.model.get_weights()
-
-        best = (0, 0, 0)
-
-        # first round of trials, find best near-optimal
-        for _ in range(trials):
-            lr = lr_range[random.randint(0, len(lr_range)-1)]
-            bs = batch_range[random.randint(0, len(batch_range)-1)]
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
-    
-            # get the model and hyperparameters with the best validation accuracy
-            # we call this a near-optima point
-            val_acc = result[1]
-            if val_acc > best[0]:
-                best = (val_acc, lr, bs)
-
-        # narrow search space to within vicinity of the best near-optima
-        learning_rates = [ best[1] / 2, best[1] * 2]
-        batch_sizes = [best[2] / 2, best[2] * 2]
-        for _ in range(trials):
-            lr = lr_range[random.randint(0, 1)]
-            bs = batch_range[random.randint(0, 1)]
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights)
-    
-            val_acc = result[1]
-            if val_acc > best[0]:
-                best = (val_acc, lr, bs)
-
-        return best[1], best[2]
-        
 
     def time_decay(self, epoch, lr):
         """ Time-based Decay

@@ -9,19 +9,19 @@
 
 <img src='macro.jpg'>
 
-<img src='macro-contact.jpg'>
+<img src='contact-macro.jpg'>
 
-<img src='macro_expand.jpg'>
+<img src='expand-macro.jpg'>
 
 ## Micro-Architecture
 
 ### Contracting Group
 
-<img src='contract-group.jpg'>
+<img src='contract-block.jpg'>
 
 ### Expanding Group
 
-<img src='expand-group.jpg'>
+<img src='expand-block.jpg'>
 
 ### Classifier
 

@@ -9,7 +9,7 @@
 
 <img src='macro.jpg'>
 
-<img src='contact-macro.jpg'>
+<img src='contract-macro.jpg'>
 
 <img src='expand-macro.jpg'>
 

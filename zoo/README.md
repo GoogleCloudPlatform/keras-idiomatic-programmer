@@ -58,6 +58,8 @@ All the models here are coded using design pattern for models. The models are ba
 | [`R-CNN`](r-cnn) |[Rich feature hierarchies for accurate object detection and semantic segmentation, 2014](https://arxiv.org/pdf/1311.2524.pdf)|
 | [`Fast R-CNN`](fast r-cnn) |[Fast R-CNN, 2015](https://arxiv.org/pdf/1504.08083.pdf)|
 | [`Faster R-CNN`](faster r-cnn) |[Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks, 2015](https://arxiv.org/pdf/1506.01497.pdf)|
+|*Image Segmentation*||
+| [`U-Net`](unet) |[U-Net: Convolutional Networks for Biomedical Image Segmentation, 2015](https://arxiv.org/abs/1505.04597)|
 
 ## Architecture Representation
 

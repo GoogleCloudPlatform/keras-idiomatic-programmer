@@ -189,5 +189,4 @@ class UNet(Composable):
 
 
 # Example U-Net
-unet = UNet()
-unet.model.summary()
+# unet = UNet()

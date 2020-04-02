@@ -96,17 +96,19 @@ class Pretraining(object):
                 self.w_lr /= 10
         return epoch * self.w_lr / self.w_epochs
 
-    def warmup(self, x_train, y_train, epochs=5, s_lr=1e-6, e_lr=0.001):
+    def warmup(self, x_train, y_train, epochs=5, s_lr=1e-6, e_lr=0.001, 
+               loss='categorical_crossentropy'):
         """ Warmup for numerical stability
             x_train : training images
             y_train : training labels
             epochs  : number of epochs for warmup
             s_lr    : start warmup learning rate
             e_lr    : end warmup learning rate
+            loss    : loss function
         """
         print("*** Warmup (for numerical stability)")
         # Setup learning rate scheduler
-        self.compile(optimizer=Adam(s_lr))
+        self.compile(optimizer=Adam(s_lr), loss=loss)
         lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
         self.w_epochs = epochs
         self.w_lr     = e_lr - s_lr

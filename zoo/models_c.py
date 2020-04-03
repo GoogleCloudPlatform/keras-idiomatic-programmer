@@ -121,7 +121,7 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
         return lr * (1. / (1. + self.e_decay[1] * epoch))
 
     def step_decay(self, epoch, lr):
-        """ Step-based decay
+        """ Step-based (polynomial) decay
         """
         return self.i_lr * self.e_decay[1]**(epoch)
 
@@ -174,7 +174,8 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
             lr = self.cosine_decay(epoch, lr)
         return lr
 
-    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=(None, 0)):
+    def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=(None, 0),
+                 split=0.1):
         """ Full Training of the Model
             x_train    : training images
             y_train    : training labels
@@ -182,6 +183,7 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
             batch_size : size of batch
             lr         : learning rate
             decay      : step-wise learning rate decay
+            split      : percent to use as validation data
         """
 
         print("*** Full Training")
@@ -208,7 +210,7 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
         self.compile(optimizer=Adam(lr=lr, decay=decay[1]))
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=0.1, verbose=1,
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=split, verbose=1,
                        callbacks=[lrate])
 
     def evaluate(self, x_test, y_test):

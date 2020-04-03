@@ -137,7 +137,7 @@ class HyperTune(object):
         print("*** Selected best learning rate:", lr)
 
         # Compile the model for the new learning rate
-        self.compile(optimizer=Adam(lr))
+        self.compile(optimizer=Adam(lr), loss=loss, metrics=metrics))
         
         v_loss = []
         # skip the first batch size - since we used it in searching learning rate

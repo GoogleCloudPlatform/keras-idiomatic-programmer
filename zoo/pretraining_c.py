@@ -116,6 +116,6 @@ class Pretraining(object):
         self.w_lr     = e_lr - s_lr
 
         # Train the model
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=32, verbose=1,
+        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, verbose=1,
                        callbacks=[lrate])
 

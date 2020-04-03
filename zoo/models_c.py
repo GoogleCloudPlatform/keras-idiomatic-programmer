@@ -175,7 +175,7 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
         return lr
 
     def training(self, x_train, y_train, epochs=10, batch_size=32, lr=0.001, decay=(None, 0),
-                 split=0.1):
+                 split=0.1, loss='categorical_crossentropy', metrics=['acc']):
         """ Full Training of the Model
             x_train    : training images
             y_train    : training labels
@@ -184,6 +184,8 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
             lr         : learning rate
             decay      : step-wise learning rate decay
             split      : percent to use as validation data
+            loss       : loss function
+            metrics    : metrics to report during training
         """
 
         print("*** Full Training")
@@ -207,7 +209,7 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune):
         self.e_decay = decay
         self.e_steps = x_train.shape[0] // batch_size
         self.t_steps = self.e_steps * epochs
-        self.compile(optimizer=Adam(lr=lr, decay=decay[1]))
+        self.compile(optimizer=Adam(lr=lr, decay=decay[1]), loss=loss, metrics=metrics)
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=split, verbose=1,

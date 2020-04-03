@@ -112,7 +112,7 @@ class HyperTune(object):
         # Best was smallest learning rate
         if lr == lr_range[0]:
             # try 1/2 the lowest learning rate
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weight, losss, metrics)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights, losss, metrics)
 
             # 1/2 of lr is even better
             if result[0] < best:

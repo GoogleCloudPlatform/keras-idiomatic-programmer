@@ -45,7 +45,7 @@ class HyperTune(object):
     # Hyperparameter Tuning
     ###
 
-    def _tune(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights):
+    def _tune(self, x_train, y_train, x_test, y_test, epochs, steps, lr, batch_size, weights, loss, metrics):
         """ Helper function for hyperparameter tuning
             x_train   : training images
             y_train   : training labels
@@ -56,9 +56,11 @@ class HyperTune(object):
             epochs    : the number of epochs
             steps     : steps per epoch
             weights   : warmup weights
+            loss      : loss function
+            metrics   : metrics to report during training
         """
         # Compile the model for the new learning rate
-        self.compile(optimizer=Adam(lr))
+        self.compile(optimizer=Adam(lr), loss=loss, metrics=metrics)
 
         # Create generator for training in steps
         datagen = ImageDataGenerator()
@@ -77,7 +79,8 @@ class HyperTune(object):
         return result
 
     def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
-                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128]):
+                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128],
+                          loss='categorical_crossentropy', metrics=['acc']):
         """ Do a grid search for hyperparameters
             x_train : training images
             y_train : training labels
@@ -85,6 +88,8 @@ class HyperTune(object):
             steps   : number of steps per epoch
             lr_range: range for searching learning rate
             batch_range: range for searching batch size
+            loss    : loss function
+            metrics : metrics to report during training
         """
         print("*** Hyperparameter Grid Search")
 
@@ -94,7 +99,7 @@ class HyperTune(object):
         # Search learning rate
         v_loss = []
         for lr in lr_range:
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights, loss, metrics)
             v_loss.append(result[0])
             
         # Find the best starting learning rate based on validation loss
@@ -107,7 +112,7 @@ class HyperTune(object):
         # Best was smallest learning rate
         if lr == lr_range[0]:
             # try 1/2 the lowest learning rate
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr / 2.0), batch_range[0], weight, losss, metrics)
 
             # 1/2 of lr is even better
             if result[0] < best:
@@ -115,7 +120,7 @@ class HyperTune(object):
             # try halfway between the first and second value
             else:
                 n_lr = (lr_range[0] + lr_range[1]) / 2.0
-                result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, n_lr, batch_range[0], weights)
+                result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, n_lr, batch_range[0], weights, loss, metrics)
 
                 # 1/2 of lr is even better
                 if result[0] < best:
@@ -123,7 +128,7 @@ class HyperTune(object):
                 
         elif lr == lr_range[len(lr_range)-1]:
             # try 2X the largest learning rate
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, (lr * 2.0), batch_range[0], weights, loss, metrics)
 
             # 2X of lr is even better
             if result[0] < best:
@@ -167,7 +172,8 @@ class HyperTune(object):
         return lr, bs
 
     def random_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
-                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128], trials=5):
+                          lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128], 
+                          loss='categorical_crossentropy', metrics=['acc'], trials=5):
         """ Do a grid search for hyperparameters
             x_train : training images
             y_train : training labels
@@ -175,6 +181,8 @@ class HyperTune(object):
             steps   : number of steps per epoch
             lr_range: range for searching learning rate
             batch_range: range for searching batch size
+            loss    : loss function
+            metrics : metrics to report during training
             trials  : maximum number of trials
         """
         print("*** Hyperparameter Random Search")
@@ -188,7 +196,7 @@ class HyperTune(object):
         for _ in range(trials):
             lr = lr_range[random.randint(0, len(lr_range)-1)]
             bs = batch_range[random.randint(0, len(batch_range)-1)]
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights, loss, metrics)
     
             # get the model and hyperparameters with the best validation accuracy
             # we call this a near-optima point
@@ -202,7 +210,7 @@ class HyperTune(object):
         for _ in range(trials):
             lr = lr_range[random.randint(0, 1)]
             bs = batch_range[random.randint(0, 1)]
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights, loss, metrics)
     
             val_acc = result[1]
             if val_acc > best[0]:

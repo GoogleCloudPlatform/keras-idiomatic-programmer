@@ -155,8 +155,8 @@ class HyperTune(object):
             result = self.evaluate(x_test, y_test)
             v_loss.append(result[0])
             
-       # Reset the weights
-       self.model.set_weights(weights)
+            # Reset the weights
+            self.model.set_weights(weights)
 
         # Find the best batch size based on validation loss
         best = sys.float_info.max

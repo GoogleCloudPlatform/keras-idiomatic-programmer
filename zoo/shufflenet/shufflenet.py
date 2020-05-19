@@ -39,8 +39,10 @@ def learner(x, groups, n_partitions, filters, reduction):
         filters      : number of filters per shuffle group
         reduction    : dimensionality reduction on entry to a shuffle block
     '''
+    assert len(groups) == len(filters)-1
+
     # Assemble the shuffle groups
-    for i in range(3):
+    for i in range(len(groups)):
         x = group(x, n_partitions, groups[i], filters[i+1], reduction)
     return x
     

@@ -152,8 +152,12 @@ def pw_group_conv(x, n_partitions, n_filters):
         # Maintain the point-wise group convolutions in a list
         groups.append(conv)
 
-    # Concatenate the outputs of the group pointwise convolutions together
-    x = Concatenate()(groups)
+    if len(groups) > 1:
+        # Concatenate the outputs of the group pointwise convolutions together
+        x = Concatenate()(groups)
+    else:
+	x = groups[0]
+	
     # Do batch normalization of the concatenated filters (feature maps)
     x = BatchNormalization()(x)
     return x

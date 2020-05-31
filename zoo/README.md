@@ -52,7 +52,7 @@ All the models here are coded using design pattern for models. The models are ba
 | [`Siamese Twin`](siamese_twin) | [Siamese Neural Networks for One-shot Image Recognition, 2015](https://www.cs.cmu.edu/~rsalakhu/papers/oneshot1.pdf) |
 |*AutoEncoders*||
 | [`Auto Encoder`](autoencoder) | no paper - general principles |
-| [`SRCNN`(srcnn) | [Image Super-Resolution Using Deep
+| [`SRCNN`](srcnn) | [Image Super-Resolution Using Deep
 Convolutional Networks](https://arxiv.org/pdf/1501.00092.pdf)
 |*Generative Adversarial Networks*||
 | [`DCGAN`](dcgan) | [Unsupervised Representation Learning with Deep Convolutional Generative Adversarial Networks, 2016](https://arxiv.org/pdf/1511.06434.pdf) |

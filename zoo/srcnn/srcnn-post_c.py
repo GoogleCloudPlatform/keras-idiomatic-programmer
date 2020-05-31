@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Super Resolution CNN (SRCNN) (2016)
+# Post-Upsampling Super Resolution CNN (SRCNN) (2016)
 # Paper: https://arxiv.org/pdf/1501.00092.pdf
 
 from tensorflow.keras import Input, Model
@@ -24,19 +24,16 @@ import sys
 sys.path.append('../')
 from models_c import Composable
 
-class SRCNN(Composable):
-    ''' Construct a Super Resolution CNN '''
-    # Meta-parameter: filter sizes for n1, n2 and n3 convolutions
-    f1 = 9
-    f2 = 1
-    f3 = 5
+class SRCNNPost(Composable):
+    ''' Construct a Post Upsampling Super Resolution CNN '''
+    # Meta-parameter: 
+    groups = [ { 'n_filters': 32, 'n_filters' : 64 } ]
 
-    def __init__(self,  
+    def __init__(self, groups=None ,
                  input_shape=(32, 32, 3), include_top=True,
-                 f1 = 9, f2=1, f3=5,
                  init_weights='he_normal', reg=None, relu=None, bias=False):
         """ Construct a Wids Residual (Convolutional Neural) Network 
-            f1, f2, f3  : number of filters for convolutional layers n1, n2 and n3
+            groups      : metaparameter for group configuration
             input_shape : input shape
             include_top : include the reconstruction component
             init_weights: kernel initialization
@@ -47,54 +44,56 @@ class SRCNN(Composable):
         # Configure base (super) class
         super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias) 
 
+        if groups is None:
+            groups = self.groups
+
         # The input tensor
         inputs = Input(input_shape)
 
         # The stem convolutional group
-        x = self.stem(inputs, f1)
+        x = self.stem(inputs)
 
-        # The encoder
-        outputs = self.encoder(x, f2)
+        # The learner
+        outputs = self.learner(x, groups)
 
         # The reconstruction
         if include_top:
-             outputs = self.reconstruction(outputs, f3)
+             outputs = self.decoder(outputs)
 
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs, f1):
+    def stem(self, inputs):
         """ Construct the Stem Convolutional Group 
             inputs : the input tensor
-            f1     : filter size
         """
         # n1, dimensionality expansion with large coarse filter
-        x = self.Conv2D(inputs, 64, (f1, f1), padding='same')
+        x = self.Conv2D(inputs, 16, (3, 3), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
         return x
 
-    def encoder(self, x, f2):
-        """ Construct the Encoder
-            x  : the input to the encoder
-            f2 : the filter size
+    def learner(self, x, groups):
+        """ Construct the Learner 
+            x      : input to the learner
+            groups : group configuration
         """
-        # n2, 1x1 bottleneck convolution
-        x = self.Conv2D(x, 32, (f2, f2), padding='same')
-        x = self.BatchNormalization(x)
-        x = self.ReLU(x)
+        for group in groups:
+            n_filters = group['n_filters' ]
+            x = self.Conv2D(x, n_filters, (3, 3), padding='same')
+            x = self.BatchNormalization(x)
+            x = self.ReLU(x)
         return x
 
-    def reconstruction(self, x, f3):
-        """ Construct the Encoder
-            x  : the input to the reconstruction
-            f3 : the filter size
+    def decoder(self, x):
+        """ Construct the Decoder
+            x    : input to the decoder
         """
-        # n3, reconstruction convolution
-        x = self.Conv2D(x, 3, (f3, f3), padding='same')
+        # reconstruction
+        x = self.Conv2DTranspose(x, 3, (3, 3), strides=2, padding='same')
         x = self.BatchNormalization(x)
-        outputs = Activation('sigmoid')(x)
-        return outputs
+        x = Activation('sigmoid')(x)
+        return x
 
 # Example
-# srcnn = SRCNN(f1=9, f2=1, f3=5)
+# srcnn = SRCNNPost()

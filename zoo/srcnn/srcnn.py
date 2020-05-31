@@ -60,7 +60,7 @@ def train():
 	x_test_lr = []
 	for image in x_test:
     		image = cv2.resize(image, (16, 16), interpolation=cv2.INTER_CUBIC)
-    	x_test_lr.append(cv2.resize(image, (32, 32), interpolation=cv2.INTER_CUBIC))
+	x_test_lr.append(cv2.resize(image, (32, 32), interpolation=cv2.INTER_CUBIC))
 	x_test_lr = np.asarray(x_test_lr)
 
 	x_train = (x_train / 255.0).astype(np.float32)

@@ -39,8 +39,10 @@ def learner(x, groups, n_partitions, filters, reduction):
         filters      : number of filters per shuffle group
         reduction    : dimensionality reduction on entry to a shuffle block
     '''
+    assert len(groups) == len(filters)-1
+
     # Assemble the shuffle groups
-    for i in range(3):
+    for i in range(len(groups)):
         x = group(x, n_partitions, groups[i], filters[i+1], reduction)
     return x
     
@@ -150,8 +152,12 @@ def pw_group_conv(x, n_partitions, n_filters):
         # Maintain the point-wise group convolutions in a list
         groups.append(conv)
 
-    # Concatenate the outputs of the group pointwise convolutions together
-    x = Concatenate()(groups)
+    if len(groups) > 1:
+        # Concatenate the outputs of the group pointwise convolutions together
+        x = Concatenate()(groups)
+    else:
+	x = groups[0]
+	
     # Do batch normalization of the concatenated filters (feature maps)
     x = BatchNormalization()(x)
     return x

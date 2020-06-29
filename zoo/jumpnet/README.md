@@ -29,7 +29,7 @@ Each of these former architectures established new best practices for increasing
 
 The Jump-Net architecture is designed to incorporate the prior best practised by ResNet v2 [7], DenseNet [8] and SparseNet [9], and introduces a new skip connection, which I refer to as a group jump link. This new skip connection further minimizes the number of parameters and matmul operations, while preserving accuracy and without going deeper in layers.
 
-<TODO- Summarize ablation study>
+*TODO- Summarize ablation study*
 
 **Introduction**:
 
@@ -46,11 +46,11 @@ I propose a different approach to the benefits of the sparse concatenated featur
 
 **Related Work**:
 
-AlexNet [1], winner of the 2012 ILSVRC challenge for image classification using a convolutional neural network brought both deep learning and convolutional neural networks into the research mainstay for solving imaging related tasks. <TODO - how it solved it>
+AlexNet [1], winner of the 2012 ILSVRC challenge for image classification using a convolutional neural network brought both deep learning and convolutional neural networks into the research mainstay for solving imaging related tasks. *TODO - how it solved it*
 
-ZFNet [2], winner of the 2013 ILSVRC challenge for image classification, made further improvements to AlexNet. <TODO - what were the improvements>
+ZFNet [2], winner of the 2013 ILSVRC challenge for image classification, made further improvements to AlexNet. *TODO - what were the improvements*
 
-GoogLeNet (Inception v1) [4] and VGG [3], 1st and 2nd place winners of the 2013 ILSVRC challenge for image classification, introduced using a repeating convolutional block pattern, delayed pooling. VGG experimented using the convolutional block patterns to go deeper in layers for more capacity, while GoogLeNet experimented with both going deeper and wider in layers for more capacity. <TODO - more details>
+GoogLeNet (Inception v1) [4] and VGG [3], 1st and 2nd place winners of the 2013 ILSVRC challenge for image classification, introduced using a repeating convolutional block pattern, delayed pooling. VGG experimented using the convolutional block patterns to go deeper in layers for more capacity, while GoogLeNet experimented with both going deeper and wider in layers for more capacity. *TODO - more details*
 
 <TODO - ResNet v1>
 

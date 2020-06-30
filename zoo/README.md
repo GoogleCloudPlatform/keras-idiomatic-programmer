@@ -8,6 +8,7 @@ All the models here are coded using design pattern for models. The models are ba
 | Model       | Paper |
 |--------------|-------|
 |*Deep Convolutional Neural Networks*||
+| [`AlexNet`](alexnet) | [ImageNet Classification with Deep Convolutional Neural Networks, 2012](https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf)|
 | [`VGG16`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |
 | [`VGG19`](vgg)     | [Very Deep Convolutional Networks for Large-Scale Image Recognition, 2014](https://arxiv.org/pdf/1409.1556.pdf) |
 |*Residual Convolutional Neural Networks*||

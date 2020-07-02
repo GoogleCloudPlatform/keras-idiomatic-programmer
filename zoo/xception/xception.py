@@ -78,12 +78,9 @@ def exitFlow(x, n_classes):
         x = Dense(n_classes, activation='softmax')(x)
         return x
 
-    # Remember the input
-    shortcut = x
-
-    # Strided convolution to double number of filters in identity link to
-    # match output of residual block for the add operation (projection shortcut)
-    shortcut = Conv2D(1024, (1, 1), strides=(2, 2), padding='same')(shortcut)
+    # 1x1 strided convolution to increase number and reduce size of feature maps
+    # in identity link to match output of residual block for the add operation (projection shortcut)
+    shortcut = Conv2D(1024, (1, 1), strides=(2, 2), padding='same')(x)
     shortcut = BatchNormalization()(shortcut)
 
     # First Depthwise Separable Convolution

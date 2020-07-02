@@ -172,11 +172,8 @@ class Xception(Composable):
         n_filters = metaparameters['n_filters']
         del metaparameters['n_filters']
 
-        # Remember the input
-        shortcut = x
-    
-        # Strided convolution to double number of filters in identity link to
-        # match output of residual block for the add operation (projection shortcut)
+        # 1x1 strided convolution to increase the number of and reduce size of the feature maps 
+        # in identity link to match output of residual block for the add operation (projection shortcut)
         shortcut = self.Conv2D(x, n_filters, (1, 1), strides=(2, 2), padding='same', **metaparameters)
         shortcut = self.BatchNormalization(shortcut)
 

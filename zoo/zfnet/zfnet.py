@@ -27,9 +27,6 @@ def stem(inputs):
     x = Conv2D(96, (7, 7), strides=(2, 2), padding='same')(inputs)
     x = ReLU()(x)
     
-    # Pooled feature maps will be reduced by 75%
-    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
-    
     # Second Convolutional layer
     x = Conv2D(256, (5, 5), strides=(2, 2), padding='same')(x)
     x = ReLU()(x)
@@ -45,6 +42,9 @@ def learner(x):
     # Third Convolutional layer
     x = Conv2D(384, (3, 3), strides=(1, 1), padding='same')(x)
     x = ReLU()(x)
+    
+    # Pooled feature maps will be reduced by 75%
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
     
     # Fourth Convolutional layer
     x = Conv2D(384, (3, 3), strides=(1, 1), padding='same')(x)
@@ -90,3 +90,4 @@ outputs = classifier(x, 1000)
 
 # Instantiate the Model
 model = Model(inputs, outputs)
+model.summary()

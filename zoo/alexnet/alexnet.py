@@ -24,14 +24,11 @@ def stem(inputs):
         inputs : the input vector
     """
     # First Convolutional layer which uses an extremely large (coarse) filter
-    x = Conv2D(96, (7, 7), strides=(4, 4), padding='same')(inputs)
+    x = Conv2D(96, (11, 11), strides=(4, 4), padding='same')(inputs)
     x = ReLU()(x)
     
-    # Pooled feature maps will be reduced by 75%
-    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
-    
     # Second Convolutional layer
-    x = Conv2D(256, (5, 5), strides=(2, 2), padding='same')(x)
+    x = Conv2D(256, (5, 5), strides=(1, 1), padding='same')(x)
     x = ReLU()(x)
     
     # Pooled feature maps will be reduced by 75%
@@ -46,6 +43,9 @@ def learner(x):
     x = Conv2D(384, (3, 3), strides=(1, 1), padding='same')(x)
     x = ReLU()(x)
     
+    # Pooled feature maps will be reduced by 75%
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
+    
     # Fourth Convolutional layer
     x = Conv2D(384, (3, 3), strides=(1, 1), padding='same')(x)
     x = ReLU()(x)
@@ -53,6 +53,9 @@ def learner(x):
     # Ffth Convolutional layer
     x = Conv2D(256, (3, 3), strides=(1, 1), padding='same')(x)
     x = ReLU()(x)
+    
+    # Pooled feature maps will be reduced by 75%
+    x = MaxPooling2D((3, 3), strides=(2, 2))(x)
     
     return x
 
@@ -86,5 +89,4 @@ x = learner(x)
 outputs = classifier(x, 1000)
 
 # Instantiate the Model
-model = Model(inputs, outputs)
-model.summary()
+# model = Model(inputs, outputs)

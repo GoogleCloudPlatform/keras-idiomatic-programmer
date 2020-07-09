@@ -32,13 +32,13 @@ from models_c import Composable
 class MobileNetV2(Composable):
     """ Construct a Mobile Convolution Neural Network V2 """
     # Meta-parameter: number of filters and blocks per group
-    groups = [ { 'n_filters' : 16,   'n_blocks' : 1 }, 
-               { 'n_filters' : 24,   'n_blocks' : 2 },
-               { 'n_filters' : 32,   'n_blocks' : 3 }, 
-               { 'n_filters' : 64,   'n_blocks' : 4 },
-               { 'n_filters' : 96,   'n_blocks' : 3 },
-               { 'n_filters' : 160,  'n_blocks' : 3 }, 
-               { 'n_filters' : 320,  'n_blocks' : 1 },
+    groups = [ { 'n_filters' : 16,   'n_blocks' : 1, 'strides': (1, 1) }, 
+               { 'n_filters' : 24,   'n_blocks' : 2, 'strides': (2, 2) },
+               { 'n_filters' : 32,   'n_blocks' : 3, 'strides': (2, 2) }, 
+               { 'n_filters' : 64,   'n_blocks' : 4, 'strides': (2, 2) },
+               { 'n_filters' : 96,   'n_blocks' : 3, 'strides': (1, 1) },
+               { 'n_filters' : 160,  'n_blocks' : 3, 'strides': (2, 2) }, 
+               { 'n_filters' : 320,  'n_blocks' : 1, 'strides': (1, 1) },
                { 'n_filters' : 1280, 'n_blocks' : 1 } ]
 
     def __init__(self, groups=None, alpha=1, expansion=6, 
@@ -110,9 +110,9 @@ class MobileNetV2(Composable):
 
         # First Inverted Residual Convolution Group
         group = groups.pop(0)
-        x = self.group(x, **group, alpha=alpha, expansion=1, strides=(1, 1))
+        x = self.group(x, **group, alpha=alpha, expansion=1)
 
-        # Add Inverted Residual Convolution Group
+        # Add remaining Inverted Residual Convolution Groups
         for group in groups:
             x = self.group(x, **group, alpha=alpha, expansion=expansion)
 
@@ -123,13 +123,15 @@ class MobileNetV2(Composable):
         x = self.ReLU(x)
         return x
 
-    def group(self, x, strides=(2, 2), **metaparameters):
+    def group(self, x, **metaparameters):
         """ Construct an Inverted Residual Group
             x         : input to the group
             strides   : whether first inverted residual block is strided.
             n_blocks  : number of blocks in the group
         """   
         n_blocks  = metaparameters['n_blocks']
+        strides   = metaparameters['strides']
+        del metaparameters['strides']
 
         # In first block, the inverted residual block maybe strided - feature map size reduction
         x = self.inverted_block(x, strides=strides, **metaparameters)
@@ -196,7 +198,7 @@ class MobileNetV2(Composable):
         return x
 
 # Example
-# mobilenet = MobileNetV2()
+mobilenet = MobileNetV2()
 
 def example():
     ''' Example for constructing/training a MobileNet V2 model on CIFAR-10

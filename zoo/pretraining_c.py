@@ -49,19 +49,24 @@ class Pretraining(object):
     w_lr           = 0    # target warmup rate
     w_epochs       = 0    # number of epochs in warmup
 
-    def init_draw(self, x_train, y_train, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32):
+    def init_draw(self, x_train=None, y_train=None, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32, metric='loss'):
         """ Use the lottery ticket principle to find the best weight initialization
             x_train : training images
             y_train : training labels
             ndraws  : number of draws to find the winning lottery ticket
             epochs  : number of trial epochs
-            steps   :
-            lr      :
-            batch_size:
+            steps   : number of steps per epoch
+            lr      : tiny learning rate
+            batch_size: batch size
+            metric  : metric used for determining best draw
         """
+        if x_train is None:
+            x_train = self.x_train
+            y_train = self.y_train
+
         print("*** Initialize Draw")
         loss = sys.float_info.max
-        weights = None
+        # weights = None
         for _ in range(ndraws):
             self.model = tf.keras.models.clone_model(self.model)
             self.compile(optimizer=Adam(lr))
@@ -70,17 +75,18 @@ class Pretraining(object):
             # Create generator for training in steps
             datagen = ImageDataGenerator()
 
-            print("*** Lottery", _)
+            print("\n*** Lottery", _ + 1)
             self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
                                                   epochs=epochs, steps_per_epoch=steps, verbose=1)
 
-            d_loss = self.model.history.history['loss'][epochs-1]
+            d_loss = self.model.history.history[metric][epochs-1]
             if d_loss < loss:
                 loss = d_loss
                 w = self.model.get_weights()
 
         # Set the best
         self.model.set_weights(w)
+        print("\n*** Selected Draw:", metric, loss) 
 
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training

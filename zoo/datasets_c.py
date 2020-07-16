@@ -45,7 +45,22 @@ class Dataset(object):
     def __init__(self):
         """ Constructor
         """
-        pass
+        self.x_train = None
+        self.y_train = None
+        self.x_test  = None
+        self.y_test  = None
+
+    @property
+    def data(self):
+        return (x_train, y_train), (x_test, y_test)
+
+    @data.setter
+    def data(self, data):
+        """ Load in memory data
+            data: expect form: ((x_train, y_train), (x_test, y_test)) 
+        """
+        self.x_train, self.y_train = data[0]
+        self.x_test, self.y_test   = data[1]
 
     def cifar10(self, epochs=10, decay=('cosine', 0)):
         """ Train on CIFAR-10

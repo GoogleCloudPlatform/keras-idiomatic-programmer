@@ -49,18 +49,31 @@ class Dataset(object):
         self.y_train = None
         self.x_test  = None
         self.y_test  = None
+        self.n_classes = 0
 
     @property
     def data(self):
         return (x_train, y_train), (x_test, y_test)
 
-    @data.setter
-    def data(self, data):
+    def load_data(self, train, test=None, std=False, onehot=False, smoothing=0.0):
         """ Load in memory data
-            data: expect form: ((x_train, y_train), (x_test, y_test)) 
+            train: expect form: (x_train, y_train)
         """
-        self.x_train, self.y_train = data[0]
-        self.x_test, self.y_test   = data[1]
+        self.x_train, self.y_train = train
+        if test is not None:
+            self.x_test, self.y_test   = test
+        if std:
+            self.x_train, self.x_test = self.standardization(self.x_train, self.x_test)
+
+        if self.y_train.ndim == 2:
+            self.n_classes = np.max(self.y_train) + 1
+        else:
+            self.n_classes = self.y_train.shape[1]
+        if onehot:
+            self.y_train = to_categorical(self.y_train, self.n_classes)
+            self.y_test  = to_categorical(self.y_test, self.n_classes)
+        if smoothing > 0.0:
+            self.y_train = self.label_smoothing(self.y_train, self.n_classes, smoothing)
 
     def cifar10(self, epochs=10, decay=('cosine', 0)):
         """ Train on CIFAR-10

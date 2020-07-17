@@ -66,7 +66,7 @@ class HyperTune(object):
         datagen = ImageDataGenerator()
          
         # Train the model
-        print("*** Learning Rate", lr)
+        print("\n*** Learning Rate", lr, "Batch Size", batch_size)
         self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
                                  epochs=epochs, steps_per_epoch=steps, verbose=1)
 
@@ -91,7 +91,7 @@ class HyperTune(object):
             loss    : loss function
             metrics : metrics to report during training
         """
-        print("*** Hyperparameter Grid Search")
+        print("\n*** Hyperparameter Grid Search")
 
         # Save the original weights
         weights = self.model.get_weights()
@@ -171,7 +171,7 @@ class HyperTune(object):
         # return the best learning rate and batch size
         return lr, bs
 
-    def random_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
+    def random_search(self, x_train=None, y_train=None, x_test=None, y_test=None, epochs=3, steps=250,
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128], 
                           loss='categorical_crossentropy', metrics=['acc'], trials=5):
         """ Do a grid search for hyperparameters
@@ -185,17 +185,31 @@ class HyperTune(object):
             metrics : metrics to report during training
             trials  : maximum number of trials
         """
-        print("*** Hyperparameter Random Search")
+        if x_train is None:
+            x_train = self.x_train
+            y_train = self.y_train
+            x_test  = self.x_test
+            y_test  = self.y_test
+
+        print("\n*** Hyperparameter Random Search")
 
         # Save the original weights
         weights = self.model.get_weights()
 
         best = (0, 0, 0)
 
-        # first round of trials, find best near-optimal
+        # lr values already tried, as not to repeat
+        tried = []
         for _ in range(trials):
             lr = lr_range[random.randint(0, len(lr_range)-1)]
             bs = batch_range[random.randint(0, len(batch_range)-1)]
+
+            # Check for repeat
+            if (lr, bs) in tried:
+                print("Random Selection already tried", (lr, bs))
+                continue
+            tried.append( (lr, bs))
+
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights, loss, metrics)
     
             # get the model and hyperparameters with the best validation accuracy
@@ -211,9 +225,10 @@ class HyperTune(object):
             lr = lr_range[random.randint(0, 1)]
             bs = batch_range[random.randint(0, 1)]
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights, loss, metrics)
-    
+   
             val_acc = result[1]
             if val_acc > best[0]:
                 best = (val_acc, lr, bs)
 
+        print("\nSelected Learning Rate", lr, "Batch Size", bs)
         return best[1], best[2]

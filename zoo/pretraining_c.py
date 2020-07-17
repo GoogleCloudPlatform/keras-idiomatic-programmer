@@ -49,7 +49,8 @@ class Pretraining(object):
     w_lr           = 0    # target warmup rate
     w_epochs       = 0    # number of epochs in warmup
 
-    def init_draw(self, x_train=None, y_train=None, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32, metric='loss'):
+    def init_draw(self, x_train=None, y_train=None, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32, 
+                  metric='loss', save=None):
         """ Use the lottery ticket principle to find the best weight initialization
             x_train : training images
             y_train : training labels
@@ -59,6 +60,7 @@ class Pretraining(object):
             lr      : tiny learning rate
             batch_size: batch size
             metric  : metric used for determining best draw
+            save    : file to save initialized weights to
         """
         if x_train is None:
             x_train = self.x_train
@@ -86,6 +88,10 @@ class Pretraining(object):
 
         # Set the best
         self.model.set_weights(w)
+ 
+        # Save the initialized weights
+        if save is not None:
+            self.model.save_weights(save)
         print("\n*** Selected Draw:", metric, loss) 
 
     def warmup_scheduler(self, epoch, lr):

@@ -78,7 +78,7 @@ class HyperTune(object):
 
         return result
 
-    def grid_search(self, x_train, y_train, x_test, y_test, epochs=3, steps=250,
+    def grid_search(self, x_train=None, y_train=None, x_test=None, y_test=None, epochs=3, steps=250,
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128],
                           loss='categorical_crossentropy', metrics=['acc']):
         """ Do a grid search for hyperparameters
@@ -91,6 +91,12 @@ class HyperTune(object):
             loss    : loss function
             metrics : metrics to report during training
         """
+        if x_train is None:
+            x_train = self.x_train
+            y_train = self.y_train
+            x_test  = self.x_test
+            y_test  = self.y_test
+
         print("\n*** Hyperparameter Grid Search")
 
         # Save the original weights

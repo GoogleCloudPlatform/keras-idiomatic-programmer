@@ -44,11 +44,12 @@ class JumpNet(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
 
-    def __init__(self, n_layers,
+    def __init__(self, n_layers, stem=[32, 64],
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
         """ Construct a Jump Convolutional Neural Network 
             n_layers    : number of layers
+            stem        : number of filters in the stem convolutional stack
             input_shape : input shape
             n_classes   : number of output classes
             include_top : whether to include classifier
@@ -73,7 +74,7 @@ class JumpNet(Composable):
         inputs = Input(input_shape)
 
         # The stem convolutional group
-        x = self.stem(inputs)
+        x = self.stem(inputs, stem=stem)
 
         # The learner
         outputs = self.learner(x, groups=groups)
@@ -86,17 +87,19 @@ class JumpNet(Composable):
         # Instantiate the Model
         self._model = Model(inputs, outputs)
 
-    def stem(self, inputs):
+    def stem(self, inputs, **metaparameters):
         """ Construct the Stem Convolutional Group 
             inputs : the input vector
+            stack  : convolutional filters in two 3x3 stack
         """
+        stack = metaparameters['stem']
     
         # Stack of two 3x3 filters
-        x = self.Conv2D(inputs, 32, (3, 3), strides=(2, 2), padding='same')
+        x = self.Conv2D(inputs, stack[0], (3, 3), strides=(2, 2), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
-        x = self.Conv2D(x, 64, (3, 3), strides=(1, 1), padding='same')
+        x = self.Conv2D(x, stack[1], (3, 3), strides=(1, 1), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
     
@@ -171,8 +174,7 @@ class JumpNet(Composable):
         x = Add()([shortcut, x])
         return x
 
-
-    def classifier(self, x, n_classes):
+    def REMclassifier(self, x, n_classes):
         """ Construct the Classifier Group 
             x         : input to the classifier
             n_classes : number of output classes
@@ -185,4 +187,36 @@ class JumpNet(Composable):
         return outputs
 
 # Example of JumpNet
-# jumpnet = JumpNet(50)
+groups = [ { 'n_filters': 32, 'n_blocks': 3 },
+           { 'n_filters': 64,  'n_blocks': 4 },
+           { 'n_filters': 128, 'n_blocks': 3 }]
+jumpnet = JumpNet(n_layers=groups, stem=[16, 32], input_shape=(32, 32, 3), n_classes=10,
+                  reg=l2(0.005))
+jumpnet.summary()
+
+if __name__ == '__main__':
+    import sys
+    from tensorflow.keras.datasets import cifar10
+    from tensorflow.keras.utils import to_categorical
+    (x_train, y_train), (x_test, y_test) = cifar10.load_data()
+    jumpnet.load_data((x_train, y_train), (x_test, y_test), std=True, onehot=True, smoothing=0.1)
+
+    # compile the model
+    jumpnet.compile(loss='categorical_crossentropy', metrics=['acc'])
+
+    
+    if sys.argv[1].startswith('init'):
+       # Use Lottery ticket approach for best initialization draw
+       ndraws = int(sys.argv[1].split('=')[1])
+       jumpnet.init_draw(ndraws=ndraws, save='lottery')
+       sys.argv.pop()
+    if sys.argv[1] == 'warmup':
+       # Warmup the weight distribution for numeric stability
+       jumpnet.warmup(epochs=4)
+
+    '''
+    lr, batch_size = jumpnet.random_search()
+
+    jumpnet.training(epochs=10, batch_size=batch_size, lr=lr, decay=('cosine', 0))
+    jumpnet.evaluate()
+    '''

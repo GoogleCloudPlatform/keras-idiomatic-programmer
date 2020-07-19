@@ -81,10 +81,14 @@ class Pretraining(object):
             self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
                                                   epochs=epochs, steps_per_epoch=steps, verbose=1)
 
+            # Next Best
             d_loss = self.model.history.history[metric][epochs-1]
             if d_loss < loss:
                 loss = d_loss
                 w = self.model.get_weights()
+                print("\n*** Current Best:", metric, loss) 
+                if save is not None:
+                    self.model.save_weights(save)
 
         # Set the best
         self.model.set_weights(w)

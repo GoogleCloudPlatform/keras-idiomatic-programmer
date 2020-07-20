@@ -31,7 +31,7 @@ from sklearn.model_selection import train_test_split
 
 import random
 import math
-import sys
+import sys, os, json
 
 class Pretraining(object):
     ''' Pretraining base (super) class for Composable Models '''
@@ -66,9 +66,21 @@ class Pretraining(object):
             x_train = self.x_train
             y_train = self.y_train
 
-        print("*** Initialize Draw")
         loss = sys.float_info.max
-        # weights = None
+        w_best = None
+        if save is not None:
+            try:
+                os.mkdir(save)
+            except:
+                pass
+            if os.path.exists(save + '/best.json'):
+                with open(save + '/best.json', 'r') as f:
+                    data = json.load(f)
+                    loss = float(data['loss'])
+                    self.model.load_weights(save + '/chkpt')
+                    w_best = self.model.get_weights()
+
+        print("*** Initialize Draw")
         for _ in range(ndraws):
             self.model = tf.keras.models.clone_model(self.model)
             self.compile(optimizer=Adam(lr))
@@ -85,18 +97,30 @@ class Pretraining(object):
             d_loss = self.model.history.history[metric][epochs-1]
             if d_loss < loss:
                 loss = d_loss
-                w = self.model.get_weights()
+                w_best = self.model.get_weights()
                 print("\n*** Current Best:", metric, loss) 
                 if save is not None:
-                    self.model.save_weights(save)
+                    self._save_best(save, loss)
 
         # Set the best
-        self.model.set_weights(w)
+        if w_best is not None:
+            self.model.set_weights(w_best)
  
-        # Save the initialized weights
-        if save is not None:
-            self.model.save_weights(save)
+            # Save the initialized weights
+            if save is not None:
+                self._save_best(save, loss)
         print("\n*** Selected Draw:", metric, loss) 
+
+    def _save_best(self, save, best):
+        """ Save current best weights
+            save : directort to save weights
+            best : metric information
+        """
+        self.model.save_weights(save + '/chkpt')
+        best = {'loss': best}
+        with open(save + "/best.json", "w") as f:
+            data = json.dumps(best)
+            f.write(data)
 
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training

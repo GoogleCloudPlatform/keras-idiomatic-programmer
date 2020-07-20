@@ -137,7 +137,7 @@ class Pretraining(object):
         return epoch * self.w_lr / self.w_epochs
 
     def warmup(self, x_train=None, y_train=None, epochs=5, batch_size=32, s_lr=1e-6, e_lr=0.001, 
-               loss='categorical_crossentropy', metrics=['acc']):
+               loss='categorical_crossentropy', metrics=['acc'], save=None):
         """ Warmup for numerical stability
             x_train   : training images
             y_train   : training labels
@@ -152,6 +152,14 @@ class Pretraining(object):
             x_train = self.x_train
             y_train = self.y_train
 
+        # Load selected weight initialization draw
+        if save is not None:
+            try:
+                os.mkdir(save)
+            except:
+                pass
+            self.model.load_weights(save + '/chkpt')
+
         print("*** Warmup (for numerical stability)")
         # Setup learning rate scheduler
         self.compile(optimizer=Adam(s_lr), loss=loss, metrics=metrics)
@@ -162,4 +170,7 @@ class Pretraining(object):
         # Train the model
         self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, verbose=1,
                        callbacks=[lrate])
+
+        if save is not None:
+            self.model.save_weights(save + '/chkpt')
 

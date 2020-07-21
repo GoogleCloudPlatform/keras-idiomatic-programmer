@@ -204,7 +204,6 @@ if __name__ == '__main__':
     # compile the model
     jumpnet.compile(loss='categorical_crossentropy', metrics=['acc'])
 
-    
     for _ in range(1, len(sys.argv)):
         if sys.argv[_].startswith('init'):
            # Use Lottery ticket approach for best initialization draw
@@ -219,7 +218,11 @@ if __name__ == '__main__':
         elif sys.argv[_].startswith("tune"):
            # Do hyperparameter tuning from warmup
            trial = int(sys.argv[_].split('=')[1])
-           lr, bs = jumpnet.random_search(save='cifar10')
+           lr, bs = jumpnet.random_search(trials=trials, save='cifar10')
+
+        elif sys.argv[_].startswith('pretext'):
+           zigsaw = int(sys.argv[_].split('=')[1])
+           jumpnet.pretext(zigsaw=zigsaw, save='cifar10')
 
     '''
     jumpnet.training(epochs=10, batch_size=bs, lr=lr, decay=('cosine', 0))

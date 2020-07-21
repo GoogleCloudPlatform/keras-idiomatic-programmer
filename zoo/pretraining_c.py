@@ -179,8 +179,8 @@ class Pretraining(object):
         if save is not None:
             self.model.save_weights(save + '/warmup/chkpt')
 
-    def pretext(self, x_train, zigsaw=9, epochs=10, batch_size=32, lr=0.001, 
-                loss='categorical_crossentropy', metrics=['acc'], save=None):
+    def pretext(self, x_train= None, zigsaw=9, epochs=10, batch_size=32, lr=0.001, 
+                loss='mse', metrics=['mse'], save=None):
         """ Pretrain using unsupervised pre-text task for zigsaw puzzle to learn essential features
             x_train   : training images
             epochs    : number of epochs for pretext task training
@@ -209,7 +209,9 @@ class Pretraining(object):
         pooling = self.model.layers[len(self.model.layers)-2].output
 
         # Attach a new top for the zigsaw puzzle
-        outputs = self.Dense(pooling, zigsaw, activation='softmax')
+        outputs = self.Dense(pooling, zigsaw)
+        self.relu = zigsaw
+        outputs = self.ReLU(outputs)
 
         # Construct wrapper model with the new top layer
         wrapper = Model(self.model.inputs, outputs)
@@ -230,10 +232,21 @@ class Pretraining(object):
             ix = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
         px_train = []
+        py_train = []
         for _ in range(len(x_train)):
             tiles = [x_train[_][x:x+M,y:y+N] for x in range(0,R,M) for y in range(0,C,N)]
-            random.randomint(ix)
+            random.shuffle(ix)
             if zigsaw == 4:
-                pass
+                r1 = np.concatenate((tiles[ix[0]], tiles[ix[1]]))
+                r2 = np.concatenate((tiles[ix[2]], tiles[ix[3]]))
+                image = np.concatenate((r1, r2), axis=1)
             else:
                 pass
+            px_train.append(image)
+            py_train.append(ix)
+
+        px_train = np.asarray(px_train)
+        py_train = np.asarray(py_train)
+
+        # Train the model
+        wrapper.fit(px_train, py_train, epochs=epochs, batch_size=batch_size, verbose=1)

@@ -208,15 +208,22 @@ if __name__ == '__main__':
     if sys.argv[1].startswith('init'):
        # Use Lottery ticket approach for best initialization draw
        ndraws = int(sys.argv[1].split('=')[1])
-       jumpnet.init_draw(ndraws=ndraws, save='lottery')
-       sys.argv.pop()
-    if sys.argv[1] == 'warmup':
+       jumpnet.init_draw(ndraws=ndraws, save='cifar10')
+       sys.argv.pop(0)
+
+    if sys.argv[1].startswith('warmup'):
        # Warmup the weight distribution for numeric stability
-       jumpnet.warmup(epochs=4)
+       epochs = int(sys.argv[1].split('=')[1])
+       jumpnet.warmup(epochs=epochs, save='cifar10')
+       sys.argv.pop(0)
+
+    if sys.argv[1].startswith("tune"):
+       # Do hyperparameter tuning from warmup
+       trial = int(sys.argv[1].split('=')[1])
+       lr, bs = jumpnet.random_search(save='cifar10')
+       sys.argv.pop(0)
 
     '''
-    lr, batch_size = jumpnet.random_search()
-
-    jumpnet.training(epochs=10, batch_size=batch_size, lr=lr, decay=('cosine', 0))
+    jumpnet.training(epochs=10, batch_size=bs, lr=lr, decay=('cosine', 0))
     jumpnet.evaluate()
     '''

@@ -31,7 +31,7 @@ from sklearn.model_selection import train_test_split
 
 import random
 import math
-import sys
+import sys, os
 
 class HyperTune(object):
     ''' Hyperparameter tuning  base (super) class for Composable Models '''
@@ -80,7 +80,7 @@ class HyperTune(object):
 
     def grid_search(self, x_train=None, y_train=None, x_test=None, y_test=None, epochs=3, steps=250,
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128],
-                          loss='categorical_crossentropy', metrics=['acc']):
+                          loss='categorical_crossentropy', metrics=['acc'], save=None):
         """ Do a grid search for hyperparameters
             x_train : training images
             y_train : training labels
@@ -96,6 +96,15 @@ class HyperTune(object):
             y_train = self.y_train
             x_test  = self.x_test
             y_test  = self.y_test
+
+        if save is not None:
+            try:
+                os.mkdir(save)
+                os.mkdir(save + '/tune')
+            except:
+                pass
+            if os.path.isfile(save + '/warmup/chkpt'):
+                self.model.load_weights(save)
 
         print("\n*** Hyperparameter Grid Search")
 
@@ -179,7 +188,7 @@ class HyperTune(object):
 
     def random_search(self, x_train=None, y_train=None, x_test=None, y_test=None, epochs=3, steps=250,
                           lr_range=[0.0001, 0.001, 0.01, 0.1], batch_range=[32, 128], 
-                          loss='categorical_crossentropy', metrics=['acc'], trials=5):
+                          loss='categorical_crossentropy', metrics=['acc'], trials=5, save=None):
         """ Do a grid search for hyperparameters
             x_train : training images
             y_train : training labels
@@ -196,6 +205,10 @@ class HyperTune(object):
             y_train = self.y_train
             x_test  = self.x_test
             y_test  = self.y_test
+
+        if save is not None:
+            if os.path.isfile(save + '/warmup/chkpt'):
+                self.model.load_weights(save)
 
         print("\n*** Hyperparameter Random Search")
 

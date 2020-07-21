@@ -187,8 +187,7 @@ class HyperTune(object):
             with open(save + '/tune/hp.json', 'w') as f:
                 data = { 'ls' : lr, 'bs': bs }
                 json.dump(data, f)
-            if os.path.isfile(save + '/tune/chkpt.index'):
-                self.model.save_weights(save + '/tune/chkpt')
+            self.model.save_weights(save + '/tune/chkpt')
 
         # return the best learning rate and batch size
         return lr, bs
@@ -214,6 +213,10 @@ class HyperTune(object):
             y_test  = self.y_test
 
         if save is not None:
+            try:
+                os.mkdir(save + '/tune')
+            except:
+                pass
             if os.path.isfile(save + '/warmup/chkpt.index'):
                 self.model.load_weights(save + '/warmup/chkpt')
 
@@ -262,7 +265,6 @@ class HyperTune(object):
             with open(save + '/tune/hp.json', 'w') as f:
                 data = { 'ls' : lr, 'bs': bs }
                 json.dump(data, f)
-            if os.path.isfile(save + '/tune/chkpt.index'):
-                self.model.save_weights(save + '/tune/chkpt')
+            self.model.save_weights(save + '/tune/chkpt')
 
         return best[1], best[2]

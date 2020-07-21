@@ -217,14 +217,17 @@ if __name__ == '__main__':
 
         elif sys.argv[_].startswith("tune"):
            # Do hyperparameter tuning from warmup
-           trial = int(sys.argv[_].split('=')[1])
+           trials = int(sys.argv[_].split('=')[1])
            lr, bs = jumpnet.random_search(trials=trials, save='cifar10')
 
         elif sys.argv[_].startswith('pretext'):
+           # Do pretext task
            zigsaw = int(sys.argv[_].split('=')[1])
-           jumpnet.pretext(zigsaw=zigsaw, save='cifar10')
+           jumpnet.pretext(zigsaw=zigsaw, lr=lr, batch_size=bs, save='cifar10')
 
-    '''
-    jumpnet.training(epochs=10, batch_size=bs, lr=lr, decay=('cosine', 0))
-    jumpnet.evaluate()
-    '''
+        elif sys.argv[_].startswith('train'):
+           # Do full training
+           epochs = int(sys.argv[_].split('=')[1])
+           jumpnet.training(epochs=epochs, batch_size=bs, lr=lr, decay=('cosine', 0))
+           jumpnet.evaluate()
+           

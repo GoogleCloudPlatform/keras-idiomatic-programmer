@@ -69,11 +69,11 @@ class Pretraining(object):
         loss = sys.float_info.max
         w_best = None
         if save is not None:
-            try:
-                os.mkdir(save)
-                os.mkdir(save + '/init')
-            except:
-                pass
+            for path in [ save, save + '/init']:
+                try:
+                    os.mkdir(path)
+                except:
+                    pass
             if os.path.exists(save + '/best.json'):
                 with open(save + '/best.json', 'r') as f:
                     data = json.load(f)
@@ -149,7 +149,7 @@ class Pretraining(object):
             e_lr      : end warmup learning rate
             loss      : loss function
             metrics   : training metrics to report
-            save      : file to save warmup weights to
+            save      : file to save warmup weights 
         """
         if x_train is None:
             x_train = self.x_train
@@ -157,11 +157,11 @@ class Pretraining(object):
 
         # Load selected weight initialization draw
         if save is not None:
-            try:
-                os.mkdir(save)
-                os.mkdir(save + '/warmup')
-            except:
-                pass
+            for path in [ save, save + '/warmup']:
+                try:
+                    os.mkdir(path)
+                except:
+                    pass
             if os.path.exists(save + '/init/chkpt.index'):
                 self.model.load_weights(save + '/init/chkpt')
 
@@ -179,3 +179,51 @@ class Pretraining(object):
         if save is not None:
             self.model.save_weights(save + '/warmup/chkpt')
 
+    def pretext(self, x_train, zigsaw=9, epochs=10, batch_size=32, lr=0.001, 
+                loss='categorical_crossentropy', metrics=['acc'], save=None):
+        """ Pretrain using unsupervised pre-text task for zigsaw puzzle to learn essential features
+            x_train   : training images
+            epochs    : number of epochs for pretext task training
+            batch_size: batch size
+            lr        : pre-text learning rate
+            loss      : loss function
+            metrics   : training metrics to report
+            save      : file to save pretext weights            
+        """
+        if x_train is None:
+            x_train = self.x_train
+
+        # Load selected weight after hypertune
+        if save is not None:
+            for path in [ save, save + '/pretext']:
+                try:
+                    os.mkdir(path)
+                except:
+                    pass
+            if os.path.exists(save + '/tune/chkpt.index'):
+                self.model.load_weights(save + '/tune/chkpt')
+
+        print("*** Pretext Task (for essential features)")
+
+        # Get the pooling layer before the final dense output layer
+        pooling = self.model.layers[len(self.model.layers)-2].output
+
+        # Attach a new top for the zigsaw puzzle
+        outputs = self.Dense(pooling, zigsaw, activation='softmax')
+
+        # Construct wrapper model with the new top layer
+        wrapper = Model(self.model.inputs, outputs)
+        wrapper.compile(loss=loss, optimizer=Adam(lr=lr), metrics=metrics)
+
+        if zigsaw == 4:
+            slice = int(x_train.shape[1] / 2)
+        elif zigsaw == 9:
+            slice = int(x_train.shape[1] / 3)
+
+        # make a copy of the training data
+        px_train = x_train[:]
+        for i in range(len(px_train)):
+            if zigsaw == 4:
+                pass
+            elif zigsaw == 9:
+                pass

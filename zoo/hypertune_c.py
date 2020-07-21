@@ -98,11 +98,11 @@ class HyperTune(object):
             y_test  = self.y_test
 
         if save is not None:
-            try:
-                os.mkdir(save)
-                os.mkdir(save + '/tune')
-            except:
-                pass
+            for path in [ save, save + '/tune']:
+                try:
+                    os.mkdir(path)
+                except:
+                    pass
             if os.path.isfile(save + '/warmup/chkpt.index'):
                 self.model.load_weights(save + '/warmup/chkpt')
 
@@ -213,10 +213,11 @@ class HyperTune(object):
             y_test  = self.y_test
 
         if save is not None:
-            try:
-                os.mkdir(save + '/tune')
-            except:
-                pass
+            for path in [ save, save + '/tune']:
+                try:
+                    os.mkdir(path)
+                except:
+                    pass
             if os.path.isfile(save + '/warmup/chkpt.index'):
                 self.model.load_weights(save + '/warmup/chkpt')
 
@@ -230,6 +231,8 @@ class HyperTune(object):
         # lr values already tried, as not to repeat
         tried = []
         for _ in range(trials):
+            print("\nTrial ", _ + 1)
+
             lr = lr_range[random.randint(0, len(lr_range)-1)]
             bs = batch_range[random.randint(0, len(batch_range)-1)]
 
@@ -249,10 +252,11 @@ class HyperTune(object):
 
         # narrow search space to within vicinity of the best near-optima
         learning_rates = [ best[1] / 2, best[1] * 2]
-        batch_sizes = [best[2] / 2, best[2] * 2]
+        batch_sizes = [int(best[2] / 2), int(best[2] * 2)]
         for _ in range(trials):
-            lr = lr_range[random.randint(0, 1)]
-            bs = batch_range[random.randint(0, 1)]
+            print("\nNarrowing, Trial", _ + 1)
+            lr = learning_rates[random.randint(0, 1)]
+            bs = batch_sizes[random.randint(0, 1)]
             result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights, loss, metrics)
    
             val_acc = result[1]

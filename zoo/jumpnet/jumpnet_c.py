@@ -205,23 +205,21 @@ if __name__ == '__main__':
     jumpnet.compile(loss='categorical_crossentropy', metrics=['acc'])
 
     
-    if sys.argv[1].startswith('init'):
-       # Use Lottery ticket approach for best initialization draw
-       ndraws = int(sys.argv[1].split('=')[1])
-       jumpnet.init_draw(ndraws=ndraws, save='cifar10')
-       sys.argv.pop(0)
+    for _ in range(1, len(sys.argv)):
+        if sys.argv[_].startswith('init'):
+           # Use Lottery ticket approach for best initialization draw
+           ndraws = int(sys.argv[_].split('=')[1])
+           jumpnet.init_draw(ndraws=ndraws, save='cifar10')
 
-    if sys.argv[1].startswith('warmup'):
-       # Warmup the weight distribution for numeric stability
-       epochs = int(sys.argv[1].split('=')[1])
-       jumpnet.warmup(epochs=epochs, save='cifar10')
-       sys.argv.pop(0)
+        elif sys.argv[_].startswith('warmup'):
+           # Warmup the weight distribution for numeric stability
+           epochs = int(sys.argv[_].split('=')[1])
+           jumpnet.warmup(epochs=epochs, save='cifar10')
 
-    if sys.argv[1].startswith("tune"):
-       # Do hyperparameter tuning from warmup
-       trial = int(sys.argv[1].split('=')[1])
-       lr, bs = jumpnet.random_search(save='cifar10')
-       sys.argv.pop(0)
+        elif sys.argv[_].startswith("tune"):
+           # Do hyperparameter tuning from warmup
+           trial = int(sys.argv[_].split('=')[1])
+           lr, bs = jumpnet.random_search(save='cifar10')
 
     '''
     jumpnet.training(epochs=10, batch_size=bs, lr=lr, decay=('cosine', 0))

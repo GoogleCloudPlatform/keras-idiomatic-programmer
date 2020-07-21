@@ -31,7 +31,7 @@ from sklearn.model_selection import train_test_split
 
 import random
 import math
-import sys, os
+import sys, os, json
 
 class HyperTune(object):
     ''' Hyperparameter tuning  base (super) class for Composable Models '''
@@ -183,6 +183,13 @@ class HyperTune(object):
 
         print("*** Selected best batch size:", bs)
 
+        if save is not None:
+            with open(save + '/tune/hp.json', 'w') as f:
+                data = { 'ls' : lr, 'bs': bs }
+                json.dump(data, f)
+            if os.path.isfile(save + '/tune/chkpt.index'):
+                self.model.save_weights(save + '/tune/chkpt')
+
         # return the best learning rate and batch size
         return lr, bs
 
@@ -250,4 +257,12 @@ class HyperTune(object):
                 best = (val_acc, lr, bs)
 
         print("\nSelected Learning Rate", lr, "Batch Size", bs)
+
+        if save is not None:
+            with open(save + '/tune/hp.json', 'w') as f:
+                data = { 'ls' : lr, 'bs': bs }
+                json.dump(data, f)
+            if os.path.isfile(save + '/tune/chkpt.index'):
+                self.model.save_weights(save + '/tune/chkpt')
+
         return best[1], best[2]

@@ -250,3 +250,6 @@ class Pretraining(object):
 
         # Train the model
         wrapper.fit(px_train, py_train, epochs=epochs, batch_size=batch_size, verbose=1)
+
+        if save is not None:
+            self.model.save_weights(save + '/pretext/chkpt')

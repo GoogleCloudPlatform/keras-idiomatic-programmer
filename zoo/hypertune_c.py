@@ -103,8 +103,8 @@ class HyperTune(object):
                 os.mkdir(save + '/tune')
             except:
                 pass
-            if os.path.isfile(save + '/warmup/chkpt'):
-                self.model.load_weights(save)
+            if os.path.isfile(save + '/warmup/chkpt.index'):
+                self.model.load_weights(save + '/warmup/chkpt')
 
         print("\n*** Hyperparameter Grid Search")
 
@@ -207,8 +207,8 @@ class HyperTune(object):
             y_test  = self.y_test
 
         if save is not None:
-            if os.path.isfile(save + '/warmup/chkpt'):
-                self.model.load_weights(save)
+            if os.path.isfile(save + '/warmup/chkpt.index'):
+                self.model.load_weights(save + '/warmup/chkpt')
 
         print("\n*** Hyperparameter Random Search")
 
@@ -229,7 +229,7 @@ class HyperTune(object):
                 continue
             tried.append( (lr, bs))
 
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, batch_range[0], weights, loss, metrics)
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights, loss, metrics)
     
             # get the model and hyperparameters with the best validation accuracy
             # we call this a near-optima point

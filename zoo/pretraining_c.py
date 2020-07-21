@@ -71,13 +71,14 @@ class Pretraining(object):
         if save is not None:
             try:
                 os.mkdir(save)
+                os.mkdir(save + '/init')
             except:
                 pass
             if os.path.exists(save + '/best.json'):
                 with open(save + '/best.json', 'r') as f:
                     data = json.load(f)
                     loss = float(data['loss'])
-                    self.model.load_weights(save + '/chkpt')
+                    self.model.load_weights(save + '/init/chkpt')
                     w_best = self.model.get_weights()
 
         print("*** Initialize Draw")
@@ -116,7 +117,8 @@ class Pretraining(object):
             save : directort to save weights
             best : metric information
         """
-        self.model.save_weights(save + '/chkpt')
+        # Late Resetting
+        self.model.save_weights(save + '/init/chkpt')
         best = {'loss': best}
         with open(save + "/best.json", "w") as f:
             data = json.dumps(best)
@@ -147,6 +149,7 @@ class Pretraining(object):
             e_lr      : end warmup learning rate
             loss      : loss function
             metrics   : training metrics to report
+            save      : file to save warmup weights to
         """
         if x_train is None:
             x_train = self.x_train
@@ -156,9 +159,11 @@ class Pretraining(object):
         if save is not None:
             try:
                 os.mkdir(save)
+                os.mkdir(save + '/warmup')
             except:
                 pass
-            self.model.load_weights(save + '/chkpt')
+            if os.path.exists(save + '/init/chkpt.index'):
+                self.model.load_weights(save + '/init/chkpt')
 
         print("*** Warmup (for numerical stability)")
         # Setup learning rate scheduler
@@ -172,5 +177,5 @@ class Pretraining(object):
                        callbacks=[lrate])
 
         if save is not None:
-            self.model.save_weights(save + '/chkpt')
+            self.model.save_weights(save + '/warmup/chkpt')
 

@@ -226,6 +226,9 @@ class HyperTune(object):
         # Save the original weights
         weights = self.model.get_weights()
 
+        # Base the number of steps on the min batch size to try
+        min_bs = np.min(batch_range)
+
         best = (0, 0, 0)
 
         # lr values already tried, as not to repeat
@@ -242,7 +245,10 @@ class HyperTune(object):
                 continue
             tried.append( (lr, bs))
 
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights, loss, metrics)
+            # Adjust steps so each trial sees same number of examples
+            trial_steps = int(min_bs / bs * steps)
+
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, trial_steps, lr, bs, weights, loss, metrics)
     
             # get the model and hyperparameters with the best validation accuracy
             # we call this a near-optima point
@@ -257,7 +263,17 @@ class HyperTune(object):
             print("\nNarrowing, Trial", _ + 1)
             lr = learning_rates[random.randint(0, 1)]
             bs = batch_sizes[random.randint(0, 1)]
-            result = self._tune(x_train, y_train, x_test, y_test, epochs, steps, lr, bs, weights, loss, metrics)
+
+            # Check for repeat
+            if (lr, bs) in tried:
+                print("Random Selection already tried", (lr, bs))
+                continue
+            tried.append( (lr, bs))
+
+            # Adjust steps so each trial sees same number of examples
+            trial_steps = int(min_bs / bs * steps)
+
+            result = self._tune(x_train, y_train, x_test, y_test, epochs, trial_steps, lr, bs, weights, loss, metrics)
    
             val_acc = result[1]
             if val_acc > best[0]:

@@ -215,15 +215,25 @@ class Pretraining(object):
         wrapper = Model(self.model.inputs, outputs)
         wrapper.compile(loss=loss, optimizer=Adam(lr=lr), metrics=metrics)
 
-        if zigsaw == 4:
-            slice = int(x_train.shape[1] / 2)
-        elif zigsaw == 9:
-            slice = int(x_train.shape[1] / 3)
+        # Rows/Columns
+        R = x_train.shape[1]
+        C = x_train.shape[2]
 
-        # make a copy of the training data
-        px_train = x_train[:]
-        for i in range(len(px_train)):
+        # Slicing
+        if zigsaw == 4:
+            M = int(x_train.shape[1] / 2)
+            N = int(x_train.shape[2] / 2)
+            ix = [0, 1, 2, 3]
+        elif zigsaw == 9:
+            M = int(x_train.shape[1] / 3)
+            N = int(x_train.shape[2] / 3)
+            ix = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+        px_train = []
+        for _ in range(len(x_train)):
+            tiles = [x_train[_][x:x+M,y:y+N] for x in range(0,R,M) for y in range(0,C,N)]
+            random.randomint(ix)
             if zigsaw == 4:
                 pass
-            elif zigsaw == 9:
+            else:
                 pass

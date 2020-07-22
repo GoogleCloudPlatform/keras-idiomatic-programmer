@@ -187,7 +187,7 @@ class HyperTune(object):
 
         if save is not None:
             with open(save + '/tune/hp.json', 'w') as f:
-                data = { 'ls' : lr, 'bs': bs }
+                data = { 'lr' : lr, 'bs': bs }
                 json.dump(data, f)
             self.model.save_weights(save + '/tune/chkpt')
 
@@ -289,7 +289,7 @@ class HyperTune(object):
 
         if save is not None:
             with open(save + '/tune/hp.json', 'w') as f:
-                data = { 'ls' : lr, 'bs': bs }
+                data = { 'lr' : lr, 'bs': bs }
                 json.dump(data, f)
             self.model.save_weights(save + '/tune/chkpt')
 

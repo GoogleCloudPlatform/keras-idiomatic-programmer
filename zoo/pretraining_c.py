@@ -194,6 +194,8 @@ class Pretraining(object):
             metrics   : training metrics to report
             save      : file to save pretext weights            
         """
+        print("\n*** Pretext Task (for essential features)")
+
         if x_train is None:
             x_train = self.x_train
 
@@ -206,13 +208,16 @@ class Pretraining(object):
                     pass
             if os.path.exists(save + '/tune/chkpt.index'):
                 self.model.load_weights(save + '/tune/chkpt')
+            elif os.path.exists(save + '/warmup/chkpt.index'):
+                self.model.load_weights(save + '/warmup/chkpt')
+            elif os.path.exists(save + '/init/chkpt.index'):
+                self.model.load_weights(save + '/init/chkpt')
 
             if lr is None:
                 with open(save + '/tune/hp.json') as f:
-                    pass # TODO
-            
-
-        print("*** Pretext Task (for essential features)")
+                   data = json.load(f)
+                   lr = data['lr']
+                   batch_size = data['bs']
 
         # Get the pooling layer before the final dense output layer
         pooling = self.model.layers[len(self.model.layers)-2].output

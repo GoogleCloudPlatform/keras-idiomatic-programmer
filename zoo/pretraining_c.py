@@ -62,6 +62,8 @@ class Pretraining(object):
             metric  : metric used for determining best draw
             save    : file to save initialized weights to
         """
+        print("\n*** Initialize Draw")
+
         if x_train is None:
             x_train = self.x_train
             y_train = self.y_train
@@ -74,14 +76,14 @@ class Pretraining(object):
                     os.mkdir(path)
                 except:
                     pass
-            if os.path.exists(save + '/best.json'):
-                with open(save + '/best.json', 'r') as f:
+            if os.path.exists(save + '/init/best.json'):
+                with open(save + '/init/best.json', 'r') as f:
                     data = json.load(f)
                     loss = float(data['loss'])
                     self.model.load_weights(save + '/init/chkpt')
                     w_best = self.model.get_weights()
+                    print("Previous best, loss =", loss)
 
-        print("*** Initialize Draw")
         for _ in range(ndraws):
             self.model = tf.keras.models.clone_model(self.model)
             self.compile(optimizer=Adam(lr))
@@ -90,7 +92,7 @@ class Pretraining(object):
             # Create generator for training in steps
             datagen = ImageDataGenerator()
 
-            print("\n*** Lottery", _ + 1)
+            print("\n*** Lottery", _ + 1, "of", ndraws)
             self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
                                                   epochs=epochs, steps_per_epoch=steps, verbose=1)
 
@@ -120,7 +122,7 @@ class Pretraining(object):
         # Late Resetting
         self.model.save_weights(save + '/init/chkpt')
         best = {'loss': best}
-        with open(save + "/best.json", "w") as f:
+        with open(save + "/init/best.json", "w") as f:
             data = json.dumps(best)
             f.write(data)
 
@@ -151,6 +153,8 @@ class Pretraining(object):
             metrics   : training metrics to report
             save      : file to save warmup weights 
         """
+        print("\n*** Warmup (for numerical stability)")
+
         if x_train is None:
             x_train = self.x_train
             y_train = self.y_train
@@ -164,8 +168,8 @@ class Pretraining(object):
                     pass
             if os.path.exists(save + '/init/chkpt.index'):
                 self.model.load_weights(save + '/init/chkpt')
+                print("Load weights from Lottery Draw initialization")
 
-        print("*** Warmup (for numerical stability)")
         # Setup learning rate scheduler
         self.compile(optimizer=Adam(s_lr), loss=loss, metrics=metrics)
         lrate = LearningRateScheduler(self.warmup_scheduler, verbose=1)
@@ -202,6 +206,11 @@ class Pretraining(object):
                     pass
             if os.path.exists(save + '/tune/chkpt.index'):
                 self.model.load_weights(save + '/tune/chkpt')
+
+            if lr is None:
+                with open(save + '/tune/best.json') as f:
+                    pass # TODO
+            
 
         print("*** Pretext Task (for essential features)")
 

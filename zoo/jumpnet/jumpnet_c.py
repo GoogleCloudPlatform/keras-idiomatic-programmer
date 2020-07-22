@@ -44,7 +44,7 @@ class JumpNet(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
 
-    def __init__(self, n_layers, stem=[32, 64],
+    def __init__(self, n_layers, stem={ 'n_filters': [32, 64], 'pooling': 'feature' },
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
                  reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
         """ Construct a Jump Convolutional Neural Network 
@@ -93,16 +93,23 @@ class JumpNet(Composable):
             stack  : convolutional filters in two 3x3 stack
         """
         stack = metaparameters['stem']
+        n_filters = stack['n_filters']
+
+        pooling = stack['pooling']
+        if pooling == 'feature':
+           strides = (2, 2)
+        else:
+           strides = (1, 1)
     
         # Stack of two 3x3 filters
-        x = self.Conv2D(inputs, stack[0], (3, 3), strides=(2, 2), padding='same')
+        x = self.Conv2D(inputs, n_filters[0], (3, 3), strides=strides, padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
 
-        x = self.Conv2D(x, stack[1], (3, 3), strides=(1, 1), padding='same')
+        x = self.Conv2D(x, n_filters[1], (3, 3), strides=(1, 1), padding='same')
         x = self.BatchNormalization(x)
         x = self.ReLU(x)
-    
+
         return x
 
     def learner(self, x, **metaparameters):
@@ -174,23 +181,12 @@ class JumpNet(Composable):
         x = Add()([shortcut, x])
         return x
 
-    def REMclassifier(self, x, n_classes):
-        """ Construct the Classifier Group 
-            x         : input to the classifier
-            n_classes : number of output classes
-        """
-        # Pool at the end of all the convolutional residual blocks
-        x = GlobalAveragePooling2D()(x)
-
-        # Final Dense Outputting Layer for the outputs
-        outputs = self.Dense(x, n_classes, activation='softmax')
-        return outputs
-
-# Example of JumpNet
+# Example of JumpNet  for CIFAR-10
 groups = [ { 'n_filters': 32, 'n_blocks': 3 },
            { 'n_filters': 64,  'n_blocks': 4 },
            { 'n_filters': 128, 'n_blocks': 3 }]
-jumpnet = JumpNet(n_layers=groups, stem=[16, 32], input_shape=(32, 32, 3), n_classes=10,
+jumpnet = JumpNet(n_layers=groups, stem={ 'n_filters': [16, 32], 'pooling': None }, 
+                  input_shape=(32, 32, 3), n_classes=10,
                   reg=l2(0.005))
 jumpnet.summary()
 

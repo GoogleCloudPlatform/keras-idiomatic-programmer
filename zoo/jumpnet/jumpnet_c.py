@@ -204,7 +204,8 @@ if __name__ == '__main__':
     # compile the model
     jumpnet.compile(loss='categorical_crossentropy', metrics=['acc'])
 
-    lr = None, bs = None
+    lr = None
+    bs = None
     for _ in range(1, len(sys.argv)):
         if sys.argv[_].startswith('init'):
            # Use Lottery ticket approach for best initialization draw

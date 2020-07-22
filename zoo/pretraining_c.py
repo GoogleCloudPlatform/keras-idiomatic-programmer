@@ -185,6 +185,9 @@ class Pretraining(object):
 
         if save is not None:
             self.model.save_weights(save + '/warmup/chkpt')
+            with open(save + '/warmup/hp.json', 'w') as f:
+                data = {'s_lr': s_lr, 'e_lr': e_lr, 'epochs': epochs }
+                json.dump(data, f)
 
     def pretext(self, x_train= None, zigsaw=9, epochs=10, batch_size=32, lr=0.001, 
                 loss='mse', metrics=['mse'], save=None):

@@ -70,6 +70,7 @@ class Pretraining(object):
 
         loss = sys.float_info.max
         w_best = None
+        t_draws = 0
         if save is not None:
             for path in [ save, save + '/init']:
                 try:
@@ -80,6 +81,7 @@ class Pretraining(object):
                 with open(save + '/init/best.json', 'r') as f:
                     data = json.load(f)
                     loss = float(data['loss'])
+                    t_draws = int(data['ndraws'])
                     self.model.load_weights(save + '/init/chkpt')
                     w_best = self.model.get_weights()
                     print("Previous best, loss =", loss)
@@ -103,7 +105,7 @@ class Pretraining(object):
                 w_best = self.model.get_weights()
                 print("\n*** Current Best:", metric, loss) 
                 if save is not None:
-                    self._save_best(save, loss)
+                    self._save_best(save, loss, t_draws + _ + 1)
 
         # Set the best
         if w_best is not None:
@@ -111,17 +113,18 @@ class Pretraining(object):
  
             # Save the initialized weights
             if save is not None:
-                self._save_best(save, loss)
+                self._save_best(save, loss, t_draws + ndraws)
         print("\n*** Selected Draw:", metric, loss) 
 
-    def _save_best(self, save, best):
+    def _save_best(self, save, best, ndraws):
         """ Save current best weights
             save : directort to save weights
             best : metric information
+            ndraws: total number of draws
         """
         # Late Resetting
         self.model.save_weights(save + '/init/chkpt')
-        best = {'loss': best}
+        best = {'loss': best, 'ndraws': ndraws}
         with open(save + "/init/best.json", "w") as f:
             data = json.dumps(best)
             f.write(data)
@@ -187,6 +190,7 @@ class Pretraining(object):
                 loss='mse', metrics=['mse'], save=None):
         """ Pretrain using unsupervised pre-text task for zigsaw puzzle to learn essential features
             x_train   : training images
+            zigsaw    : number of tiles in zigsaw puzzle
             epochs    : number of epochs for pretext task training
             batch_size: batch size
             lr        : pre-text learning rate
@@ -255,7 +259,10 @@ class Pretraining(object):
                 r2 = np.concatenate((tiles[ix[2]], tiles[ix[3]]))
                 image = np.concatenate((r1, r2), axis=1)
             else:
-                pass
+                r1 = np.concatenate((tiles[ix[0]], tiles[ix[1]], tiles[ix[2]]))
+                r2 = np.concatenate((tiles[ix[3]], tiles[ix[4]], tiles[ix[5]]))
+                r3 = np.concatenate((tiles[ix[6]], tiles[ix[7]], tiles[ix[8]]))
+                image = np.concatenate((r1, r2, r3), axis=1)
             px_train.append(image)
             py_train.append(ix)
 

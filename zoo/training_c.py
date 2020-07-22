@@ -31,7 +31,7 @@ from sklearn.model_selection import train_test_split
 
 import random
 import math
-import sys
+import sys, os, json
 
 class Training(object):
     ''' Training Class for Models '''
@@ -133,6 +133,8 @@ class Training(object):
             metrics    : metrics to report during training
             save       : where to store training metadata
         """
+        print("\n*** Full Training")
+
         if x_train is None:
             x_train = self.x_train
             y_train = self.y_train
@@ -147,9 +149,17 @@ class Training(object):
                 self.model.load_weights(save + '/pretext/chkpt')
             elif os.path.isfile(save + '/tune/chkpt.index'):
                 self.model.load_weights(save + '/tune/chkpt')
-                
+            elif os.path.isfile(save + '/warmup/chkpt.index'):
+                self.model.load_weights(save + '/warmup/chkpt')
+            elif os.path.isfile(save + '/init/chkpt.index'):
+                self.model.load_weights(save + '/init/chkpt')
 
-        print("\n*** Full Training")
+            if lr is None:
+                if os.path.isfile(save + '/tune/hp.json'):
+                    with open(save + '/tune/hp.json', 'r') as f:
+                        data = json.load(f)
+                        lr = data['lr']
+                        batch_size = data['bs']
 
         # Check for hidden dropout layer in classifier
         for layer in self.model.layers:

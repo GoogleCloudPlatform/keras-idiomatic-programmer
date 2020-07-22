@@ -208,7 +208,7 @@ class Pretraining(object):
                 self.model.load_weights(save + '/tune/chkpt')
 
             if lr is None:
-                with open(save + '/tune/best.json') as f:
+                with open(save + '/tune/hp.json') as f:
                     pass # TODO
             
 

@@ -120,7 +120,7 @@ class Training(object):
         return lr
 
     def training(self, x_train=None, y_train=None, epochs=10, batch_size=32, lr=0.001, decay=(None, 0),
-                 split=0.1, loss='categorical_crossentropy', metrics=['acc']):
+                 split=0.1, loss='categorical_crossentropy', metrics=['acc'], save=None):
         """ Full Training of the Model
             x_train    : training images
             y_train    : training labels
@@ -131,10 +131,23 @@ class Training(object):
             split      : percent to use as validation data
             loss       : loss function
             metrics    : metrics to report during training
+            save       : where to store training metadata
         """
         if x_train is None:
             x_train = self.x_train
             y_train = self.y_train
+
+        if save is not None:
+            for path in [ save, save + '/train']:
+                try:
+                    os.mkdir(path)
+                except:
+                    pass
+            if os.path.isfile(save + '/pretext/chkpt.index'):
+                self.model.load_weights(save + '/pretext/chkpt')
+            elif os.path.isfile(save + '/tune/chkpt.index'):
+                self.model.load_weights(save + '/tune/chkpt')
+                
 
         print("\n*** Full Training")
 

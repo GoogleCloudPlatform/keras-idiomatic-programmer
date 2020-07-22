@@ -105,6 +105,8 @@ class HyperTune(object):
                     pass
             if os.path.isfile(save + '/warmup/chkpt.index'):
                 self.model.load_weights(save + '/warmup/chkpt')
+            elif os.path.isfile(save + '/init/chkpt.index'):
+                self.model.load_weights(save + '/warmup/chkpt')
 
         print("\n*** Hyperparameter Grid Search")
 
@@ -220,6 +222,8 @@ class HyperTune(object):
                     pass
             if os.path.isfile(save + '/warmup/chkpt.index'):
                 self.model.load_weights(save + '/warmup/chkpt')
+            elif os.path.isfile(save + '/init/chkpt.index):
+                self.model.load_weights(save + '/warmup/chkpt')
 
         print("\n*** Hyperparameter Random Search")
 
@@ -255,6 +259,7 @@ class HyperTune(object):
             val_acc = result[1]
             if val_acc > best[0]:
                 best = (val_acc, lr, bs)
+                print("\nCurrent Best: lr", lr, "bs", bs")
 
         # narrow search space to within vicinity of the best near-optima
         learning_rates = [ best[1] / 2, best[1] * 2]
@@ -278,6 +283,7 @@ class HyperTune(object):
             val_acc = result[1]
             if val_acc > best[0]:
                 best = (val_acc, lr, bs)
+                print("\nCurrent Best: lr", lr, "bs", bs")
 
         print("\nSelected Learning Rate", lr, "Batch Size", bs)
 

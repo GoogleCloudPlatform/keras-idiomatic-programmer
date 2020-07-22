@@ -238,7 +238,7 @@ class HyperTune(object):
         # lr values already tried, as not to repeat
         tried = []
         for _ in range(trials):
-            print("\nTrial ", _ + 1)
+            print("\nTrial ", _ + 1, "of", trials)
 
             lr = lr_range[random.randint(0, len(lr_range)-1)]
             bs = batch_range[random.randint(0, len(batch_range)-1)]

@@ -139,13 +139,22 @@ class Training(object):
             x_train = self.x_train
             y_train = self.y_train
 
+        t_epochs = 0
+
         if save is not None:
             for path in [ save, save + '/train']:
                 try:
                     os.mkdir(path)
                 except:
                     pass
-            if os.path.isfile(save + '/pretext/chkpt.index'):
+            if os.path.isfile(save + '/train/chkpt.index'):
+                self.model.load_weights(save + '/train/chkpt')
+                print("\nIncemental Training, loaded previous weights")
+                if os.path.isfile(save + '/train/train.json'):
+                    with open(save + '/train/train.json', 'r') as f:
+                        data = json.load(f)
+                        t_epochs = data['epochs']
+            elif os.path.isfile(save + '/pretext/chkpt.index'):
                 self.model.load_weights(save + '/pretext/chkpt')
             elif os.path.isfile(save + '/tune/chkpt.index'):
                 self.model.load_weights(save + '/tune/chkpt')
@@ -155,7 +164,12 @@ class Training(object):
                 self.model.load_weights(save + '/init/chkpt')
 
             if lr is None:
-                if os.path.isfile(save + '/tune/hp.json'):
+                if os.path.isfile(save + '/train/train.json'):
+                    with open(save + '/train/train.json', 'r') as f:
+                        data = json.load(f)
+                        lr = data['lr']
+                        batch_size = data['bs']
+                elif os.path.isfile(save + '/tune/hp.json'):
                     with open(save + '/tune/hp.json', 'r') as f:
                         data = json.load(f)
                         lr = data['lr']
@@ -174,7 +188,7 @@ class Training(object):
         elif not isinstance(decay, tuple):
             raise Exception("Training: decay must be (time, value)")
         elif decay[0] not in [None, 'time', 'step', 'exp', 'cosine']:
-            raise Exception("Training: invalid method for decay")
+            raise Exception("Training: invalid method for decay:", decay[0])
 
         self.i_lr    = lr
         self.e_decay = decay
@@ -183,8 +197,15 @@ class Training(object):
         self.compile(optimizer=Adam(lr=lr, decay=decay[1]), loss=loss, metrics=metrics)
 
         lrate = LearningRateScheduler(self.training_scheduler, verbose=1)
-        self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=split, verbose=1,
-                       callbacks=[lrate])
+        result = self.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, validation_split=split, 
+                       verbose=1, callbacks=[lrate])
+
+        if save is not None:
+            self.model.save_weights(save + '/train/chkpt')
+            with open(save + '/train/train.json', 'w') as f:
+                data = { 'lr': lr, 'bs': batch_size, 'epochs': t_epochs + epochs,
+                         'val_loss': result.history['val_loss'], 'val_acc': result.history['val_acc'] }
+                json.dump(data, f)
 
     def evaluate(self, x_test=None, y_test=None):
         """ Call underlying evaluate() method

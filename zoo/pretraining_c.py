@@ -105,7 +105,7 @@ class Pretraining(object):
                 w_best = self.model.get_weights()
                 print("\n*** Current Best:", metric, loss) 
                 if save is not None:
-                    self._save_best(save, loss, t_draws + _ + 1)
+                    self._save_best(save, loss, t_draws + _ + 1, epochs, steps)
 
         # Set the best
         if w_best is not None:
@@ -113,10 +113,10 @@ class Pretraining(object):
  
             # Save the initialized weights
             if save is not None:
-                self._save_best(save, loss, t_draws + ndraws)
+                self._save_best(save, loss, t_draws + ndraws, epochs, steps)
         print("\n*** Selected Draw:", metric, loss) 
 
-    def _save_best(self, save, best, ndraws):
+    def _save_best(self, save, best, ndraws, epochs, steps):
         """ Save current best weights
             save : directort to save weights
             best : metric information
@@ -124,7 +124,7 @@ class Pretraining(object):
         """
         # Late Resetting
         self.model.save_weights(save + '/init/chkpt')
-        best = {'loss': best, 'ndraws': ndraws}
+        best = {'loss': best, 'ndraws': ndraws, 'epochs': epochs, 'steps': steps}
         with open(save + "/init/best.json", "w") as f:
             data = json.dumps(best)
             f.write(data)

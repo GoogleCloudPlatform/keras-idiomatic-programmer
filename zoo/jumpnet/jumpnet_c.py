@@ -226,6 +226,6 @@ if __name__ == '__main__':
         elif sys.argv[_].startswith('train'):
            # Do full training
            epochs = int(sys.argv[_].split('=')[1])
-           jumpnet.training(epochs=epochs, batch_size=bs, lr=lr, decay=('cosine', 0))
+           jumpnet.training(epochs=epochs, batch_size=bs, lr=lr, decay=('cosine', 0), save='cifar10')
            jumpnet.evaluate()
            

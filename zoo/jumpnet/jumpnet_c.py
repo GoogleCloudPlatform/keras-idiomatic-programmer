@@ -22,7 +22,7 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, BatchNormalization, Re
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D, Add, Concatenate
 from tensorflow.keras.regularizers import l2
 
-import sys
+import sys, json
 sys.path.append('../')
 from models_c import Composable
 
@@ -205,8 +205,13 @@ if __name__ == '__main__':
     for _ in range(1, len(sys.argv)):
         if sys.argv[_].startswith('init'):
            # Use Lottery ticket approach for best initialization draw
-           ndraws = int(sys.argv[_].split('=')[1])
-           jumpnet.init_draw(ndraws=ndraws, save='cifar10')
+           value = sys.argv[_].split('=')[1].split(',')
+           ndraws = int(value[0])
+           if len(value) > 1:
+               early = bool(value[1])
+           else:
+               early = False
+           jumpnet.init_draw(ndraws=ndraws, early=False, save='cifar10')
 
         elif sys.argv[_].startswith('warmup'):
            # Warmup the weight distribution for numeric stability

@@ -83,6 +83,7 @@ class Pretraining(object):
                 with open(save + '/init/best.json', 'r') as f:
                     data = json.load(f)
                     loss = float(data['loss'])
+                    acc  = float(data['acc'])
                     t_draws = int(data['ndraws'])
                     self.model.load_weights(save + '/init/chkpt')
                     w_best = self.model.get_weights()

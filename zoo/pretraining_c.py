@@ -49,8 +49,8 @@ class Pretraining(object):
     w_lr           = 0    # target warmup rate
     w_epochs       = 0    # number of epochs in warmup
 
-    def init_draw(self, x_train=None, y_train=None, ndraws=5, epochs=3, steps=350, lr=1e-06, batch_size=32, 
-                  metric='loss', save=None):
+    def init_draw(self, x_train=None, y_train=None, ndraws=5, epochs=3, steps=350, lr=1e-06, 
+                  batch_size=32, metric='loss', early=False, save=None):
         """ Use the lottery ticket principle to find the best weight initialization
             x_train : training images
             y_train : training labels
@@ -60,6 +60,7 @@ class Pretraining(object):
             lr      : tiny learning rate
             batch_size: batch size
             metric  : metric used for determining best draw
+            early   : whether to early stop when best draw found
             save    : file to save initialized weights to
         """
         print("\n*** Initialize Draw")
@@ -69,6 +70,7 @@ class Pretraining(object):
             y_train = self.y_train
 
         loss = sys.float_info.max
+        acc  = 0
         w_best = None
         t_draws = 0
         if save is not None:
@@ -96,16 +98,20 @@ class Pretraining(object):
 
             print("\n*** Lottery", _ + 1, "of", ndraws)
             self.model.fit(datagen.flow(x_train, y_train, batch_size=batch_size),
-                                                  epochs=epochs, steps_per_epoch=steps, verbose=1)
+                                        epochs=epochs, steps_per_epoch=steps, verbose=1)
 
             # Next Best
-            d_loss = self.model.history.history[metric][epochs-1]
+            d_loss = self.model.history.history['loss'][epochs-1]
+            d_acc  = self.model.history.history['acc'][epochs-1]
             if d_loss < loss:
                 loss = d_loss
+                acc  = d_acc
                 w_best = self.model.get_weights()
                 print("\n*** Current Best:", metric, loss) 
+                if early:
+                    break
                 if save is not None:
-                    self._save_best(save, loss, t_draws + _ + 1, epochs, steps)
+                    self._save_best(save, loss, acc, t_draws + _ + 1, epochs, steps)
 
         # Set the best
         if w_best is not None:
@@ -113,18 +119,19 @@ class Pretraining(object):
  
             # Save the initialized weights
             if save is not None:
-                self._save_best(save, loss, t_draws + ndraws, epochs, steps)
+                self._save_best(save, loss, acc, t_draws + ndraws, epochs, steps)
         print("\n*** Selected Draw:", metric, loss) 
 
-    def _save_best(self, save, best, ndraws, epochs, steps):
+    def _save_best(self, save, loss, acc, ndraws, epochs, steps):
         """ Save current best weights
             save : directort to save weights
-            best : metric information
+            loss : metric information
+            acc  : metric information
             ndraws: total number of draws
         """
         # Late Resetting
         self.model.save_weights(save + '/init/chkpt')
-        best = {'loss': best, 'ndraws': ndraws, 'epochs': epochs, 'steps': steps}
+        best = {'loss': loss, 'acc': acc, 'ndraws': ndraws, 'epochs': epochs, 'steps': steps}
         with open(save + "/init/best.json", "w") as f:
             data = json.dumps(best)
             f.write(data)

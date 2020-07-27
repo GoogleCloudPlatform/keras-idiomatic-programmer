@@ -211,7 +211,7 @@ if __name__ == '__main__':
                early = bool(value[1])
            else:
                early = False
-           jumpnet.init_draw(ndraws=ndraws, early=False, save='cifar10')
+           jumpnet.init_draw(ndraws=ndraws, early=early, save='cifar10')
 
         elif sys.argv[_].startswith('warmup'):
            # Warmup the weight distribution for numeric stability

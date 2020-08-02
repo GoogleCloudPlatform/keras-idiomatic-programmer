@@ -190,6 +190,9 @@ class Training(object):
         elif decay[0] not in [None, 'time', 'step', 'exp', 'cosine']:
             raise Exception("Training: invalid method for decay:", decay[0])
 
+        if batch_size is None:
+            batch_size = 32
+
         self.i_lr    = lr
         self.e_decay = decay
         self.e_steps = x_train.shape[0] // batch_size

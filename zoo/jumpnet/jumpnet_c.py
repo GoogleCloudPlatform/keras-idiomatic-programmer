@@ -203,7 +203,13 @@ if __name__ == '__main__':
     lr = None
     bs = None
     for _ in range(1, len(sys.argv)):
-        if sys.argv[_].startswith('init'):
+        if sys.argv[_].startswith('lr'):
+           # learning rate
+           lr = float(sys.argv[_].split('=')[1])
+        elif sys.argv[_].startswith('bs'):
+           # batch size
+           bs = int(sys.argv[_].split('=')[1])
+        elif sys.argv[_].startswith('init'):
            # Use Lottery ticket approach for best initialization draw
            value = sys.argv[_].split('=')[1].split(',')
            ndraws = int(value[0])

@@ -72,7 +72,10 @@ class Pretraining(object):
         loss = sys.float_info.max
         acc  = 0
         w_best = None
-        t_draws = 0
+
+        # previous values
+        prev = None
+        p_draws = 0
         if save is not None:
             for path in [ save, save + '/init']:
                 try:
@@ -84,10 +87,15 @@ class Pretraining(object):
                     data = json.load(f)
                     loss = float(data['loss'])
                     acc  = float(data['acc'])
-                    t_draws = int(data['ndraws'])
+                    p_draws = int(data['ndraws'])
                     self.model.load_weights(save + '/init/chkpt')
                     w_best = self.model.get_weights()
-                    print("Previous best, loss =", loss)
+                    print("Previous best, loss =", loss, 'acc = ', acc)
+
+                    try:
+                        prev = data['prev']
+                    except:
+                        prev = { 'loss': loss, 'acc': acc, 'ndraws': p_draws }
 
         for _ in range(ndraws):
             self.model = tf.keras.models.clone_model(self.model)
@@ -110,9 +118,10 @@ class Pretraining(object):
                 w_best = self.model.get_weights()
                 print("\n*** Current Best:", metric, loss) 
                 if early:
+                    ndraws = _ + 1
                     break
                 if save is not None:
-                    self._save_best(save, loss, acc, t_draws + _ + 1, epochs, steps)
+                    self._save_best(save, loss, acc, p_draws + _ + 1, epochs, steps, prev)
 
         # Set the best
         if w_best is not None:
@@ -120,22 +129,29 @@ class Pretraining(object):
  
             # Save the initialized weights
             if save is not None:
-                self._save_best(save, loss, acc, t_draws + ndraws, epochs, steps)
+                self._save_best(save, loss, acc, p_draws + ndraws, epochs, steps, prev)
         print("\n*** Selected Draw:", metric, loss) 
 
-    def _save_best(self, save, loss, acc, ndraws, epochs, steps):
+    def _save_best(self, save, loss, acc, ndraws, epochs, steps, prev=None):
         """ Save current best weights
-            save : directort to save weights
-            loss : metric information
-            acc  : metric information
+            save  : directort to save weights
+            loss  : metric information
+            acc   : metric information
             ndraws: total number of draws
+            epochs: number of epochs
+            steps : number of steps per epoch
+            prev  : previous results
         """
         # Late Resetting
         self.model.save_weights(save + '/init/chkpt')
-        best = {'loss': loss, 'acc': acc, 'ndraws': ndraws, 'epochs': epochs, 'steps': steps}
         with open(save + "/init/best.json", "w") as f:
-            data = json.dumps(best)
+            if prev is None:
+                data = {'loss': loss, 'acc': acc, 'ndraws': ndraws, 'epochs': epochs, 'steps': steps}
+            else:
+                data = {'loss': loss, 'acc': acc, 'ndraws': ndraws, 'epochs': epochs, 'steps': steps, 'prev': prev}
+            data = json.dumps(data)
             f.write(data)
+            
 
     def warmup_scheduler(self, epoch, lr):
         """ learning rate schedular for warmup training

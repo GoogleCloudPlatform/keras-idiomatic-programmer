@@ -93,7 +93,7 @@ class Pretraining(object):
                     print("Previous best, loss =", loss, 'acc = ', acc)
 
                     try:
-                        prev = data['prev']
+                        prev = [ data['prev'], { 'loss': loss, 'acc': acc, 'ndraws': p_draws } ]
                     except:
                         prev = { 'loss': loss, 'acc': acc, 'ndraws': p_draws }
 

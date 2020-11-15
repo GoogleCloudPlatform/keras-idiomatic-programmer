@@ -40,13 +40,15 @@ class Layers(object):
     reg          = None         # kernel regularizer
     relu         = None         # ReLU max value
     bias         = True         # whether to use bias in dense/conv layers
+    bn_epsilon   = 1e-5		# batch norm epsilon
  
-    def __init__(self, init_weights, reg, relu, bias):
+    def __init__(self, init_weights, reg, relu, bn_epsilon, bias):
         """ Constructor
             init_weights : kernel initializer
             reg          : kernel regularizer
             relu         : clip value for ReLU
             bias         : whether to use bias
+            bn_epsilon   : epsilon for batch normalization
         """
         if init_weights is not None:
             self.init_weights = init_weights
@@ -56,6 +58,8 @@ class Layers(object):
             self.relu = relu
         if bias is not None:
             self.bias = bias
+        if bn_epsilon is not None:
+            self.bn_epsilon = bn_epsilon
 
     def prestem(self, inputs, **metaparameters):
       """ Construct a Pre-stem for Stem Group
@@ -298,7 +302,7 @@ class Layers(object):
         """ Construct a Batch Normalization function
             x : input to function
         """
-        x = BatchNormalization(epsilon=1.001e-5, **params)(x)
+        x = BatchNormalization(epsilon=self.bn_epsilon, **params)(x)
         return x
 
     ###

@@ -43,16 +43,19 @@ class SiameseTwin(Composable):
 
 
     def __init__(self, input_shape=(105, 105, 3),
-                       init_weights='glorot_uniform', reg=None, relu=None, bias=True):
+                       initializer='glorot_uniform', regularizer=None, relu_clip=None, 
+                       bn_epsilon=None, use_bias=True):
         """ Construct a Siamese Twin Neural Network 
             input_shape : input shape
-            reg         : kernel regularizer
-            relu        : max value for ReLU
-            init_weights: kernel initializer
-            bias        : whether to use bias in conjunction with batch norm
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias in conjunction with batch norm
         """
         # Configure the base (super) class
-        super().__init__(reg=reg, relu=relu, init_weights=init_weights, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
+                            relu_clip=None, bn_epsilon=None, use_bias=use_bias)
     
         # Build the twin model
         twin = self.twin(input_shape)

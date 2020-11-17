@@ -43,7 +43,8 @@ class MobileNetV2(Composable):
 
     def __init__(self, groups=None, alpha=1, expansion=6, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=6.0, bias=False):
+                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=6.0, 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a Mobile Convolution Neural Network V2
             groups      : number of filters and blocks per group
             alpha       : width multiplier
@@ -51,13 +52,15 @@ class MobileNetV2(Composable):
             input_shape : the input shape
             n_classes   : number of output classes
             include_top : whether to include classifier
-            reg         : kernel regularizer
-            init_weights: kernel initializer
-            relu        : max value for ReLU
-            bias        : whether to use a bias
+            regularizer : kernel regularizer
+            initializer : kernel initializer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use a bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
         
         if groups is None:
              groups = list(self.groups)
@@ -198,15 +201,15 @@ class MobileNetV2(Composable):
         return x
 
 # Example
-mobilenet = MobileNetV2()
+# mobilenet = MobileNetV2()
 
 def example():
     ''' Example for constructing/training a MobileNet V2 model on CIFAR-10
     '''
     # Example of constructing a mini-MobileNet
-    groups = [ { 'n_filters': 16,  'n_blocks': 1 },
-               { 'n_filters': 32,  'n_blocks': 2 },
-               { 'n_filters': 64,  'n_blocks': 3 } ]
+    groups = [ { 'n_filters': 16,  'n_blocks': 1, 'strides' : 2 },
+               { 'n_filters': 32,  'n_blocks': 2, 'strides' : 1 },
+               { 'n_filters': 64,  'n_blocks': 3, 'strides' : 1 } ]
     mobilenet = MobileNetV2(groups, input_shape=(32, 32, 3), n_classes=10)
     mobilenet.model.summary()
     mobilenet.cifar10()

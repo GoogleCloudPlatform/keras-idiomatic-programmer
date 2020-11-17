@@ -45,7 +45,8 @@ class SEResNeXt(Composable):
 
     def __init__(self, n_layers, cardinality=32, ratio=16, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
+                 regularizer=l2(0.001), initializer='he_normal', relu_clip=None, 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a Residual Next Convolution Neural Network
             n_layers    : number of layers
             cardinality : width of group convolution
@@ -53,13 +54,15 @@ class SEResNeXt(Composable):
             input_shape : the input shape
             n_classes   : number of output classes
             include_top : whether to include classifier
-            init_weights: kernel initializer
-            reg         : kernel regularization
-            relu        : max value for ReLU
-            bias        : whether to use bias with batchnorm
+            initializer : kernel initializer
+            regularizer : kernel regularization
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias with batchnorm
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
         
         # predefined
         if isinstance(n_layers, int):

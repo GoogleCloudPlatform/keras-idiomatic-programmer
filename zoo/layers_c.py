@@ -189,13 +189,13 @@ class Layers(object):
             initializer = hyperparameters['initializer']
         else:
             initializer = self.initializer
-        if 'bias' in hyperparameters:
-            bias = hyperparameters['bias']
+        if 'use_bias' in hyperparameters:
+            use_bias = hyperparameters['use_bias']
         else:
-            bias = self.bias
+            use_bias = self.use_bias
 
         x = Conv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
-                   use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
+                   use_bias=use_bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def Conv2DTranspose(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -218,13 +218,13 @@ class Layers(object):
             initializer = hyperparameters['initializer']
         else:
             initializer = self.initializer 
-        if 'bias' in hyperparameters:
-            bias = hyperparameters['bias']
+        if 'use_bias' in hyperparameters:
+            use_bias = hyperparameters['use_bias']
         else:
-            bias = self.bias
+            use_bias = self.use_bias
 
         x = Conv2DTranspose(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, 
-			    use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
+			    use_bias=use_bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def DepthwiseConv2D(self, x, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -246,13 +246,13 @@ class Layers(object):
             initializer = hyperparameters['initializer']
         else:
             initializer = self.initializer
-        if 'bias' in hyperparameters:
-            bias = hyperparameters['bias']
+        if 'use_bias' in hyperparameters:
+            use_bias = hyperparameters['use_bias']
         else:
-            bias = self.bias
+            use_bias = self.use_bias
 
         x = DepthwiseConv2D(kernel_size, strides=strides, padding=padding, activation=activation, 
-			    use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
+			    use_bias=use_bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def SeparableConv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -275,13 +275,13 @@ class Layers(object):
             initializer = hyperparameters['initializer']
         else:
             initializer = self.initializer
-        if 'bias' in hyperparameters:
-            bias = hyperparameters['bias']
+        if 'use_bias' in hyperparameters:
+            use_bias = hyperparameters['use_bias']
         else:
-            bias = self.bias
+            use_bias = self.use_bias
 
         x = SeparableConv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
-                            use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
+                            use_bias=use_bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
 
         return x
 

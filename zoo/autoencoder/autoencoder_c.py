@@ -28,17 +28,21 @@ class AutoEncoder(Composable):
     layers = [ {'n_nodes': 256 }, { 'n_nodes': 128 }, { 'n_nodes': 64 } ]
 
     def __init__(self, layers=None, input_shape=(32, 32, 3),
-                 init_weights='he_normal', reg=None, relu=None, bias=True):
+                 initializer='he_normal', regularizer=None, relu_clip=None, 
+                 bn_epsilon=None, use_bias=True):
         ''' Construct an AutoEncoder
             input_shape : input shape to the autoencoder
             layers      : the number of filters per layer
-            init_weights: kernel initializer
-            reg         : kernel regularizer
-            relu        : clip value for ReLU
-            bias        : whether to use bias
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : clip value for ReLU
+            bn_epsilon  : epsilon for batch normalization
+            use_bias    : whether to use bias
         '''
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon,
+                            use_bias=use_bias)
 
         if layers is None:
            layers = self.layers

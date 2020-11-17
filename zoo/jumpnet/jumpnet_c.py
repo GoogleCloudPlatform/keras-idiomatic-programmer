@@ -46,20 +46,23 @@ class JumpNet(Composable):
 
     def __init__(self, n_layers, stem={ 'n_filters': [32, 64], 'pooling': 'feature' },
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
+                 regularizer=l2(0.001), relu_clip=None, initializer='he_normal', 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a Jump Convolutional Neural Network 
             n_layers    : number of layers
             stem        : number of filters in the stem convolutional stack
             input_shape : input shape
             n_classes   : number of output classes
             include_top : whether to include classifier
-            reg         : kernel regularizer
-            relu        : max value for ReLU
-            init_weights: kernel initializer
-            bias        : whether to use bias with batchnorm
+            regulalizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            initializer : kernel initializer
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        super().__init__(reg=reg, relu=relu, init_weights=init_weights, bias=bias)
+        Composable.__init__(self, regularizer=regularizer, relu_clip=relu_clip, 
+                            initializer=initializer, bn_epsilon=bn_epsilon, use_bias=use_bias)
 
         # predefined
         if isinstance(n_layers, int):
@@ -187,7 +190,7 @@ groups = [ { 'n_filters': 32, 'n_blocks': 3 },
            { 'n_filters': 128, 'n_blocks': 3 }]
 jumpnet = JumpNet(n_layers=groups, stem={ 'n_filters': [16, 32], 'pooling': None }, 
                   input_shape=(32, 32, 3), n_classes=10,
-                  reg=l2(0.005))
+                  regularizer=l2(0.005))
 jumpnet.summary()
 
 if __name__ == '__main__':

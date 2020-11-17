@@ -44,7 +44,8 @@ class ShuffleNet(Composable):
 
     def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=False):
+                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=None, 
+                 bn_epsilon=None, use_bias=False):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
             filters     : filters per group based on partitions
@@ -53,12 +54,14 @@ class ShuffleNet(Composable):
             input_shape : the input shape to the model
             n_classes   : number of output classes
             include_top : whether to include classifier
-            init_weights: kernel initializer
-            reg         : kernel regularizer
-            relu        : max value for ReLU
-            bias        : whether to use bias in conjunction with batch norm
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias in conjunction with batch norm
         '''
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
         
         if groups is None:
             groups = list(ShuffleNet.groups)

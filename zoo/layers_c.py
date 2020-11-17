@@ -36,30 +36,30 @@ import sys
 class Layers(object):
     ''' Layers class for Composable Models '''
 
-    init_weights = 'he_normal'  # weight initialization
-    reg          = None         # kernel regularizer
-    relu         = None         # ReLU max value
-    bias         = True         # whether to use bias in dense/conv layers
+    initializer  = 'he_normal'  # weight initialization
+    regularizer  = None         # kernel regularizer
+    relu_clip    = None         # ReLU max value
     bn_epsilon   = 1e-5		# batch norm epsilon
+    use_bias     = True         # whether to use bias in dense/conv layers
  
-    def __init__(self, init_weights, reg, relu, bn_epsilon, bias):
+    def __init__(self, initializer, regularizer, relu_clip, bn_epsilon, use_bias):
         """ Constructor
-            init_weights : kernel initializer
-            reg          : kernel regularizer
-            relu         : clip value for ReLU
-            bias         : whether to use bias
+            initializer  : kernel initializer
+            regularizer  : kernel regularizer
+            relu_clip    : clip value for ReLU
             bn_epsilon   : epsilon for batch normalization
+            use_bias     : whether to use bias
         """
-        if init_weights is not None:
-            self.init_weights = init_weights
-        if reg is not None:
-            self.reg = reg
-        if relu is not None:
-            self.relu = relu
-        if bias is not None:
-            self.bias = bias
+        if initializer is not None:
+            self.initializer = initializer
+        if regularizer is not None:
+            self.regularizer = regularizer
+        if relu_clip is not None:
+            self.relu_clip = relu_clip
         if bn_epsilon is not None:
             self.bn_epsilon = bn_epsilon
+        if use_bias is not None:
+            self.use_bias = use_bias
 
     def prestem(self, inputs, **metaparameters):
       """ Construct a Pre-stem for Stem Group
@@ -153,20 +153,20 @@ class Layers(object):
             x           : input to layer
             activation  : activation function
             use_bias    : whether to use bias
-            init_weights: kernel initializer
-            reg         : kernel regularizer
+            initializer : kernel initializer
+            regularizer : kernel regularizer
         """
-        if 'reg' in hyperparameters:
-            reg = hyperparameters['reg']
+        if 'regularizer' in hyperparameters:
+            reg = hyperparameters['regularizer']
         else:
-            reg = self.reg
-        if 'init_weights' in hyperparameters:
-            init_weights = hyperparameters['init_weights']
+            regularizer = self.regularizer
+        if 'initializer' in hyperparameters:
+            initializer = hyperparameters['initializer']
         else:
-            init_weights = self.init_weights
+            initializer = self.initializer
             
         x = Dense(units, activation, use_bias=use_bias,
-                  kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+                  kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def Conv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -178,24 +178,24 @@ class Layers(object):
             padding     : how to pad when filter overlaps the edge
             activation  : activation function
             use_bias    : whether to include the bias
-            init_weights: kernel initializer
-            reg         : kernel regularizer
+            initializer : kernel initializer
+            regularizer : kernel regularizer
         """
-        if 'reg' in hyperparameters:
-            reg = hyperparameters['reg']
+        if 'regularizer' in hyperparameters:
+            regularizer = hyperparameters['regularizer']
         else:
-            reg = self.reg
-        if 'init_weights' in hyperparameters:
-            init_weights = hyperparameters['init_weights']
+            regularizer = self.regularizer
+        if 'initializer' in hyperparameters:
+            initializer = hyperparameters['initializer']
         else:
-            init_weights = self.init_weights
+            initializer = self.initializer
         if 'bias' in hyperparameters:
             bias = hyperparameters['bias']
         else:
             bias = self.bias
 
         x = Conv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
-                   use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+                   use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def Conv2DTranspose(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -207,24 +207,24 @@ class Layers(object):
             padding     : how to pad when filter overlaps the edge
             activation  : activation function
             use_bias    : whether to include the bias
-            init_weights: kernel initializer
-            reg         : kernel regularizer
+            initializer : kernel initializer
+            regularizer : kernel regularizer
         """
-        if 'reg' in hyperparameters:
-            reg = hyperparameters['reg']
+        if 'regularizer' in hyperparameters:
+            regularizer = hyperparameters['regularizer']
         else:
-            reg = self.reg
-        if 'init_weights' in hyperparameters:
-            init_weights = hyperparameters['init_weights']
+            regularizer = self.regularizer
+        if 'initializer' in hyperparameters:
+            initializer = hyperparameters['initializer']
         else:
-            init_weights = self.init_weights 
+            initializer = self.initializer 
         if 'bias' in hyperparameters:
             bias = hyperparameters['bias']
         else:
             bias = self.bias
 
         x = Conv2DTranspose(n_filters, kernel_size, strides=strides, padding=padding, activation=activation, 
-			    use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+			    use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def DepthwiseConv2D(self, x, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -235,24 +235,24 @@ class Layers(object):
             padding     : how to pad when filter overlaps the edge
             activation  : activation function
             use_bias    : whether to include the bias
-            init_weights: kernel initializer
-            reg         : kernel regularizer
+            initializer : kernel initializer
+            regularizer : kernel regularizer
         """
-        if 'reg' in hyperparameters:
-            reg = hyperparameters['reg']
+        if 'regularizer' in hyperparameters:
+            regularizer = hyperparameters['regularizer']
         else:
-            reg = self.reg
-        if 'init_weights' in hyperparameters:
-            init_weights = hyperparameters['init_weights']
+            regularizer = self.regularizer
+        if 'initializer' in hyperparameters:
+            initializer = hyperparameters['initializer']
         else:
-            init_weights = self.init_weights
+            initializer = self.initializer
         if 'bias' in hyperparameters:
             bias = hyperparameters['bias']
         else:
             bias = self.bias
 
         x = DepthwiseConv2D(kernel_size, strides=strides, padding=padding, activation=activation, 
-			    use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+			    use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def SeparableConv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
@@ -264,24 +264,24 @@ class Layers(object):
             padding     : how to pad when filter overlaps the edge
             activation  : activation function
             use_bias    : whether to include the bias
-            init_weights: kernel initializer
-            reg         : kernel regularizer
+            initializer : kernel initializer
+            regularizer : kernel regularizer
         """
-        if 'reg' in hyperparameters:
-            reg = hyperparameters['reg']
+        if 'regularizer' in hyperparameters:
+            regularizer = hyperparameters['regularizer']
         else:
-            reg = self.reg
-        if 'init_weights' in hyperparameters:
-            init_weights = hyperparameters['init_weights']
+            regularizer = self.regularizer
+        if 'initializer' in hyperparameters:
+            initializer = hyperparameters['initializer']
         else:
-            init_weights = self.init_weights
+            initializer = self.initializer
         if 'bias' in hyperparameters:
             bias = hyperparameters['bias']
         else:
             bias = self.bias
 
         x = SeparableConv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
-                            use_bias=bias, kernel_initializer=init_weights, kernel_regularizer=reg)(x)
+                            use_bias=bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
 
         return x
 
@@ -289,7 +289,7 @@ class Layers(object):
         """ Construct ReLU activation function
             x  : input to activation function
         """
-        x = ReLU(self.relu)(x)
+        x = ReLU(self.relu_clip)(x)
         return x
 	
     def HS(self, x):

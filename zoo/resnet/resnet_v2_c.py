@@ -49,19 +49,22 @@ class ResNetV2(Composable):
 
     def __init__(self, n_layers, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 reg=l2(0.001), relu=None, init_weights='he_normal', bias=False):
+                 regularizer=l2(0.001), relu_clip=None, initializer='he_normal', 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a Residual Convolutional Neural Network V2
             n_layers    : number of layers
             input_shape : input shape
             n_classes   : number of output classes
             include_top : whether to include classifier
-            reg         : kernel regularizer
-            init_weights: kernel initializer
-            relu        : max value for ReLU
-            bias        : whether to include a bias with batchnorm
+            regularizer : kernel regularizer
+            initializer : kernel initializer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to include a bias with batchnorm
         """
         # Configure base (super) class
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
 
         # predefined
         if isinstance(n_layers, int):

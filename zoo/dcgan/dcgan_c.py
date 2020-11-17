@@ -32,16 +32,19 @@ from models_c import Composable
 class DCGAN(Composable):
     
     def __init__(self, latent=100, input_shape=(28, 28, 1), 
-                 reg=None, init_weights='glorot_uniform', relu=None, bias=True): 
+                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
+                 bn_epsilon=None, use_bias=True): 
         """ Construct a Deep Convolutional GAN (DC-GAN)
             latent      : dimension of latent space
             input_shape : input shape
-            reg         : kernel regularizer
-            init_weights: kernel initializer
-            relu        : max value for ReLU
-            bias        : whether to include bias
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch normalization
+            use_bias    : whether to include bias
         """
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
         
         # Construct the generator
         self.g = self.generator(latent=latent, height=input_shape[0], channels=input_shape[2])

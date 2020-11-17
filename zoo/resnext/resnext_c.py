@@ -46,20 +46,22 @@ class ResNeXt(Composable):
     
     def __init__(self, n_layers, cardinality=32, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 reg=l2(0.001), init_weights='he_normal', relu=None, bias=False):
+                 regularizer=l2(0.001), initializer='he_normal', relu_clip=None, 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a Residual Next Convolution Neural Network
             n_layers    : number of layers.
             cardinality : width of group convolution
             input_shape : the input shape
             n_classes   : number of output classes
             include_top : whether to include classifier
-            reg         : kernel regularizer
-            init_weights: kernel initializer
-            relu        : max value for ReLU
-            bias        : whether to use bias with batchnorm
+            regularizer : kernel regularizer
+            initializer : kernel initializer
+            relu_clip   : max value for ReLU
+            use_bias    : whether to use bias with batchnorm
         """
         # Configure base (super) class
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, use_bias=use_bias)
         
         # predefined
         if isinstance(n_layers, int):
@@ -234,4 +236,4 @@ def example():
     resnext.model.summary()
     resnext.cifar10()
 
-# example()
+example()

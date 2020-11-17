@@ -27,23 +27,25 @@ from models_c import Composable
 
 class InceptionV3(Composable):
     """ Construct an Inception V3 convolutional neural network """
-    init_weights='glorot_uniform'
 
     def __init__(self, dropout=0.4, 
                  input_shape=(229, 229, 3), n_classes=1000, include_top=True,
-                 init_weights='glorot_uniform', reg=None, relu=None, bias=False):
+                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
+                 bn_epsilon=None, use_bias=False):
         """ Construct an Inception V3 convolutional neural network
             dropout     : percentage of dropout rate
             input_shape : the input to the model
             n_classes   : number of output classes
             include_top : whether to include the classifier
-            init_weights: kernel initiaklizer
-            reg         : kernel regularizer
-            relu        : max value for ReLU
-            bias        : whether to use bias
+            initializer : kernel initiaklizer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
 
         # The input tensor (299x299 in V3 vs 224x224 in V1/V2)
         inputs = Input(shape=input_shape)

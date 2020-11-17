@@ -30,19 +30,22 @@ class InceptionV1(Composable):
 
     def __init__(self, dropout=0.4, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 init_weights='glorot_uniform', reg=None, relu=None, bias=True):
+                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
+                 bn_epsilon=None, use_bias=True):
         """ Construct an Inception Convolutional Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to the neural network
             n_classes   : number of output classes
             include_top : whether to include the classifier
-            init_weights: kernel initializer
-            reg         : kernel regularizer
-            relu        : max value for ReLU
-            bias        : whether to use bias
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias
         """
         # Configure base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
         
 	# The input tensor
         inputs = Input(shape=input_shape)

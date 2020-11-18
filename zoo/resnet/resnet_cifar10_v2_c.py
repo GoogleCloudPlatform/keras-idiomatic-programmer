@@ -44,10 +44,17 @@ class ResNetCifarV2(Composable):
                       { 'n_filters': 64,  'n_blocks': 111},
                       { 'n_filters': 128, 'n_blocks': 111}]}
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, n_layers,
                  input_shape=(32, 32, 3), n_classes=10, include_top=True,
-                 regularizer=l2(0.001), relu_clip=None, initializer='he_normal', 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Residual Convolutional Neural Network V1
             n_layers    : number of layers
             input_shape : input shape
@@ -60,8 +67,7 @@ class ResNetCifarV2(Composable):
             use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # depth
         if isinstance(n_layers, int):

@@ -32,10 +32,17 @@ class WRN(Composable):
     # Meta-parameter: number of filters per group
     groups = [ { 'n_filters': 16 }, { 'n_filters' : 32 }, { 'n_filters' : 64 } ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, groups=None, depth=16, k=8, dropout=0, 
                  input_shape=(32, 32, 3), n_classes=10, include_top=True,
-                 initializer='he_normal', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Wide Residual (Convolutional Neural) Network 
             depth       : number of layers
             k           : width factor
@@ -50,8 +57,7 @@ class WRN(Composable):
             use_bias    : whether use bias in conjunction with batch norm
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         if groups is None:
             groups = list(self.groups)

@@ -42,10 +42,17 @@ class ShuffleNet(Composable):
             8: [{ 'n_filters' : 384 }, { 'n_filters' : 768 }, { 'n_filters' : 1536 }]
     }
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, groups=None, filters=None, n_partitions=2, reduction=0.25, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=None, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         ''' Construct a Shuffle Convolution Neural Network
             groups      : number of shuffle blocks per shuffle group
             filters     : filters per group based on partitions
@@ -60,8 +67,7 @@ class ShuffleNet(Composable):
             bn_epsilon  : epsilon for batch norm
             use_bias    : whether to use bias in conjunction with batch norm
         '''
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         if groups is None:
             groups = list(ShuffleNet.groups)

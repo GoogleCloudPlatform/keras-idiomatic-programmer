@@ -44,10 +44,17 @@ class JumpNet(Composable):
                       { 'n_filters': 512, 'n_blocks': 3 } ]             # ResNet152
              }
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, n_layers, stem={ 'n_filters': [32, 64], 'pooling': 'feature' },
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 regularizer=l2(0.001), relu_clip=None, initializer='he_normal', 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Jump Convolutional Neural Network 
             n_layers    : number of layers
             stem        : number of filters in the stem convolutional stack
@@ -61,8 +68,9 @@ class JumpNet(Composable):
             use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        Composable.__init__(self, regularizer=regularizer, relu_clip=relu_clip, 
-                            initializer=initializer, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        #Composable.__init__(self, regularizer=regularizer, relu_clip=relu_clip, 
+        #                    initializer=initializer, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # predefined
         if isinstance(n_layers, int):

@@ -30,10 +30,17 @@ sys.path.append('../')
 from models_c import Composable
 
 class DCGAN(Composable):
+
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
     
     def __init__(self, latent=100, input_shape=(28, 28, 1), 
-                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=True): 
+                 **hyperparameters): 
         """ Construct a Deep Convolutional GAN (DC-GAN)
             latent      : dimension of latent space
             input_shape : input shape
@@ -43,8 +50,7 @@ class DCGAN(Composable):
             bn_epsilon  : epsilon for batch normalization
             use_bias    : whether to include bias
         """
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         # Construct the generator
         self.g = self.generator(latent=latent, height=input_shape[0], channels=input_shape[2])

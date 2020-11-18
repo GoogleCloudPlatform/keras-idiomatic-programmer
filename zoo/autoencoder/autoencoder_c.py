@@ -27,9 +27,16 @@ class AutoEncoder(Composable):
     # metaparameter: number of filters per layer
     layers = [ {'n_nodes': 256 }, { 'n_nodes': 128 }, { 'n_nodes': 64 } ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, layers=None, input_shape=(32, 32, 3),
-                 initializer='he_normal', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=True):
+                 **hyperparameters):
         ''' Construct an AutoEncoder
             input_shape : input shape to the autoencoder
             layers      : the number of filters per layer
@@ -40,9 +47,7 @@ class AutoEncoder(Composable):
             use_bias    : whether to use bias
         '''
         # Configure base (super) class
-        Composable.__init__(self, initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon,
-                            use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         if layers is None:
            layers = self.layers
@@ -152,4 +157,4 @@ def example():
     ae.model.evaluate(x_test, x_test)
 
 
-example()
+# example()

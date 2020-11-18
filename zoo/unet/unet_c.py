@@ -34,11 +34,18 @@ class UNet(Composable):
                { 'n_filters': 256, 'crop': 16 },
                { 'n_filters': 512, 'crop': 4 }
              ]
+
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
     
     def __init__(self, groups=None,
                  input_shape=(572, 572, 3), n_classes=2, include_top=True,
-                 regularizer=None, relu_clip=None, initializer='he_normal', 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a U-Net Convolutiuonal Neural Network
 	    groups      : contracting path groups
 	    input_shape : input shape
@@ -51,8 +58,7 @@ class UNet(Composable):
             use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # Predefined
         if groups is None:

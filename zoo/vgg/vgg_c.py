@@ -42,19 +42,22 @@ class VGG(Composable):
 
     def __init__(self, n_layers, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 reg=None, init_weights='glorot_uniform', relu=None, bias=True):
+                 regularizer=None, initializer='glorot_uniform', relu_clip=None, 
+                 bn_epsilon=None, use_bias=True):
         """ Construct a VGG model
             n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
             n_classes:  : number of output classes
             include_top : whether to include classifier
-            reg         : kernel regularizer
-            init_weights: kernel initializer
-            relu        : max value for ReLU
-            bias        : whether to use bias
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias
         """
         # Configure the base (super) class
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, use_bias=use_bias)
 
         # predefined
         if isinstance(n_layers, int):

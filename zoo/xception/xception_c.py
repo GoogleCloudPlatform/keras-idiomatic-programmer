@@ -34,10 +34,17 @@ class Xception(Composable):
               { 'n_filters' : 728 }, { 'n_filters' : 728 }, { 'n_filters' : 728 }, 
               { 'n_filters' : 728 }, { 'n_filters' : 728 } ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : True
+                      }
+
     def __init__(self, entry=None, middle=None, 
                  input_shape=(229, 229, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=True):
+                 **hyperparameters):
         """ Construct an Xception Convolution Neural Network
             entry       : number of blocks/filters for entry module
             middle      : number of blocks/filters for middle module
@@ -50,8 +57,7 @@ class Xception(Composable):
             bn_epsilon  : epsilon for batch norm
             use_bias    : whether to use bias in conjunction with batch norm
         """
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         if entry is None:
             entry = self.entry
@@ -242,4 +248,4 @@ def example():
     xception.model.summary()
     xception.cifar10()
 
-# example()
+example()

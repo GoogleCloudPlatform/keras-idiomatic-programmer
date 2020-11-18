@@ -38,10 +38,17 @@ class SqueezeNetBypass(Composable):
                  { 'n_filters' : 64, 'bypass': False } ],
                [ { 'n_filters' : 64, 'bypass': True } ] ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : True
+                      }
+
     def __init__(self, groups=None, dropout=0.5, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=None, 
-                 bn_epsilon=None, use_bias=True):
+                 **hyperparameters):
         ''' Construct a SqueezeNet Bypass Convolution Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to model
@@ -54,8 +61,7 @@ class SqueezeNetBypass(Composable):
             use_bias    : whether to use bias in conjunction with batch norm
         '''
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         if groups is None:
             groups = list(SqueezeNetBypass.groups)

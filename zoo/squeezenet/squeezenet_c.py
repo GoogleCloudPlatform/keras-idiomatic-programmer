@@ -32,10 +32,17 @@ class SqueezeNet(Composable):
                [ { 'n_filters' : 32 }, { 'n_filters' : 48 }, { 'n_filters' : 48 },  { 'n_filters': 64 } ], 
                [ { 'n_filters' : 64 } ] ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : True
+                      }
+
     def __init__(self, groups=None, dropout=0.5, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=None, 
-                 bn_epsilon=None, use_bias=True):
+                 **hyperparameters):
         ''' Construct a SqueezeNet Convolutional Neural Network
             dropout     : percent of dropout
             groups      : number of filters per block in groups
@@ -49,8 +56,7 @@ class SqueezeNet(Composable):
             bias        : whether to use bias in conjunction with batch norm
         '''
         # Configure base (super) model
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         if groups is None:
             groups = list(SqueezeNet.groups)
@@ -177,4 +183,4 @@ def example():
     squeezenet.model.summary()
     squeezenet.cifar10()
 
-example()
+# example()

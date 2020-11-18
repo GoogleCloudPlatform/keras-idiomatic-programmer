@@ -43,10 +43,17 @@ class SEResNeXt(Composable):
                       { 'filters_in': 1024, 'filters_out' : 2048, 'n_blocks': 3 } ]      # SE-ResNeXt152
              }
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, n_layers, cardinality=32, ratio=16, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 regularizer=l2(0.001), initializer='he_normal', relu_clip=None, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Residual Next Convolution Neural Network
             n_layers    : number of layers
             cardinality : width of group convolution
@@ -61,8 +68,7 @@ class SEResNeXt(Composable):
             use_bias    : whether to use bias with batchnorm
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         # predefined
         if isinstance(n_layers, int):

@@ -40,10 +40,18 @@ class DenseNet(Composable):
     # Meta-parameter: number of filters in a convolution block within a residual block (growth rate)
     n_filters = 32
 
+
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, n_layers, n_filters=32, reduction=0.5, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 regularizer=l2(0.001), initializer='he_normal', relu_clip=None, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Densely Connected Convolution Neural Network
             n_layers    : number of layers
             n_filters   : number of filters (growth rate)
@@ -58,8 +66,7 @@ class DenseNet(Composable):
             use_bias    : whether to use bias
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # predefined
         if isinstance(n_layers, int):

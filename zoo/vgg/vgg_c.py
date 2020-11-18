@@ -40,10 +40,17 @@ class VGG(Composable):
                       { 'n_layers': 4, 'n_filters': 512 },
                       { 'n_layers': 4, 'n_filters': 512 } ] }	# VGG19
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : True
+                      }
+
     def __init__(self, n_layers, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 regularizer=None, initializer='glorot_uniform', relu_clip=None, 
-                 bn_epsilon=None, use_bias=True):
+                 **hyperparameters):
         """ Construct a VGG model
             n_layers    : number of layers (16 or 19) or metaparameter for blocks
             input_shape : input shape to the model
@@ -56,8 +63,7 @@ class VGG(Composable):
             use_bias    : whether to use bias
         """
         # Configure the base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # predefined
         if isinstance(n_layers, int):

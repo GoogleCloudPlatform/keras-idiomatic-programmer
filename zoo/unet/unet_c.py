@@ -37,19 +37,22 @@ class UNet(Composable):
     
     def __init__(self, groups=None,
                  input_shape=(572, 572, 3), n_classes=2, include_top=True,
-                 reg=None, relu=None, init_weights='he_normal', bias=False):
+                 regularizer=None, relu_clip=None, initializer='he_normal', 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a U-Net Convolutiuonal Neural Network
 	    groups      : contracting path groups
 	    input_shape : input shape
     	    n_classes   : number of output classes
             include_top : whether to include classifier
-            reg         : kernel regularizer
-            relu        : max value for ReLU
-            init_weights: kernel initializer
-            bias        : whether to use bias with batchnorm
+            initializer : kernel initializer
+            regularizer : kernel regularizer
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        super().__init__(reg=reg, relu=relu, init_weights=init_weights, bias=bias)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
 
         # Predefined
         if groups is None:

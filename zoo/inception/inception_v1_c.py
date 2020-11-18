@@ -28,10 +28,17 @@ from models_c import Composable
 class InceptionV1(Composable):
     """ Construct an Inception Convolutional Neural Network """
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : True
+                      }
+
     def __init__(self, dropout=0.4, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=True):
+                 **hyperparameters):
         """ Construct an Inception Convolutional Neural Network
             dropout     : percentage of dropout
             input_shape : input shape to the neural network
@@ -44,8 +51,7 @@ class InceptionV1(Composable):
             use_bias    : whether to use bias
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
 	# The input tensor
         inputs = Input(shape=input_shape)

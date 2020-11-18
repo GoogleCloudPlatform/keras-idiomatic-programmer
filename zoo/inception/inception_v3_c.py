@@ -28,10 +28,17 @@ from models_c import Composable
 class InceptionV3(Composable):
     """ Construct an Inception V3 convolutional neural network """
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, dropout=0.4, 
                  input_shape=(229, 229, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct an Inception V3 convolutional neural network
             dropout     : percentage of dropout rate
             input_shape : the input to the model
@@ -44,8 +51,7 @@ class InceptionV3(Composable):
             use_bias    : whether to use bias
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # The input tensor (299x299 in V3 vs 224x224 in V1/V2)
         inputs = Input(shape=input_shape)

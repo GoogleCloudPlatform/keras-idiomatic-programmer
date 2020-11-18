@@ -43,8 +43,7 @@ from datasets_c import Dataset
 class Composable(Layers, Preprocess, Pretraining, HyperTune, Training, Dataset):
     ''' Composable base (super) class for Models '''
 
-    def __init__(self, initializer=None, regularizer=None, relu_clip=None, bn_epsilon=None,
-                 use_bias=None):
+    def __init__(self, default_hyperparameters=None, **hyperparameters):
         """ Constructor
             initializer  : kernel initializer
             regularizer  : kernel regularizer
@@ -52,7 +51,9 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune, Training, Dataset):
             bn_epsilon   : epsilon for batch norm
             use_bias     : whether to use bias
         """
-        Layers.__init__(self, initializer, regularizer, relu_clip, bn_epsilon, use_bias)
+        for key, value in hyperparameters.items():
+            default_hyperparameters[key] = value
+        Layers.__init__(self, **default_hyperparameters)
         Preprocess.__init__(self)
         Pretraining.__init__(self)
         HyperTune.__init__(self)

@@ -41,10 +41,17 @@ class MobileNetV2(Composable):
                { 'n_filters' : 320,  'n_blocks' : 1, 'strides': (1, 1) },
                { 'n_filters' : 1280, 'n_blocks' : 1 } ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : 6.0,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, groups=None, alpha=1, expansion=6, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=6.0, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Mobile Convolution Neural Network V2
             groups      : number of filters and blocks per group
             alpha       : width multiplier
@@ -59,8 +66,7 @@ class MobileNetV2(Composable):
             use_bias    : whether to use a bias
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
         
         if groups is None:
              groups = list(self.groups)

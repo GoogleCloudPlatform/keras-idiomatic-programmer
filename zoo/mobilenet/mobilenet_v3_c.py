@@ -68,10 +68,17 @@ class MobileNetV3(Composable):
                          ]
                       }
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': l2(0.001),
+                        'relu_clip'  : 6.0,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, groups, alpha=1, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=6.0, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Mobile Convolution Neural Network V3
             groups      : number of filters and blocks per group
             alpha       : width multiplier
@@ -85,8 +92,7 @@ class MobileNetV3(Composable):
             use_bias    : whether to use bias
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
-                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # Variable Binding
         self.GROUPS()
@@ -286,4 +292,4 @@ def example():
     mobilenet.model.summary()
     mobilenet.cifar10()
 
-example()
+# example()

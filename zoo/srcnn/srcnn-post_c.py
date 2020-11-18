@@ -29,10 +29,17 @@ class SRCNNPost(Composable):
     # Meta-parameter: 
     groups = [ { 'n_filters': 32, 'n_filters' : 64 } ]
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'he_normal',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : False
+                      }
+
     def __init__(self, groups=None ,
                  input_shape=(32, 32, 3), include_top=True,
-                 initializer='he_normal', regularizer=None, relu_clip=None, 
-                 bn_epsilon=None, use_bias=False):
+                 **hyperparameters):
         """ Construct a Wids Residual (Convolutional Neural) Network 
             groups      : metaparameter for group configuration
             input_shape : input shape
@@ -44,8 +51,7 @@ class SRCNNPost(Composable):
             use_bias    : whether use bias in conjunction with batch norm
         """
         # Configure base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
-                            relu_clip=relu_clip, use_bias=use_bias) 
+        Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         if groups is None:
             groups = self.groups

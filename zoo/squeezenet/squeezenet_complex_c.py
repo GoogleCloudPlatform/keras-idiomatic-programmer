@@ -34,7 +34,8 @@ class SqueezeNetComplex(Composable):
 
     def __init__(self, groups=None, dropout=0.5, 
                  input_shape=(224, 224, 3), n_classes=1000, include_top=True,
-                 init_weights='glorot_uniform', reg=l2(0.001), relu=None, bias=True):
+                 initializer='glorot_uniform', regularizer=l2(0.001), relu_clip=None, 
+                 bn_epsilon=None, use_bias=True):
         ''' Construct a SqueezeNet Complex Bypass Convolution Neural Network
             groups      : number of blocks/filters per group
             dropout     : percent of dropoput
@@ -46,7 +47,8 @@ class SqueezeNetComplex(Composable):
             relu        : max value for ReLU
             bias        : whether to use bias in conjunction with batch norm
         '''
-        super().__init__(init_weights=init_weights, reg=reg, relu=relu)
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer, 
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias)
         
         if groups is None:
             groups = list(SqueezeNetComplex.groups)

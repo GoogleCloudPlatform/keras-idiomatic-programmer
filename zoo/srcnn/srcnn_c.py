@@ -34,18 +34,21 @@ class SRCNN(Composable):
     def __init__(self,  
                  input_shape=(32, 32, 3), include_top=True,
                  f1 = 9, f2=1, f3=5,
-                 init_weights='he_normal', reg=None, relu=None, bias=False):
+                 initializer='he_normal', regularizer=None, relu_clip=None, 
+                 bn_epsilon=None, use_bias=False):
         """ Construct a Wids Residual (Convolutional Neural) Network 
             f1, f2, f3  : number of filters for convolutional layers n1, n2 and n3
             input_shape : input shape
             include_top : include the reconstruction component
-            init_weights: kernel initialization
-            reg         : kernel regularization
-            relu        : max value for ReLU
-            bias        : whether use bias in conjunction with batch norm
+            initializer : kernel initialization
+            regularizer : kernel regularization
+            relu_clip   : max value for ReLU
+            bn_epsilon  : epsilon for batch norm
+            use_bias    : whether use bias in conjunction with batch norm
         """
         # Configure base (super) class
-        super().__init__(reg=reg, init_weights=init_weights, relu=relu, bias=bias) 
+        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
+                            relu_clip=relu_clip, bn_epsilon=bn_epsilon, use_bias=use_bias) 
 
         # The input tensor
         inputs = Input(input_shape)

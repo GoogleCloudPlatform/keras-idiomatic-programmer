@@ -50,7 +50,7 @@ class DCGAN(Composable):
             bn_epsilon  : epsilon for batch normalization
             use_bias    : whether to include bias
         """
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, None, self.hyperparameters, **hyperparameters)
         
         # Construct the generator
         self.g = self.generator(latent=latent, height=input_shape[0], channels=input_shape[2])

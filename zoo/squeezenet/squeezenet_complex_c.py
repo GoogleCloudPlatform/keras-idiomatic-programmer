@@ -54,7 +54,7 @@ class SqueezeNetComplex(Composable):
             relu        : max value for ReLU
             bias        : whether to use bias in conjunction with batch norm
         '''
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
         
         if groups is None:
             groups = list(SqueezeNetComplex.groups)

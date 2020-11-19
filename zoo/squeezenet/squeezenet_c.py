@@ -56,7 +56,7 @@ class SqueezeNet(Composable):
             bias        : whether to use bias in conjunction with batch norm
         '''
         # Configure base (super) model
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
         
         if groups is None:
             groups = list(SqueezeNet.groups)

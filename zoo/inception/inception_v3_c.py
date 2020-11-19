@@ -51,7 +51,7 @@ class InceptionV3(Composable):
             use_bias    : whether to use bias
         """
         # Configure base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
 
         # The input tensor (299x299 in V3 vs 224x224 in V1/V2)
         inputs = Input(shape=input_shape)

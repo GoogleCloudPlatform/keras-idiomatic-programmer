@@ -152,7 +152,7 @@ class Layers(object):
         """
         self._model.summary()
 
-    def Dense(self, x, units, activation=None, use_bias=True, **hyperparameters):
+    def Dense(self, x, units, activation=None, **hyperparameters):
         """ Construct Dense Layer
             x           : input to layer
             activation  : activation function
@@ -168,6 +168,11 @@ class Layers(object):
             initializer = hyperparameters['initializer']
         else:
             initializer = self.initializer
+        if 'use_bias' in hyperparameters:
+            use_bias = hyperparameters['use_bias']
+            del hyperparameters['use_bias']
+        else:
+            use_bias = self.use_bias
             
         x = Dense(units, activation, use_bias=use_bias,
                   kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
@@ -187,14 +192,17 @@ class Layers(object):
         """
         if 'regularizer' in hyperparameters:
             regularizer = hyperparameters['regularizer']
+            del hyperparameters['regularizer']
         else:
             regularizer = self.regularizer
         if 'initializer' in hyperparameters:
             initializer = hyperparameters['initializer']
+            del hyperparameters['initializer']
         else:
             initializer = self.initializer
         if 'use_bias' in hyperparameters:
             use_bias = hyperparameters['use_bias']
+            del hyperparameters['use_bias']
         else:
             use_bias = self.use_bias
 

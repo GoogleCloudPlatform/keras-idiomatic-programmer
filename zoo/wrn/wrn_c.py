@@ -57,7 +57,7 @@ class WRN(Composable):
             use_bias    : whether use bias in conjunction with batch norm
         """
         # Configure base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
 
         if groups is None:
             groups = list(self.groups)

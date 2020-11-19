@@ -54,7 +54,7 @@ class SRCNN(Composable):
             use_bias    : whether use bias in conjunction with batch norm
         """
         # Configure base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
 
         # The input tensor
         inputs = Input(input_shape)

@@ -57,7 +57,7 @@ class Xception(Composable):
             bn_epsilon  : epsilon for batch norm
             use_bias    : whether to use bias in conjunction with batch norm
         """
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
         
         if entry is None:
             entry = self.entry

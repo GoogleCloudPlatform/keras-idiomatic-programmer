@@ -68,8 +68,6 @@ class JumpNet(Composable):
             use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        #Composable.__init__(self, regularizer=regularizer, relu_clip=relu_clip, 
-        #                    initializer=initializer, bn_epsilon=bn_epsilon, use_bias=use_bias)
         Composable.__init__(self, self.hyperparameters, **hyperparameters)
 
         # predefined

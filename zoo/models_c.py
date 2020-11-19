@@ -43,13 +43,12 @@ from datasets_c import Dataset
 class Composable(Layers, Preprocess, Pretraining, HyperTune, Training, Dataset):
     ''' Composable base (super) class for Models '''
 
-    def __init__(self, default_hyperparameters=None, **hyperparameters):
+    def __init__(self, input_shape, include_task, default_hyperparameters=None, **hyperparameters):
         """ Constructor
-            initializer  : kernel initializer
-            regularizer  : kernel regularizer
-            relu_clip    : clip value for ReLU
-            bn_epsilon   : epsilon for batch norm
-            use_bias     : whether to use bias
+            input_shape  : input tensor to the model
+            include_task : include the task component
+            default_hyperparameters: parent model default hyperparameter settings
+            **hyperparameters: overridden hyperparameter settings
         """
         for key, value in hyperparameters.items():
             default_hyperparameters[key] = value
@@ -59,6 +58,9 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune, Training, Dataset):
         HyperTune.__init__(self)
         Training.__init__(self)
         Dataset.__init__(self)
+
+        self.input_shape = input_shape
+        self.include_task = include_task
 
         # Feature maps encoding at the bottleneck layer in classifier (high dimensionality)
         self._encoding = None

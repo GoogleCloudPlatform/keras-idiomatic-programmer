@@ -41,10 +41,16 @@ class SiameseTwin(Composable):
     # with a mean of 0.5 and standard deviation of 10e-2
     biases = RandomNormal(mean=0.5, stddev=10e-2)
 
+    # Initial Hyperparameters
+    hyperparameters = { 'initializer': 'glorot_uniform',
+                        'regularizer': None,
+                        'relu_clip'  : None,
+                        'bn_epsilon' : None,
+                        'use_bias'   : True
+                      }
 
     def __init__(self, input_shape=(105, 105, 3),
-                       initializer='glorot_uniform', regularizer=None, relu_clip=None, 
-                       bn_epsilon=None, use_bias=True):
+                       **hyperparameters):
         """ Construct a Siamese Twin Neural Network 
             input_shape : input shape
             initializer : kernel initializer
@@ -54,8 +60,7 @@ class SiameseTwin(Composable):
             use_bias    : whether to use bias in conjunction with batch norm
         """
         # Configure the base (super) class
-        Composable.__init__(self, initializer=initializer, regularizer=regularizer,
-                            relu_clip=None, bn_epsilon=None, use_bias=use_bias)
+        Composable.__init__(self, input_shape, None, self.hyperparameters, **hyperparameters)
     
         # Build the twin model
         twin = self.twin(input_shape)

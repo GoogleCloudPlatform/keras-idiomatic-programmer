@@ -39,28 +39,32 @@ class Layers(object):
     initializer  = 'he_normal'  # weight initialization
     regularizer  = None         # kernel regularizer
     relu_clip    = None         # ReLU max value
-    bn_epsilon   = 1e-5		# batch norm epsilon
+    bn_epsilon   = 0		# batch norm epsilon
     use_bias     = True         # whether to use bias in dense/conv layers
- 
-    def __init__(self, initializer, regularizer, relu_clip, bn_epsilon, use_bias):
-        """ Constructor
-            initializer  : kernel initializer
-            regularizer  : kernel regularizer
-            relu_clip    : clip value for ReLU
-            bn_epsilon   : epsilon for batch normalization
-            use_bias     : whether to use bias
-        """
-        if initializer is not None:
-            self.initializer = initializer
-        if regularizer is not None:
-            self.regularizer = regularizer
-        if relu_clip is not None:
-            self.relu_clip = relu_clip
-        if bn_epsilon is not None:
-            self.bn_epsilon = bn_epsilon
-        if use_bias is not None:
-            self.use_bias = use_bias
 
+    def __init__(self, **hyperparameters):
+        """ Constructor
+        """
+        if 'initializer' in hyperparameters:
+            self.initializer = hyperparameters['initializer']
+            del hyperparameters['initializer']
+        if 'regularizer' in hyperparameters:
+            self.regularizer = hyperparameters['regularizer']
+            del hyperparameters['regularizer']
+        if 'relu_clip' in hyperparameters:
+            self.relu_clip = hyperparameters['relu_clip']
+            del hyperparameters['relu_clip']
+        if 'bn_epsilon' in hyperparameters:
+            if hyperparameters['bn_epsilon'] != None:
+                self.bn_epsilon = hyperparameters['bn_epsilon']
+            del hyperparameters['bn_epsilon']
+        if 'use_bias' in hyperparameters:
+            self.use_bias = hyperparameters['use_bias']
+            del hyperparameters['use_bias']
+
+        # retain unprocessed hyperparameters
+        self.hyperparameters = hyperparameters
+ 
     def prestem(self, inputs, **metaparameters):
       """ Construct a Pre-stem for Stem Group
           inputs : input to the pre-stem

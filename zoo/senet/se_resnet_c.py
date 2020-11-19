@@ -64,7 +64,7 @@ class SEResNet(Composable):
             relu        : max value for ReLU
             bias        : whether to use bias for batchnorm
         """
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
         
         # predefined
         if isinstance(n_layers, int):

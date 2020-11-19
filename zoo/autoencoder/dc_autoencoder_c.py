@@ -47,7 +47,7 @@ class AutoEncoder(Composable):
             use_bias    : whether to use bias
         '''
         # Configure base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, None, self.hyperparameters, **hyperparameters)
 
         if layers is None:
            layers = self.layers

@@ -66,7 +66,7 @@ class MobileNetV2(Composable):
             use_bias    : whether to use a bias
         """
         # Configure base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
         
         if groups is None:
              groups = list(self.groups)

@@ -70,7 +70,7 @@ class ResNetV2(Composable):
             use_bias    : whether to include a bias with batchnorm
         """
         # Configure base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
 
         # predefined
         if isinstance(n_layers, int):

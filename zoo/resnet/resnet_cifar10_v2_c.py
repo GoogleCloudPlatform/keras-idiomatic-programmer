@@ -67,7 +67,7 @@ class ResNetCifarV2(Composable):
             use_bias    : whether to use bias with batchnorm
         """
         # Configure the base (super) class
-        Composable.__init__(self, self.hyperparameters, **hyperparameters)
+        Composable.__init__(self, input_shape, include_top, self.hyperparameters, **hyperparameters)
 
         # depth
         if isinstance(n_layers, int):

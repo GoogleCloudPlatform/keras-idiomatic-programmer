@@ -36,11 +36,15 @@ import sys
 class Layers(object):
     ''' Layers class for Composable Models '''
 
+    # hyperparameters
     initializer  = 'he_normal'  # weight initialization
     regularizer  = None         # kernel regularizer
     relu_clip    = None         # ReLU max value
     bn_epsilon   = 0		# batch norm epsilon
     use_bias     = True         # whether to use bias in dense/conv layers
+
+    # layers
+    _conv = Conv2D
 
     def __init__(self, **hyperparameters):
         """ Constructor
@@ -178,7 +182,8 @@ class Layers(object):
                   kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
-    def Conv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):
+    def Conv2D(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', 
+               activation=None, **hyperparameters):
         """ Construct a Conv2D layer
             x           : input to layer
             n_filters   : number of filters
@@ -206,8 +211,9 @@ class Layers(object):
         else:
             use_bias = self.use_bias
 
-        x = Conv2D(n_filters, kernel_size, strides=strides, padding=padding, activation=activation,
-                   use_bias=use_bias, kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
+        x = self._conv(n_filters, kernel_size, strides=strides, padding=padding, 
+                       activation=activation, use_bias=use_bias, 
+                       kernel_initializer=initializer, kernel_regularizer=regularizer)(x)
         return x
 
     def Conv2DTranspose(self, x, n_filters, kernel_size, strides=(1, 1), padding='valid', activation=None, **hyperparameters):

@@ -317,6 +317,25 @@ class Layers(object):
         x = BatchNormalization(epsilon=self.bn_epsilon, **params)(x)
         return x
 
+    def ConvBNReLU(self, inputs, n_filters, kernel_size, strides=1, padding='same', 
+                   **hyperparameters):
+        ''' Construct post-activation batchnorm '''
+        outputs = inputs
+        outputs = self.Conv2D(outputs, n_filters, kernel_size, strides=strides, 
+                              padding=padding, **hyperparameters) 
+        outputs = self.BatchNormalization(outputs, **hyperparameters)
+        outputs = self.ReLU(outputs, **hyperparameters)
+        return outputs
+        
+    def BNReLUConv(self, inputs, n_filters, kernel_size, strides=1, padding='same', 
+                   **hyperparameters):
+        ''' Construct pre-activation batchnorm '''
+        outputs = inputs
+        outputs = self.BatchNormalization(outputs, **hyperparameters)
+        outputs = self.ReLU(outputs, **hyperparameters)
+        outputs = self.Conv2D(outputs, n_filters, kernel_size, strides=strides, 
+                              padding=padding, **hyperparameters) 
+        return outputs
     ###
     # Pre-stem Layers
     ###

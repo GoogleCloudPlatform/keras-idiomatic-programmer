@@ -105,4 +105,17 @@ class Composable(Layers, Preprocess, Pretraining, HyperTune, Training, Dataset):
     def probabilities(self, layer):
         self._probabilities = layer
 
+    @property
+    def softmax(self):
+        return self._softmax
+
+    @softmax.setter
+    def softmax(self, layer):
+        self._softmax = layer
+
+   
+    @property
+    def inputs(self):
+        return self._model.inputs
+
 

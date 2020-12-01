@@ -389,7 +389,7 @@ class Layers(object):
         """  Custom Layer for Postprocessing Output - """
         def __init__(self, **parameters):
             """ Constructor """
-            super(Composable.Argmax, self).__init__(**parameters)
+            super().__init__(**parameters)
 
         def build(self, input_shape=None, **parameters):
             """ Handler for Build (Functional) or Compile (Sequential) operation """
@@ -407,6 +407,13 @@ class Layers(object):
             if not training:
                 # inputs should be a 1D vector from softmax
                 index = tf.math.argmax(inputs, axis=1)
+            else:
+                index = tf.constant(-1, dtype=tf.int64)
 
             return index
+
+     def freeze(self):
+         """ Freeze all the layers in the model """
+         for layer in self._model.layers:
+             layer.trainable = False
 

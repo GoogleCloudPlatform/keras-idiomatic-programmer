@@ -385,6 +385,11 @@ class Layers(object):
     # Post-task layers
     ###
 
+    def freeze(self):
+        """ Freeze all the layers in the model """
+        for layer in self._model.layers:
+            layer.trainable = False
+
     class Argmax(layers.Layer):
         """  Custom Layer for Postprocessing Output - """
         def __init__(self, **parameters):
@@ -411,9 +416,4 @@ class Layers(object):
                 index = tf.constant(-1, dtype=tf.int64)
 
             return index
-
-        def freeze(self):
-            """ Freeze all the layers in the model """
-            for layer in self._model.layers:
-                layer.trainable = False
 

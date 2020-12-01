@@ -412,8 +412,8 @@ class Layers(object):
 
             return index
 
-     def freeze(self):
-         """ Freeze all the layers in the model """
-         for layer in self._model.layers:
-             layer.trainable = False
+        def freeze(self):
+            """ Freeze all the layers in the model """
+            for layer in self._model.layers:
+                layer.trainable = False
 

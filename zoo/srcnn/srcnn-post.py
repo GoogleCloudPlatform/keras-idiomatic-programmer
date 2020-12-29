@@ -57,7 +57,7 @@ def train():
 
     x_train_lr = []    
     for image in x_train:    
-        x_train_lr.append(cv2.resize(image, (16, 16)))    
+        x_train_lr.append(cv2.resize(image, (16, 16, 3)))    
     x_train_lr = np.asarray(x_train_lr)    
 
     x_train = (x_train / 255.0).astype(np.float32)    

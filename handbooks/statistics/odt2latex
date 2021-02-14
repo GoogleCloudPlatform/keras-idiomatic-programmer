@@ -1,0 +1,1 @@
+pandoc --to=latex+smart --extract-media=./media idiomatic-statistics.odt -o idiomatic-statistics.tex
